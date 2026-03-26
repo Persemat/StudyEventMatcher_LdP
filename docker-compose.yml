@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: myappdb
+      MYSQL_DATABASE: dem_db
       MYSQL_USER: springuser
       MYSQL_PASSWORD: springpass
     ports:
