@@ -7,7 +7,9 @@ export default function AuthPage() {
   const [cognome, setCognome] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confermaPassword, setConfermaPassword] = useState('')
   const [mostraPassword, setMostraPassword] = useState(false)
+  const [mostraConfermaPassword, setMostraConfermaPassword] = useState(false)
 
   const [messaggio, setMessaggio] = useState('')
   const [errore, setErrore] = useState('')
@@ -16,6 +18,11 @@ export default function AuthPage() {
     event.preventDefault()
     setMessaggio('')
     setErrore('')
+
+    if (!isLogin && password !== confermaPassword) {
+      setErrore('Le password non coincidono')
+      return
+    }
 
     try {
       const response = await fetch(isLogin ? '/Utenti/login' : '/Utenti', {
@@ -41,7 +48,7 @@ export default function AuthPage() {
         setMessaggio(`Accesso effettuato per: ${data.email}`)
       } else {
         setMessaggio(
-          `Registrazione completata per: ${data.nome} ${data.cognome}`
+          `Registrazione completata per: ${data.nome ?? ''} ${data.cognome ?? ''}`
         )
       }
 
@@ -49,6 +56,7 @@ export default function AuthPage() {
       setCognome('')
       setEmail('')
       setPassword('')
+      setConfermaPassword('')
     } catch (error) {
       console.error(error)
       setErrore(error.message)
@@ -58,14 +66,15 @@ export default function AuthPage() {
   return (
     <main style={styles.container}>
       <section style={styles.wrapper}>
-        <div style={styles.logoCircle}>📖</div>        
+        <div style={styles.logoCircle}>📖</div>
         <h1 style={styles.title}>StudyTogether</h1>
-        <br></br>
+        <br />
         <p style={styles.subtitle}>
           {isLogin
             ? 'Benvenuto! Accedi al tuo account'
             : 'Crea il tuo account e inizia a studiare insieme'}
         </p>
+
         <div style={styles.card}>
           <div style={styles.tabs}>
             <button
@@ -173,10 +182,37 @@ export default function AuthPage() {
                 </button>
               </div>
 
-              {!isLogin && (
-                <small style={styles.smallText}>Minimo 8 caratteri</small>
-              )}
+              
             </div>
+
+            {!isLogin && (
+              <div style={styles.field}>
+                <label htmlFor="confermaPassword" style={styles.label}>
+                  Conferma Password
+                </label>
+
+                <div style={styles.passwordWrapper}>
+                  <input
+                    id="confermaPassword"
+                    type={mostraConfermaPassword ? 'text' : 'password'}
+                    value={confermaPassword}
+                    onChange={(e) => setConfermaPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    style={styles.passwordInput}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMostraConfermaPassword(!mostraConfermaPassword)
+                    }
+                    style={styles.eyeButton}
+                  >
+                    👁
+                  </button>
+                </div>
+              </div>
+            )}
 
             <button type="submit" style={styles.submitButton}>
               {isLogin ? 'Accedi' : 'Crea Account'}
