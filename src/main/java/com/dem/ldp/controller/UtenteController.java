@@ -31,6 +31,10 @@ public ResponseEntity<?> createUtente(@RequestBody Utente utente) {
     String email = utente.getEmail();
     String password = utente.getPassword();
 
+    if (utenteRepository.findByEmail(email).isPresent()) {
+        return ResponseEntity.badRequest().body("Email già registrata");
+    }
+
     if (email == null || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
         return ResponseEntity.badRequest().body("Email non valida");
     }
@@ -58,10 +62,44 @@ public ResponseEntity<?> createUtente(@RequestBody Utente utente) {
         )
     );
 }
-    // per verificare che la password inserita sia giusta nel login
-    // encoder.matches("password inserita", "password crypatata del database");
-    @GetMapping
-    public List<Utente> getAllUtentes() {
-        return utenteRepository.findAll();
+// per verificare che la password inserita sia giusta nel login
+// encoder.matches("password inserita", "password crypatata del database");
+@GetMapping
+public List<Utente> getAllUtentes() {
+    return utenteRepository.findAll();
+}
+
+@PostMapping("/login")
+public ResponseEntity<?> login(@RequestBody Utente utenteLogin) {
+
+    String email = utenteLogin.getEmail();
+    String password = utenteLogin.getPassword();
+
+    if (email == null || email.isBlank()) {
+        return ResponseEntity.badRequest().body("Email obbligatoria");
+    }
+
+    if (password == null || password.isBlank()) {
+        return ResponseEntity.badRequest().body("Password obbligatoria");
+    }
+
+    var utenteTrovato = utenteRepository.findByEmail(email);
+
+    if (utenteTrovato.isEmpty()) {
+        return ResponseEntity.badRequest().body("Email non trovata");
+    }
+
+    Utente utente = utenteTrovato.get();
+
+    if (!passwordEncoder.matches(password, utente.getPassword())) {
+        return ResponseEntity.badRequest().body("Password errata");
+    }
+
+    return ResponseEntity.ok(
+        Map.of(
+            "id", utente.getId(),
+            "email", utente.getEmail()
+        )
+    );
     }
 }
