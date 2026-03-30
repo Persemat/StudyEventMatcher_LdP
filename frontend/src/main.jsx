@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import Registrazione from './Registrazione.jsx'
 import AuthPage from './authPage.jsx'
 import './index.css'
 

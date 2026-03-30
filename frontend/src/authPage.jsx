@@ -3,7 +3,8 @@ import { useState } from 'react'
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
 
-  //const [nomeCompleto, setNomeCompleto] = useState('')
+  const [nome, setNome] = useState('')
+  const [cognome, setCognome] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mostraPassword, setMostraPassword] = useState(false)
@@ -24,15 +25,8 @@ export default function AuthPage() {
         },
         body: JSON.stringify(
           isLogin
-            ? {
-                email,
-                password,
-              }
-            : {
-                //nomeCompleto,
-                email,
-                password,
-              }
+            ? { email, password }
+            : { nome, cognome, email, password }
         ),
       })
 
@@ -46,10 +40,13 @@ export default function AuthPage() {
       if (isLogin) {
         setMessaggio(`Accesso effettuato per: ${data.email}`)
       } else {
-        setMessaggio(`Registrazione completata per: ${data.email}`)
+        setMessaggio(
+          `Registrazione completata per: ${data.nome} ${data.cognome}`
+        )
       }
 
-     // setNomeCompleto('')
+      setNome('')
+      setCognome('')
       setEmail('')
       setPassword('')
     } catch (error) {
@@ -61,8 +58,7 @@ export default function AuthPage() {
   return (
     <main style={styles.container}>
       <section style={styles.wrapper}>
-        <div style={styles.logoCircle}>📖</div>
-
+        <div style={styles.logoCircle}>📖</div>        
         <h1 style={styles.title}>StudyTogether</h1>
         <br></br>
         <p style={styles.subtitle}>
@@ -70,7 +66,6 @@ export default function AuthPage() {
             ? 'Benvenuto! Accedi al tuo account'
             : 'Crea il tuo account e inizia a studiare insieme'}
         </p>
-
         <div style={styles.card}>
           <div style={styles.tabs}>
             <button
@@ -105,22 +100,39 @@ export default function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} style={styles.form}>
-            {/* {!isLogin && (
-              <div style={styles.field}>
-                <label htmlFor="nomeCompleto" style={styles.label}>
-                  Nome Completo
-                </label>
-                <input
-                  id="nomeCompleto"
-                  type="text"
-                  value={nomeCompleto}
-                  onChange={(event) => setNomeCompleto(event.target.value)}
-                  placeholder="Mario Rossi"
-                  required={!isLogin}
-                  style={styles.input}
-                />
+            {!isLogin && (
+              <div style={styles.row}>
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label htmlFor="nome" style={styles.label}>
+                    Nome
+                  </label>
+                  <input
+                    id="nome"
+                    type="text"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="Mario"
+                    required
+                    style={styles.input}
+                  />
+                </div>
+
+                <div style={{ ...styles.field, flex: 1 }}>
+                  <label htmlFor="cognome" style={styles.label}>
+                    Cognome
+                  </label>
+                  <input
+                    id="cognome"
+                    type="text"
+                    value={cognome}
+                    onChange={(e) => setCognome(e.target.value)}
+                    placeholder="Rossi"
+                    required
+                    style={styles.input}
+                  />
+                </div>
               </div>
-            )} */}
+            )}
 
             <div style={styles.field}>
               <label htmlFor="email" style={styles.label}>
@@ -130,7 +142,7 @@ export default function AuthPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="mario.rossi@example.com"
                 required
                 style={styles.input}
@@ -147,7 +159,7 @@ export default function AuthPage() {
                   id="password"
                   type={mostraPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   style={styles.passwordInput}
@@ -162,7 +174,7 @@ export default function AuthPage() {
               </div>
 
               {!isLogin && (
-                <small style={styles.smallText}>Minimo 6 caratteri</small>
+                <small style={styles.smallText}>Minimo 8 caratteri</small>
               )}
             </div>
 
@@ -262,6 +274,11 @@ const styles = {
     flexDirection: 'column',
     gap: '18px',
   },
+  row: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap',
+  },
   field: {
     display: 'flex',
     flexDirection: 'column',
@@ -281,36 +298,30 @@ const styles = {
     backgroundColor: '#f1f5f9',
     color: '#000000',
   },
- passwordWrapper: {
-  display: 'flex',
-  alignItems: 'center',
-  border: '1px solid #cbd5e1',
-  borderRadius: '14px',
-  
-},
-
-passwordInput: {
-  flex: 1,
-  padding: '16px',
-  border: 'none',
-  fontSize: '16px',
-  outline: 'none',
-  borderRadius: '14px 0 0 14px',
-  backgroundColor: '#f1f5f9',
-  color: '#000000',
-},
-
-eyeButton: {
-  border: 'none',
-  backgroundColor: 'transparent',
-  padding: '0 16px',
-  cursor: 'pointer',
-  fontSize: '20px',
-  color: '#64748b',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
+  passwordWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    border: '1px solid #cbd5e1',
+    borderRadius: '14px',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: '16px',
+    border: 'none',
+    fontSize: '16px',
+    outline: 'none',
+    borderRadius: '14px 0 0 14px',
+    backgroundColor: '#f1f5f9',
+    color: '#000000',
+  },
+  eyeButton: {
+    border: 'none',
+    backgroundColor: 'transparent',
+    padding: '0 16px',
+    cursor: 'pointer',
+    fontSize: '20px',
+    color: '#64748b',
+  },
   smallText: {
     color: '#64748b',
     fontSize: '14px',
