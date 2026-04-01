@@ -1,7 +1,7 @@
 build-job:
   image: node
   script:
-    -cd frontend
+    - cd frontend
     - npm install
     - npm run build
   artifacts:
