@@ -1,8 +1,9 @@
 build-job:
   image: node
   script:
+    -cd frontend
     - npm install
     - npm run build
   artifacts:
     paths:
-      - "build/"
+      - "frontend/build/"
