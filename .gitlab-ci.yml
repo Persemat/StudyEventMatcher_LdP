@@ -1,9 +1,29 @@
-build-job:
-  image: node
+stages:
+  - build
+  - package
+
+# Build frontend
+frontend-build:
+  stage: build
+  image: node:18
   script:
     - cd frontend
     - npm install
     - npm run build
   artifacts:
     paths:
-      - "frontend/build/"
+      - frontend/build/
+
+# Build backend + integra frontend
+backend-package:
+  stage: package
+  image: maven:3.9-eclipse-temurin-17
+  dependencies:
+    - frontend-build
+  script:
+    - mkdir -p src/main/resources/static
+    - cp -r frontend/build/* src/main/resources/static/
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
