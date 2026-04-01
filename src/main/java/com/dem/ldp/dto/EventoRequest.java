@@ -9,6 +9,7 @@ import java.util.List;
 public record EventoRequest(
     String titolo,
     LocalDateTime dataOra,
+    Double durata,
     String luogo,
     List<String> tag,
     String descrizione,

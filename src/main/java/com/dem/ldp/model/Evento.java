@@ -20,6 +20,9 @@ public class Evento {
     private LocalDateTime dataOra;
 
     @Column(nullable = false)
+    private Double durata;
+
+    @Column(nullable = false)
     private String luogo;
 
     //ElementCOlletion per salvare una lista di tag
@@ -124,6 +127,14 @@ public class Evento {
 
     public void setCreatore(Utente creatore) {
         this.creatore = creatore;
+    }
+
+    public void setDurata(double durata) {
+        this.durata = durata;
+    }
+
+    public void setDurata(Double durata) {
+        this.durata = durata;
     }
 
     

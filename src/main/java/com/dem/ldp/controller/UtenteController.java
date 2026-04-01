@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/Utenti")
+@CrossOrigin(origins = "http://localhost:5173") // Permette le richieste da React
 public class UtenteController {
 
     private final UtenteRepository utenteRepository;

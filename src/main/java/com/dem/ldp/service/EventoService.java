@@ -33,6 +33,7 @@ public class EventoService {
         Evento nuovoEvento = new Evento();
         nuovoEvento.setTitolo(request.titolo());
         nuovoEvento.setDataOra(request.dataOra());
+        nuovoEvento.setDurata(request.durata());
         nuovoEvento.setLuogo(request.luogo());
         nuovoEvento.setTag(request.tag());
         nuovoEvento.setDescrizione(request.descrizione());
