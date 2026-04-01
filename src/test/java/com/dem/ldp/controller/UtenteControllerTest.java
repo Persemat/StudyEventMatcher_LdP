@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @ActiveProfiles("test")
-class UtenteControllerIT {
+class UtenteControllerTest {
 
     @Autowired
     private TestRestTemplate restTemplate;

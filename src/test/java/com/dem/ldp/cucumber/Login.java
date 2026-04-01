@@ -15,6 +15,8 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.*;
+
 
 public class Login {
 
@@ -97,7 +99,7 @@ public class Login {
 
     @And("permette il passaggio all'area riservata")
     public void permettePassaggioAreaRiservata() throws Exception {
-        result.andExpect(content().string(Matchers.not(Matchers.isEmptyOrNullString())));
+        result.andExpect(content().string(not(blankOrNullString())));
     }
 
     @Then("il sistema respinge la richiesta")
