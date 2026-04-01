@@ -16,4 +16,6 @@ public record EventoRequest(
     Integer maxPartecipanti,
     boolean partecipazioneCreatoreNecessaria,
     Long creatoreId // Usiamo l'ID invece dell'intero oggetto Utente
-) {}
+) {
+    
+}

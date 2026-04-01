@@ -29,7 +29,7 @@ public class EventoService {
         }
         Utente creatore = creatoreOpt.get();
 
-        // 2. Creazione e mappatura dell'Entità
+        //Creazione e mappatura dell'Entità
         Evento nuovoEvento = new Evento();
         nuovoEvento.setTitolo(request.titolo());
         nuovoEvento.setDataOra(request.dataOra());
@@ -43,7 +43,7 @@ public class EventoService {
         nuovoEvento.setStato("aperto");
         nuovoEvento.setCreatore(creatore);
 
-        // 3. Salvataggio tramite Repository
+        //Salvataggio tramite Repository
         return eventoRepository.save(nuovoEvento);
     }
 }
