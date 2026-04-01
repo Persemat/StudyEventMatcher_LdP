@@ -5,7 +5,7 @@ stages:
 # Build frontend
 frontend-build:
   stage: build
-  image: node:18
+  image: node:20
   script:
     - cd frontend
     - npm install
