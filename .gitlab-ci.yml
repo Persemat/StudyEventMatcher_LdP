@@ -12,7 +12,7 @@ frontend-build:
     - npm run build
   artifacts:
     paths:
-      - frontend/build/
+      - frontend/dist/
 
 # Build backend + integra frontend
 backend-package:
@@ -22,7 +22,7 @@ backend-package:
     - frontend-build
   script:
     - mkdir -p src/main/resources/static
-    - cp -r build/* src/main/resources/static/
+    - cp -r frontend/dist/* src/main/resources/static/
     - mvn clean package -DskipTests
   artifacts:
     paths:
