@@ -21,7 +21,7 @@ backend-tests:
   dependencies:
     - frontend-build
   script:
-    - mvn test -Dspring.profiles.active=test
+    - mvn clean test -Dspring.profiles.active=test
 
 
 # Build backend + integra frontend
