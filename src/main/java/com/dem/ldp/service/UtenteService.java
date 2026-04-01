@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -65,7 +66,9 @@ public class UtenteService {
                 )
         );
     }
-
+    public List<Utente> getAllUtenti() {
+        return utenteRepository.findAll();
+    }
     public ResponseEntity<?> login(Utente utenteLogin) {
         String email = utenteLogin.getEmail();
         String password = utenteLogin.getPassword();
