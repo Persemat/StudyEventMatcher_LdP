@@ -1,6 +1,7 @@
 stages:
   - build
-  - test
+  - unit-test
+  - integration-test
   - package
 
 # Build frontend
@@ -15,14 +16,23 @@ frontend-build:
     paths:
       - frontend/dist/
     
-backend-tests:
-  stage: test
+backend-unit-tests:
+  stage: unit-test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
     - frontend-build
   script:
     - mvn clean test -Dspring.profiles.active=test
 
+backend-integration-tests:
+  stage: integration-test
+  image: maven:3.9-eclipse-temurin-17
+  dependencies:
+    - frontend-build
+  script:
+    - mkdir -p src/main/resources/static
+    - cp -r frontend/dist/* src/main/resources/static/
+    - mvn verify -Dspring.profiles.active=test
 
 # Build backend + integra frontend
 backend-package:
