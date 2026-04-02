@@ -4,6 +4,7 @@ stages:
   - integration-test
   - package
 
+# 1️⃣ Build frontend
 frontend-build:
   stage: build
   image: node:20
@@ -13,26 +14,37 @@ frontend-build:
     - npm run build
   artifacts:
     paths:
-      - frontend/dist/
+      - frontend/dist/   # salva la build come artifact
+    expire_in: 1 hour
 
-backend-unit-tests:
-  stage: unit-test
-  image: maven:3.9-eclipse-temurin-17
-  script:
-    - mvn clean test -Dspring.profiles.active=test
-
+# 2️⃣ Prepara backend copiando il frontend
 prepare-backend:
   stage: build
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - frontend-build
+    - frontend-build   # prende l'artifact frontend/dist/
   script:
     - mkdir -p src/main/resources/static
     - cp -r frontend/dist/* src/main/resources/static/
   artifacts:
     paths:
-      - src/main/resources/static/
+      - src/main/resources/static/  # artifact per job successivi
+    expire_in: 1 hour
 
+# 3️⃣ Test unitari backend
+backend-unit-tests:
+  stage: unit-test
+  image: maven:3.9-eclipse-temurin-17
+  dependencies:
+    - prepare-backend   # assicura che i file statici siano disponibili
+  script:
+    - mvn clean test -Dspring.profiles.active=test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
+
+# 4️⃣ Test di integrazione backend
 backend-integration-tests:
   stage: integration-test
   image: maven:3.9-eclipse-temurin-17
@@ -41,6 +53,7 @@ backend-integration-tests:
   script:
     - mvn verify -Dspring.profiles.active=test
 
+# 5️⃣ Package finale backend + frontend
 backend-package:
   stage: package
   image: maven:3.9-eclipse-temurin-17
