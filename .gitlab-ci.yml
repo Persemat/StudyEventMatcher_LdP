@@ -22,6 +22,8 @@ backend-unit-tests:
   dependencies:
     - frontend-build
   script:
+    - mkdir -p src/main/resources/static
+    - cp -r frontend/dist/* src/main/resources/static/
     - mvn clean test -Dspring.profiles.active=test
 
 backend-integration-tests:
