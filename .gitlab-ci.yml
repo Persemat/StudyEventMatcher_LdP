@@ -4,7 +4,6 @@ stages:
   - integration-test
   - package
 
-# Build frontend
 frontend-build:
   stage: build
   image: node:20
@@ -15,34 +14,39 @@ frontend-build:
   artifacts:
     paths:
       - frontend/dist/
-    
+
 backend-unit-tests:
   stage: unit-test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn clean test -Dspring.profiles.active=test
+
+prepare-backend:
+  stage: build
   image: maven:3.9-eclipse-temurin-17
   dependencies:
     - frontend-build
   script:
-    - mvn clean test -Dspring.profiles.active=test
+    - mkdir -p src/main/resources/static
+    - cp -r frontend/dist/* src/main/resources/static/
+  artifacts:
+    paths:
+      - src/main/resources/static/
 
 backend-integration-tests:
   stage: integration-test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - frontend-build
+    - prepare-backend
   script:
-    - mkdir -p src/main/resources/static
-    - cp -r frontend/dist/* src/main/resources/static/
     - mvn verify -Dspring.profiles.active=test
 
-# Build backend + integra frontend
 backend-package:
   stage: package
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - frontend-build
+    - prepare-backend
   script:
-    - mkdir -p src/main/resources/static
-    - cp -r frontend/dist/* src/main/resources/static/
     - mvn clean package -DskipTests
   artifacts:
     paths:
