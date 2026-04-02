@@ -1,5 +1,6 @@
 stages:
   - build
+  - build2
   - unit-test
   - integration-test
   - package
@@ -15,11 +16,10 @@ frontend-build:
   artifacts:
     paths:
       - frontend/dist/   # salva la build come artifact
-    expire_in: 1 hour
 
 # 2️⃣ Prepara backend copiando il frontend
 prepare-backend:
-  stage: build
+  stage: build2
   image: maven:3.9-eclipse-temurin-17
   dependencies:
     - frontend-build   # prende l'artifact frontend/dist/
@@ -29,7 +29,6 @@ prepare-backend:
   artifacts:
     paths:
       - src/main/resources/static/  # artifact per job successivi
-    expire_in: 1 hour
 
 # 3️⃣ Test unitari backend
 backend-unit-tests:
