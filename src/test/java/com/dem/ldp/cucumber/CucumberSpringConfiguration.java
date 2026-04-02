@@ -1,9 +1,11 @@
-package com.dem.ldp.config;
+package com.dem.ldp.cucumber;
+
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
 @CucumberContextConfiguration
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class CucumberSpringConfiguration {
-    
 }
