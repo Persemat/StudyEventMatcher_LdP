@@ -25,6 +25,10 @@ backend-unit-tests:
     - mkdir -p src/main/resources/static
     - cp -r frontend/dist/* src/main/resources/static/
     - mvn clean test -Dspring.profiles.active=test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
 
 backend-integration-tests:
   stage: integration-test
