@@ -8,4 +8,5 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class CucumberSpringConfiguration {
+
 }
