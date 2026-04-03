@@ -25,17 +25,21 @@ public class EventoController {
     public ResponseEntity<?> creaEvento(@RequestBody EventoRequest request) {
         // Validazione campi obbligatori 
         if(request.titolo() == null || request.titolo().isBlank() ||
-            request.dataOra() == null ||
+            request.dataOra() == null || request.durata() == null ||
             request.luogo() == null || request.luogo().isBlank() || 
             request.tag() == null || request.tag().isEmpty()) {
             return ResponseEntity.badRequest().body("Errore: Campi obbligatori mancanti (Titolo, data/ora, luogo e tag)");
         }
     
-        try{
+        try {
             // Passa al Service
             Evento eventoCreato = eventoService.creaNuovoEvento(request);
             return ResponseEntity.ok("Evento '" + eventoCreato.getTitolo() + "' creato con successo!");
-        }catch(RuntimeException e){
+        } catch(RuntimeException e) {
+            // Stampiamo l'errore nel terminale per aiutare il debug!
+            System.out.println("⚠️ ERRORE INTERNO NEL SERVICE: " + e.getMessage());
+            e.printStackTrace(); 
+            
             return ResponseEntity.status(404).body("Errore: " + e.getMessage());
         }
     }

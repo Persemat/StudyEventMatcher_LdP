@@ -72,7 +72,7 @@ public class EventoServiceTest {
 
     @Test
     void testCreaNuovoEvento_UtenteNonTrovato() {
-        // 1. PREPARAZIONE
+        
         EventoRequest request = new EventoRequest(
                 "Studio Analisi", 
                 LocalDateTime.parse("2026-04-10T15:00:00"),

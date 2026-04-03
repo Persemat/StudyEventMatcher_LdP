@@ -7,8 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureTestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -37,11 +37,12 @@ class EventoControllerTest {
     // Questo metodo viene eseguito PRIMA di ogni singolo @Test
     @BeforeEach
     void preparaDatabase() {
-        // 1. Puliamo tutto per avere un ambiente pulito
+        
+        //Puliamo tutto per avere un ambiente pulito
         eventoRepository.deleteAll();
         utenteRepository.deleteAll();
 
-        // 2. Creiamo un utente di base che farà da "creatore" degli eventi
+        //Creiamo un utente di base che farà da "creatore" degli eventi
         Utente utenteTest = new Utente();
         utenteTest.setNome("Luca");
         utenteTest.setCognome("Bianchi");
@@ -49,7 +50,7 @@ class EventoControllerTest {
         utenteTest.setPassword("Pass123");
         utenteRepository.save(utenteTest);
 
-        // Salviamo l'ID generato dal database per usarlo nei test
+        //Salviamo l'ID generato dal database per usarlo nei test
         this.utenteId = utenteTest.getId(); 
     }
 
@@ -60,32 +61,32 @@ class EventoControllerTest {
                 {
                   "titolo": "Gruppo di studio Java",
                   "dataOra": "2026-10-15T15:00:00",
-                  "durataOre": 2.5,
+                  "durata": 2.5,
                   "luogo": "Aula Magna",
                   "tag": ["Java", "Programmazione"],
                   "descrizione": "Ripasso per l'esame",
-                  "limitePartecipanti": 10,
+                  "maxPartecipanti": 10,
                   "partecipazioneCreatoreNecessaria": true,
-                  "utenteId": %d
+                  "creatoreId": %d
                 }
                 """;
-        // Inseriamo l'ID vero al posto di %d
+        //Inseriamo l'ID vero al posto di %d
         String json = String.format(jsonTemplate, utenteId);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Lanciamo la chiamata POST
+        //Lanciamo la chiamata POST
         ResponseEntity<String> response = restTemplate.postForEntity(
-                "/api/eventi", // <-- Assicurati che questo sia il percorso corretto del tuo controller
+                "/Eventi", 
                 new HttpEntity<>(json, headers),
                 String.class
         );
 
-        // Verifiche
+        //Verifiche
         assertEquals(200, response.getStatusCode().value());
         assertTrue(response.getBody().contains("Gruppo di studio Java"));
-        // Verifichiamo che il database non sia vuoto
+        //Verifichiamo che il database non sia vuoto
         assertEquals(1, eventoRepository.count());
     }
 
@@ -95,13 +96,13 @@ class EventoControllerTest {
                 {
                   "titolo": "", 
                   "dataOra": "2026-10-15T15:00:00",
-                  "durataOre": 2.5,
+                  "durata": 2.5,
                   "luogo": "Aula Magna",
                   "tag": ["Java"],
                   "descrizione": "Ripasso",
-                  "limitePartecipanti": 10,
+                  "maxPartecipanti": 10,
                   "partecipazioneCreatoreNecessaria": true,
-                  "utenteId": %d
+                  "creatoreId": %d
                 }
                 """;
         String json = String.format(jsonTemplate, utenteId);
@@ -110,7 +111,7 @@ class EventoControllerTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ResponseEntity<String> response = restTemplate.postForEntity(
-                "/api/eventi",
+                "/Eventi",
                 new HttpEntity<>(json, headers),
                 String.class
         );

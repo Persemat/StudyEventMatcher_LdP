@@ -23,11 +23,8 @@ public class EventoService {
     public Evento creaNuovoEvento(EventoRequest request) {
         
         //Recupero dell'utente creatore
-        Optional<Utente> creatoreOpt = utenteRepository.findById(request.creatoreId());
-        if (creatoreOpt.isEmpty()) {
-            throw new RuntimeException("Utente creatore non trovato con ID: " + request.creatoreId());
-        }
-        Utente creatore = creatoreOpt.get();
+        Utente creatore = utenteRepository.findById(request.creatoreId())
+                .orElseThrow(() -> new RuntimeException("Utente creatore non trovato con ID: " + request.creatoreId()));
 
         //Creazione e mappatura dell'Entità
         Evento nuovoEvento = new Evento();

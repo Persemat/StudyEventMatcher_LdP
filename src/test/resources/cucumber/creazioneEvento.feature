@@ -4,7 +4,7 @@ Feature: Creazione di un nuovo evento
 
   Scenario: Creazione di un evento valido
     Given l'utente si trova nella pagina di creazione evento
-    When l'utente inserisce titolo, descrizione, data e luogo
+    When l'utente inserisce titolo, descrizione, data, durata e luogo
     And aggiunge uno o piu tag e imposta un limite di partecipanti
     And imposta il flag Partecipazione del creatore necessaria
     And conferma la creazione
@@ -16,4 +16,4 @@ Feature: Creazione di un nuovo evento
     Given l'utente si trova nella pagina di creazione evento
     When l'utente tenta di creare un evento senza compilare i campi obbligatori
     Then il sistema impedisce la creazione dell'evento
-    And il sistema mostra "Campi obbligatori mancanti"
+    And il sistema mostra l'errore "Campi obbligatori mancanti"
