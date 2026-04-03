@@ -4,7 +4,7 @@ stages:
   - test
   - package
 
-chache:
+cache:
   # Maven
   - key: maven
     paths:
