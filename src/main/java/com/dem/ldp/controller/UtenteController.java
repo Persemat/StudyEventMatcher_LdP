@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/Utenti")
+@CrossOrigin(origins = "http://localhost:5173") // Permette le richieste da React
 public class UtenteController {
 
     private final UtenteService utenteService;

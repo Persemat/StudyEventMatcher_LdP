@@ -10,4 +10,5 @@ import org.springframework.test.context.ActiveProfiles;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CucumberSpringConfiguration {
+
 }
