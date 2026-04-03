@@ -1,41 +1,51 @@
 stages:
-  - build
-  - build2
-  - unit-test
-  - integration-test
+  - frontend
+  - backend
+  - test
   - package
+
+chache:
+  # Maven
+  - key: maven
+    paths:
+      - ~/.m2/repository
+  # Node/NPM
+  - key: frontend
+    paths:
+      - frontend/node_modules/
 
 # 1️⃣ Build frontend
 frontend-build:
-  stage: build
+  stage: frontend
   image: node:20
-  script:
+  before_script:
     - cd frontend
     - npm install
+  script:
     - npm run build
   artifacts:
     paths:
-      - frontend/dist/   # salva la build come artifact
+      - frontend/dist/
 
-# 2️⃣ Prepara backend copiando il frontend
-prepare-backend:
-  stage: build2
+# 2️⃣ Prepare backend (copy frontend build)
+backend-prepare:
+  stage: backend
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - frontend-build   # prende l'artifact frontend/dist/
+    - frontend-build
   script:
     - mkdir -p src/main/resources/static
     - cp -r frontend/dist/* src/main/resources/static/
   artifacts:
     paths:
-      - src/main/resources/static/  # artifact per job successivi
+      - src/main/resources/static/
 
-# 3️⃣ Test unitari backend
+# 3️⃣ Unit tests
 backend-unit-tests:
-  stage: unit-test
+  stage: test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - prepare-backend   # assicura che i file statici siano disponibili
+    - backend-prepare
   script:
     - mvn clean test -Dspring.profiles.active=test
   artifacts:
@@ -43,21 +53,21 @@ backend-unit-tests:
     paths:
       - target/surefire-reports/
 
-# 4️⃣ Test di integrazione backend
+# 4️⃣ Integration tests
 backend-integration-tests:
-  stage: integration-test
+  stage: test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - prepare-backend
+    - backend-prepare
   script:
     - mvn verify -Dspring.profiles.active=test
 
-# 5️⃣ Package finale backend + frontend
-backend-package:
+# 5️⃣ Package final application
+package:
   stage: package
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - prepare-backend
+    - backend-prepare
   script:
     - mvn clean package -DskipTests
   artifacts:
