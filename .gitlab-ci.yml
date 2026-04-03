@@ -41,7 +41,7 @@ backend-prepare:
       - src/main/resources/static/
 
 # 3️⃣ Unit tests
-backend-unit-tests:
+unit-tests:
   stage: test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
@@ -54,7 +54,7 @@ backend-unit-tests:
       - target/surefire-reports/
 
 # 4️⃣ Integration tests
-backend-integration-tests:
+integration-tests:
   stage: test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
@@ -67,7 +67,8 @@ package:
   stage: package
   image: maven:3.9-eclipse-temurin-17
   dependencies:
-    - backend-prepare
+    - unit-tests
+    - integration-tests
   script:
     - mvn clean package -DskipTests
   artifacts:
