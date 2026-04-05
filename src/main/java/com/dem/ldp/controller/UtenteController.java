@@ -2,6 +2,9 @@ package com.dem.ldp.controller;
 
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.service.UtenteService;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +32,8 @@ public class UtenteController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Utente utenteLogin) {
-        return utenteService.login(utenteLogin);
+    public ResponseEntity<?> login(@RequestBody Utente utente, HttpSession session) {
+        // 2. Passa la sessione al metodo del service
+        return utenteService.login(utente, session);
     }
 }

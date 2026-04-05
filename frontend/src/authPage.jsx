@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from "react-router-dom";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
-
+  const navigate = useNavigate();
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [email, setEmail] = useState('')
@@ -35,6 +36,7 @@ export default function AuthPage() {
             ? { email, password }
             : { nome, cognome, email, password }
         ),
+        credentials: 'include'
       })
 
       if (!response.ok) {
@@ -45,11 +47,23 @@ export default function AuthPage() {
       const data = await response.json()
 
       if (isLogin) {
-        setMessaggio(`Accesso effettuato per: ${data.email}`)
+        setMessaggio(`Accesso effettuato per: ${data.email}`);
+        
+        // Aspetta 1 secondo e poi vai alla Dashboard
+        setTimeout(() => {
+          navigate("/dashboard"); // Assicurati che la rotta in App.js si chiami così
+        }, 1000);
+
       } else {
+        // Per la registrazione, di solito è meglio mandarlo al login o loggarlo subito
         setMessaggio(
           `Registrazione completata per: ${data.nome ?? ''} ${data.cognome ?? ''}`
-        )
+        );
+        
+        // Opzionale: dopo la registrazione lo mandiamo al login dopo 2 secondi
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       }
 
       setNome('')

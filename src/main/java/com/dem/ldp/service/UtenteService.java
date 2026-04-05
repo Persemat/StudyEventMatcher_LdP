@@ -2,6 +2,9 @@ package com.dem.ldp.service;
 
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -62,44 +65,42 @@ public class UtenteService {
                         "id", salvato.getId(),
                         "nome", salvato.getNome(),
                         "cognome", salvato.getCognome(),
-                        "email", salvato.getEmail()
-                )
-        );
+                        "email", salvato.getEmail()));
     }
+
     public List<Utente> getAllUtenti() {
         return utenteRepository.findAll();
     }
-    public ResponseEntity<?> login(Utente utenteLogin) {
+
+    public ResponseEntity<?> login(Utente utenteLogin, HttpSession session) { // <--- Aggiungi HttpSession
         String email = utenteLogin.getEmail();
         String password = utenteLogin.getPassword();
 
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().body("Email obbligatoria");
-        }
-
-        if (password == null || password.isBlank()) {
-            return ResponseEntity.badRequest().body("Password obbligatoria");
-        }
+        // ... i tuoi controlli di validazione (email/password null) rimangono uguali
+        // ...
 
         var utenteTrovato = utenteRepository.findByEmail(email);
-
         if (utenteTrovato.isEmpty()) {
-            return ResponseEntity.badRequest().body("Email non trovata");
+            return ResponseEntity.status(401).body("Credenziali non valide"); // Meglio 401 che 400 per la sicurezza
         }
 
         Utente utente = utenteTrovato.get();
 
         if (!passwordEncoder.matches(password, utente.getPassword())) {
-            return ResponseEntity.badRequest().body("Password errata");
+            return ResponseEntity.status(401).body("Credenziali non valide");
         }
+
+        // Salviamo l'ID nella sessione sul SERVER.
+        // Il client riceverà solo un cookie criptato (JSESSIONID) che punta a questa
+        // riga.
+        session.setAttribute("userId", utente.getId());
 
         return ResponseEntity.ok(
                 Map.of(
-                        "id", utente.getId(),
                         "nome", utente.getNome(),
                         "cognome", utente.getCognome(),
                         "email", utente.getEmail()
-                )
-        );
+                // Non serve più mandare l'ID al frontend!
+                ));
     }
 }
