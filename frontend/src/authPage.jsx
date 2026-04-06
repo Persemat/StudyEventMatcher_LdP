@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from "react-router-dom";
 
-export default function AuthPage() {
+export default function AuthPage(props) {
   const [isLogin, setIsLogin] = useState(true)
   const navigate = useNavigate();
   const [nome, setNome] = useState('')
@@ -48,6 +48,7 @@ export default function AuthPage() {
 
       if (isLogin) {
         setMessaggio(`Accesso effettuato per: ${data.email}`);
+        props.onLoginSuccess(data);
         
         // Aspetta 1 secondo e poi vai alla Dashboard
         setTimeout(() => {

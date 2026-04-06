@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class UtenteService {
@@ -103,4 +104,26 @@ public class UtenteService {
                 // Non serve più mandare l'ID al frontend!
                 ));
     }
+
+    public ResponseEntity<?> getLoggedUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione non valida o scaduta");
+        }
+
+        Optional<Utente> userOpt = utenteRepository.findById(userId);
+
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Utente non trovato");
+        }
+        Utente user = userOpt.get();
+        Map<String, String> response = Map.of(
+                "nome", user.getNome(),
+                "cognome", user.getCognome(),
+                "email", user.getEmail());
+        return ResponseEntity.ok(response);
+
+    }
+
 }

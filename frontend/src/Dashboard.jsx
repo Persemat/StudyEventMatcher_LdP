@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Calendar, Users, Plus } from "lucide-react";
 import EventCard from "./EventCard"; 
 
-export default function Dashboard() {
+export default function Dashboard({user}) {
   const [events, setEvents] = useState([]);
+  const [loggedUser, setLoggedUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // 1) Creazione prenotazione
@@ -34,6 +35,29 @@ export default function Dashboard() {
     fetchEvents();
   }, []);
 
+  /*useEffect(() => {
+    const loadLoggedUser = async () => {
+      try {
+      const response = await fetch('/Utenti/me', {
+        method: 'GET',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText)
+      }
+
+      const data = await response.json()
+      setLoggedUser(data)
+    } catch (error) {
+      console.error(error)
+      setErrore(error.message)
+    };
+    };
+    loadLoggedUser();
+  }, []);
+*/
   // Gestione stato di caricamento per evitare il "flash" della lista vuota
   if (loading) {
     return <div className="p-8 text-center text-gray-500 italic">Il Backend sta elaborando i tuoi consigli personalizzati...</div>;
@@ -44,7 +68,7 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">
-          Benvenuto! Scopri gli eventi di studio consigliati per te
+          Benvenuto {user?.nome}! Scopri gli eventi di studio consigliati per te
         </p>
       </div>
 

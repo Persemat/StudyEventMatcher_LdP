@@ -2,8 +2,12 @@ package com.dem.ldp.service;
 
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -16,6 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class UtenteServiceTest {
+
+    @Mock
+    private HttpSession session;
 
     private UtenteRepository utenteRepository;
     private PasswordEncoder passwordEncoder;
@@ -198,7 +205,7 @@ class UtenteServiceTest {
         utenteLogin.setEmail("");
         utenteLogin.setPassword("Password123");
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin);
+        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
 
         assertEquals(400, response.getStatusCode().value());
         assertEquals("Email obbligatoria", response.getBody());
@@ -212,7 +219,7 @@ class UtenteServiceTest {
         utenteLogin.setEmail("mario@example.com");
         utenteLogin.setPassword("");
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin);
+        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
 
         assertEquals(400, response.getStatusCode().value());
         assertEquals("Password obbligatoria", response.getBody());
@@ -229,7 +236,7 @@ class UtenteServiceTest {
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin);
+        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
 
         assertEquals(400, response.getStatusCode().value());
         assertEquals("Email non trovata", response.getBody());
@@ -249,7 +256,7 @@ class UtenteServiceTest {
         when(passwordEncoder.matches("Password123", "HASH"))
                 .thenReturn(false);
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin);
+        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
 
         assertEquals(400, response.getStatusCode().value());
         assertEquals("Password errata", response.getBody());
@@ -271,7 +278,7 @@ class UtenteServiceTest {
         when(passwordEncoder.matches("Password123", "HASH"))
                 .thenReturn(true);
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin);
+        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
 
         assertEquals(200, response.getStatusCode().value());
 
@@ -279,7 +286,8 @@ class UtenteServiceTest {
         Map<String, Object> body = (Map<String, Object>) response.getBody();
 
         assertNotNull(body);
-        assertEquals(1L, body.get("id"));
+        // assertEquals(1L, body.get("id"));
+        verify(session).setAttribute("userId", 1L);
         assertEquals("Mario", body.get("nome"));
         assertEquals("Rossi", body.get("cognome"));
         assertEquals("mario@example.com", body.get("email"));

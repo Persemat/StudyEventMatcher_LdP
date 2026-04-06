@@ -31,6 +31,11 @@ public class UtenteController {
         return utenteService.getAllUtenti();
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getLoggedUser(HttpSession session) {
+        return utenteService.getLoggedUser(session);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Utente utente, HttpSession session) {
         // 2. Passa la sessione al metodo del service
