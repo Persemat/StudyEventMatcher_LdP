@@ -6,15 +6,15 @@ import Dashboard from './Dashboard'
 import AuthPage from './authPage'
 import './index.css'
 
-// 1. IL GUARDIANO: Un componente semplicissimo da spiegare
+
 // Se l'utente non è loggato, lo rispedisce al login.
 const ProtectedRoute = ({ user, children }) => {
-  // CASO 1: La fetch sta ancora viaggiando
+  // CASO 1: La fetch sta ancora viaggiando. 
   if (user === undefined) {
-    return <div>Caricamento sessione...</div>; // Fermati qui, non reindirizzare!
+    return <div>Caricamento sessione...</div>; 
   }
 
-  // CASO 2: La fetch è finita e il server ha detto "non ti conosco"
+  // CASO 2: La fetch è finita e il backend non ha rilevato una sessione attiva
   if (user === null) {
     return <Navigate to="/login" replace />;
   }
@@ -24,7 +24,7 @@ const ProtectedRoute = ({ user, children }) => {
 };
 
 const App = () => {
-  // 2. LO STATO DELL'UTENTE: Vive qui, nel punto più alto dell'app
+  
   // Usiamo 'undefined' per dire "sto caricando" e 'null' per dire "non loggato"
 const [loggedUser, setLoggedUser] = useState(undefined); 
 
@@ -43,14 +43,14 @@ useEffect(() => {
         {/* Passiamo la funzione per settare l'utente dopo il login */}
         <Route path="/login" element={<AuthPage onLoginSuccess={setLoggedUser} />} />
 
-        {/* 4. LE ROTTE PROTETTE: Avvolgiamo il MainLayout nel nostro Guardiano */}
+        {/* Avvolgiamo il MainLayout nel ProtectedRoute */}
         <Route element={
           <ProtectedRoute user={loggedUser}>
             <MainLayout user={loggedUser} />
           </ProtectedRoute>
         }>
           <Route path="/dashboard" element={<Dashboard user={loggedUser} />} />
-          {/* Qui aggiungerai le altre rotte come /profilo, /eventi, ecc. */}
+          {/* Qui vanno aggiunte le rotte per le altre pagine */}
         </Route>
       </Routes>
     </BrowserRouter>
