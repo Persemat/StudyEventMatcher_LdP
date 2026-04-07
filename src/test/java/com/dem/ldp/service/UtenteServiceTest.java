@@ -32,6 +32,8 @@ class UtenteServiceTest {
     void setUp() {
         utenteRepository = mock(UtenteRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
+        session = mock(HttpSession.class);
+
         utenteService = new UtenteService(utenteRepository, passwordEncoder);
     }
 

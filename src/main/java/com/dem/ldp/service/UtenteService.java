@@ -77,18 +77,23 @@ public class UtenteService {
         String email = utenteLogin.getEmail();
         String password = utenteLogin.getPassword();
 
-        // ... i tuoi controlli di validazione (email/password null) rimangono uguali
-        // ...
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body("Email obbligatoria");
+        }
+
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body("Password obbligatoria");
+        }
 
         var utenteTrovato = utenteRepository.findByEmail(email);
         if (utenteTrovato.isEmpty()) {
-            return ResponseEntity.status(401).body("Credenziali non valide"); // Meglio 401 che 400 per la sicurezza
+            return ResponseEntity.status(400).body("Email non trovata"); // Meglio 401 che 400 per la sicurezza
         }
 
         Utente utente = utenteTrovato.get();
 
         if (!passwordEncoder.matches(password, utente.getPassword())) {
-            return ResponseEntity.status(401).body("Credenziali non valide");
+            return ResponseEntity.status(400).body("Password errata");
         }
 
         // Salviamo l'ID nella sessione sul SERVER.
