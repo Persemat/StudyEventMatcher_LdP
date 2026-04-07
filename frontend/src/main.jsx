@@ -4,11 +4,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './MainLayout' 
 import Dashboard from './Dashboard'
 import AuthPage from './authPage'
+import AllEvents from './AllEvents'
 import './index.css'
 
 
 // Se l'utente non è loggato, lo rispedisce al login.
 const ProtectedRoute = ({ user, children }) => {
+  console.log("Stato utente nel guardiano:", user);
   // CASO 1: La fetch sta ancora viaggiando. 
   if (user === undefined) {
     return <div>Caricamento sessione...</div>; 
@@ -50,6 +52,7 @@ useEffect(() => {
           </ProtectedRoute>
         }>
           <Route path="/dashboard" element={<Dashboard user={loggedUser} />} />
+          <Route path="/eventi" element={<AllEvents />} />
           {/* Qui vanno aggiunte le rotte per le altre pagine */}
         </Route>
       </Routes>

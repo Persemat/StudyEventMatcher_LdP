@@ -23,7 +23,7 @@ export default function MainLayout() {
             </div>
             <nav className="flex items-center gap-6">
                 <Link
-                to="/"
+                to="/dashboard"
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                   isActive("/") && location.pathname === "/"
                     ? "bg-blue-100 text-blue-700"

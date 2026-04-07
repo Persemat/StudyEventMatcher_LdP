@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
 
 export default function EventCard({
   event, // Questo oggetto arriva dal tuo List<Evento> di Spring
@@ -58,7 +58,7 @@ export default function EventCard({
       <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-3">
         <span>Durata: <strong>{event.durata}h</strong></span>
         <span className={`font-bold ${event.stato === 'aperto' ? 'text-green-600' : 'text-red-600'}`}>
-          ● {event.stato.toUpperCase()}
+          ● {event.stato?.toUpperCase()}
         </span>
       </div>
 
