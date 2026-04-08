@@ -5,6 +5,7 @@ import MainLayout from './MainLayout'
 import Dashboard from './Dashboard'
 import AuthPage from './authPage'
 import AllEvents from './AllEvents'
+import Profile from './Profile'
 import './index.css'
 import MyEvents from './MyEvents'
 
@@ -38,6 +39,18 @@ useEffect(() => {
     .catch(() => setLoggedUser(null));
 }, []);
 
+const handleLogout = async () => {
+    try {
+      // Avvisiamo Spring Boot di distruggere la sessione
+      // await fetch('/logout', { method: 'POST' });   DA IMPLEMENTARE
+    } catch (err) {
+      console.error("Errore durante il logout", err);
+    } finally {
+      // In ogni caso, resettiamo l'utente nel frontend
+      setLoggedUser(null);
+    }
+  };
+
   return (
     <BrowserRouter>
       <Routes>
@@ -55,6 +68,7 @@ useEffect(() => {
           <Route path="/dashboard" element={<Dashboard user={loggedUser} />} />
           <Route path="/eventi" element={<AllEvents />} />
           <Route path="/miei-eventi" element={<MyEvents />} />
+          <Route path="/profilo" element={<Profile user={loggedUser} onLogout={handleLogout} />} />
           {/* Qui vanno aggiunte le rotte per le altre pagine */}
         </Route>
       </Routes>
