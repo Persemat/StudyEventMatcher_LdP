@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function CreaEvento() {
+export default function CreaEvento({ onClose }) {
   // Definiamo gli stati per i campi del form
   const [titolo, setTitolo] = useState('');
   const [materia, setMateria] = useState(''); // Questo lo useremo come Tag
@@ -30,7 +30,6 @@ export default function CreaEvento() {
       descrizione: descrizione,
       maxPartecipanti: parseInt(maxPartecipanti),
       partecipazioneCreatoreNecessaria: true, // Per ora lo forziamo a true
-      creatoreId: creatoreId 
         };
 
     try {

@@ -24,82 +24,82 @@ import com.dem.ldp.repository.UtenteRepository;
 public class EventoServiceTest {
     @InjectMocks
     private EventoService eventoService;
+
     @Mock
     private EventoRepository eventoRepository;
+
     @Mock
     private UtenteRepository utenteRepository;
 
+    @Mock
+    private jakarta.servlet.http.HttpSession session;
+
     @Test
-    void testCreaNuovoEvento_Successo(){
-
+    void testCreaNuovoEvento_Successo() {
+        // 1. DTO Aggiornato (Senza l'ID utente in fondo)
         EventoRequest request = new EventoRequest(
-            "Matematica",
-            LocalDateTime.parse("2024-10-01T15:00:00"),
-            2.0,
-            "Biblioteca Comunale",
-            List.of("matematica"),
-            "RIpasso",
-            5,
-            true,
-            1L
-        );
+                "Matematica",
+                LocalDateTime.parse("2026-10-01T15:00:00"),
+                2.0,
+                "Biblioteca Comunale",
+                List.of("matematica"),
+                "Ripasso",
+                5,
+                true);
 
-        //Creazione finto utente
         Utente creatore = new Utente();
         ReflectionTestUtils.setField(creatore, "id", 1L);
-        creatore.setEmail("mario@gmail.it");
 
-       
-        //Quando ti cercano l'ID 1, restituisci il creatore
+        // 2. SIMULIAMO LA SESSIONE
+        // Quando il service chiede "userId" alla sessione, restituiamo 1L
+        when(session.getAttribute("userId")).thenReturn(1L);
         when(utenteRepository.findById(1L)).thenReturn(Optional.of(creatore));
-        
-        //Quando provano a salvare un evento, restituisci semplicemente quello stesso evento
-        when(eventoRepository.save(any(Evento.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Eseguiamo il vero metodo
-        Evento risultato = eventoService.creaNuovoEvento(request);
+        when(eventoRepository.save(any(Evento.class))).thenAnswer(i -> i.getArgument(0));
 
-        // Verifica
-        // Controlliamo che il Service abbia fatto bene i compiti
+        // 3. ESECUZIONE (Passiamo anche il mock della sessione)
+        Evento risultato = eventoService.creaNuovoEvento(request, session);
+
+        // 4. VERIFICA
         assertNotNull(risultato);
         assertEquals("Matematica", risultato.getTitolo());
-        assertEquals("aperto", risultato.getStato()); // Verifica cruciale del criterio di accettazione!
+        assertEquals("aperto", risultato.getStato());
         assertEquals(creatore, risultato.getCreatore());
-        
-        // Verifichiamo che il service abbia effettivamente chiamato il comando .save()
         verify(eventoRepository, times(1)).save(any(Evento.class));
     }
 
     @Test
-    void testCreaNuovoEvento_UtenteNonTrovato() {
-        
+    void testCreaNuovoEvento_SessioneMancante() {
         EventoRequest request = new EventoRequest(
-                "Studio Analisi", 
-                LocalDateTime.parse("2026-04-10T15:00:00"),
-                 2.0, 
-                 "Aula 1",
-                List.of("Matematica"), 
-                "Ripasso", 
-                5, 
-                true, 
-                99L // ID inesistente!
-        );
+                "Matematica", LocalDateTime.now(), 2.0, "Aula 1",
+                List.of("test"), "desc", 5, true);
 
-        //Non troviamo nessun utente con quell'Id
-        when(utenteRepository.findById(99L)).thenReturn(Optional.empty());
+        // Simuliamo sessione vuota (userId non presente)
+        when(session.getAttribute("userId")).thenReturn(null);
 
-        //Azione e verifica 
-        //Ci aspettiamo una RuntimeException
-        RuntimeException eccezione = assertThrows(RuntimeException.class, () -> {
-            eventoService.creaNuovoEvento(request);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            eventoService.creaNuovoEvento(request, session);
         });
 
-        // Verifichiamo che il messaggio di errore sia corretto
-        assertTrue(eccezione.getMessage().contains("Utente creatore non trovato con ID: 99"));
-        
-        // Verifichiamo che il salvataggio NON sia mai stato chiamato per errore
+        assertEquals("Sessione non valida o scaduta", ex.getMessage());
         verify(eventoRepository, never()).save(any());
-    
     }
 
+    @Test
+    void testCreaNuovoEvento_UtenteNonTrovato() {
+        EventoRequest request = new EventoRequest(
+                "Studio Analisi", LocalDateTime.parse("2026-04-10T15:00:00"),
+                2.0, "Aula 1", List.of("Matematica"), "Ripasso", 5, true);
+
+        // Sessione valida, ma utente sparito dal DB
+        when(session.getAttribute("userId")).thenReturn(99L);
+        when(utenteRepository.findById(99L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            eventoService.creaNuovoEvento(request, session);
+        });
+
+        assertTrue(ex.getMessage().contains("Utente non trovato"));
+        verify(eventoRepository, never()).save(any());
+    }
 }

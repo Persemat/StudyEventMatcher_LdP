@@ -5,6 +5,10 @@ import com.dem.ldp.model.Evento;
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.EventoRepository;
 import com.dem.ldp.repository.UtenteRepository;
+
+import jakarta.servlet.http.HttpSession;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -20,13 +24,18 @@ public class EventoService {
         this.utenteRepository = utenteRepository;
     }
 
-    public Evento creaNuovoEvento(EventoRequest request) {
-        
-        //Recupero dell'utente creatore
-        Utente creatore = utenteRepository.findById(request.creatoreId())
-                .orElseThrow(() -> new RuntimeException("Utente creatore non trovato con ID: " + request.creatoreId()));
+    public Evento creaNuovoEvento(EventoRequest request, HttpSession session) {
 
-        //Creazione e mappatura dell'Entità
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            throw new RuntimeException("Sessione non valida o scaduta");
+        }
+
+        Utente creatore = utenteRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        // Creazione e mappatura dell'Entità
         Evento nuovoEvento = new Evento();
         nuovoEvento.setTitolo(request.titolo());
         nuovoEvento.setDataOra(request.dataOra());
@@ -36,11 +45,11 @@ public class EventoService {
         nuovoEvento.setDescrizione(request.descrizione());
         nuovoEvento.setMaxPartecipanti(request.maxPartecipanti());
         nuovoEvento.setPartecipazioneCreatoreNecessaria(request.partecipazioneCreatoreNecessaria());
-        
+
         nuovoEvento.setStato("aperto");
         nuovoEvento.setCreatore(creatore);
 
-        //Salvataggio tramite Repository
+        // Salvataggio tramite Repository
         return eventoRepository.save(nuovoEvento);
     }
 }

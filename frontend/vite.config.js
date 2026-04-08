@@ -10,6 +10,11 @@ export default defineConfig({
       '/Utenti': {
         target: 'http://host.docker.internal:8080',
         changeOrigin: true
+      },
+      // ECCO IL PEZZO MANCANTE:
+      '/Eventi': {
+        target: 'http://host.docker.internal:8080',
+        changeOrigin: true
       }
     }
   }
