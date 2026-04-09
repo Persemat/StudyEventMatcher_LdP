@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import EventCard from "./EventCard"; // Assicurati che il file si chiami così
+import { useEventActions } from "./hooks/useEventActions";
 
+
+
+// Mock temporaneo (in futuro useremo una fetch)
+// TO DO: 
+// Rimuovere mockData una volta implementata la fetch
 const mockData = [
   { 
     id: 1, 
@@ -57,6 +63,20 @@ export default function AllEvents() {
   const [events, setEvents] = useState(mockData);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState("Tutti");
+  const [loading, setLoading] = useState(true);
+
+
+  const fetchEvents = async () => {
+        setLoading(true);
+        // TO DO: 
+        // Qui va la fetch per recuperare tutti gli eventi: fetch('/eventi', { credentials: 'include' })
+        // Per ora simuliamo che la funzione sia in arrivo
+        setLoading(false);
+      };
+
+  useEffect(() => {
+      fetchEvents();
+    }, []);
 
   // Estrazione tag per il filtro
   const allTags = ["Tutti", ...new Set(events.flatMap((e) => e.tag || []))];
@@ -73,21 +93,12 @@ export default function AllEvents() {
     return matchesSearch && matchesTag;
   });
 
-  // Gestione azioni (passate come props a EventCard)
-  const handleBook = (id) => {
-    setEvents(prev => prev.map(ev => 
-      ev.id === id ? { ...ev, isBooked: true, currentParticipants: ev.currentParticipants + 1 } : ev
-    ));
-  };
 
-  const handleCancel = (id) => {
-    setEvents(prev => prev.map(ev => 
-      ev.id === id ? { ...ev, isBooked: false, currentParticipants: Math.max(0, ev.currentParticipants - 1) } : ev
-    ));
-  };
+//Passi la funzione all'hook così lui può richiamarla dopo un'azione (es. dopo prenota)
+const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
-  const handleEdit = (id) => {
-    console.log("Modifica evento ID:", id);
+  const handleEdit = (event) => {
+    console.log("Modifica evento ID:", event.id);
     // Qui andrà la logica per aprire la modale di modifica
   };
 
@@ -130,9 +141,9 @@ export default function AllEvents() {
             <EventCard 
               key={event.id} 
               event={event} 
-              onBook={handleBook}
-              onCancelBooking={handleCancel}
-              onEdit={handleEdit}
+              onBook={() => handleBook(event.id)}
+              onCancelBooking={() => handleCancelBooking(event.id, event.partecipazioneCreatoreNecessaria)}
+              onEdit={() => handleEdit(event)}
             />
           ))}
         </div>

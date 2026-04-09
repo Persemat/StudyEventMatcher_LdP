@@ -36,6 +36,8 @@ public class UtenteController {
         return utenteService.getLoggedUser(session);
     }
 
+    // TO DO:
+    // Aggiungere DTO UtenteRequest
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Utente utente, HttpSession session) {
         // 2. Passa la sessione al metodo del service

@@ -1,39 +1,37 @@
 import { useState, useEffect } from "react";
 import { Calendar, Users, Plus } from "lucide-react";
 import EventCard from "./EventCard"; 
+import { useEventActions } from "./hooks/useEventActions";
 
 export default function Dashboard({user}) {
   const [events, setEvents] = useState([]);
   const [loggedUser, setLoggedUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 1) Creazione prenotazione
-  const handleBookEvent = async (eventId) => {
-    console.log("Inizio fetch prenotazione per:", eventId);
-    // Qui chiamerai il metodo POST del backend per la prenotazione
-  };
 
-  // 2) Cancellazione prenotazione (Abbandono o Annullamento)
-  const handleCancelBooking = async (eventId) => {
-    console.log("Inizio fetch cancellazione/abbandono per:", eventId);
-    // Qui andrà la logica con window.confirm e la fetch DELETE/POST
-  };
-
-  // 3) Modifica evento
-  const handleEditEvent = (eventId) => {
-    console.log("Apertura modale di modifica per l'evento:", eventId);
-    // Qui implementerai l'apertura del form pre-compilato
-  };
-
-  useEffect(() => {
-    const fetchEvents = async () => {
+  const fetchEvents = async () => {
       setLoading(true);
       // Qui andrà la tua fetch complessa: fetch('/api/eventi/consigliati', { credentials: 'include' })
       // Per ora simuliamo che la funzione sia in arrivo
       setLoading(false);
     };
+
+useEffect(() => {
     fetchEvents();
   }, []);
+
+//Passi la funzione all'hook così lui può richiamarla dopo un'azione (es. dopo prenota)
+const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+
+
+  // 3) Modifica evento
+  const handleEdit = (event) => {
+    console.log("Apertura modale di modifica per l'evento:", event.id);
+    // TO-DO: implementare apertura del modale di modifica
+    //        passargli l'evento e le funzioni "onClose" e "onSuccess"
+  };
+
+  
 
   // Gestione stato di caricamento per evitare il "flash" della lista vuota
   if (loading) {
@@ -75,9 +73,9 @@ export default function Dashboard({user}) {
                 key={event.id} 
                 event={event} 
                 // Passiamo i riferimenti alle funzioni definite sopra
-                onBook={handleBookEvent}
-                onCancelBooking={handleCancelBooking}
-                onEdit={handleEditEvent}
+                onBook={() => handleBook(event.id)}
+                onCancelBooking={() => handleCancelBooking(event.id, event.partecipazioneCreatoreNecessaria)}
+                onEdit={() => handleEdit(event)}
               />
             ))}
           </div>
