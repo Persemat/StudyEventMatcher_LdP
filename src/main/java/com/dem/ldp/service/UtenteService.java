@@ -1,17 +1,15 @@
 package com.dem.ldp.service;
 
+import com.dem.ldp.dto.LoginRequest;
+import com.dem.ldp.dto.UtenteRequest;
+import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
 
 import jakarta.servlet.http.HttpSession;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class UtenteService {
@@ -24,111 +22,93 @@ public class UtenteService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public ResponseEntity<?> registra(Utente utente) {
-        String nome = utente.getNome();
-        String cognome = utente.getCognome();
-        String email = utente.getEmail();
-        String password = utente.getPassword();
+    public UtenteResponse registra(UtenteRequest request) {
+        String nome = request.nome();
+        String cognome = request.cognome();
+        String email = request.email();
+        String password = request.password();
 
         if (nome == null || nome.isBlank()) {
-            return ResponseEntity.badRequest().body("Nome obbligatorio");
+            throw new IllegalArgumentException("Nome obbligatorio");
         }
 
         if (cognome == null || cognome.isBlank()) {
-            return ResponseEntity.badRequest().body("Cognome obbligatorio");
+            throw new IllegalArgumentException("Cognome obbligatorio");
         }
 
         if (email == null || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            return ResponseEntity.badRequest().body("Email non valida");
+            throw new IllegalArgumentException("Email non valida");
         }
 
         if (utenteRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body("Email già registrata");
+            throw new IllegalArgumentException("Email già registrata");
         }
 
         if (password == null || password.length() < 8) {
-            return ResponseEntity.badRequest().body("Password troppo corta");
+            throw new IllegalArgumentException("Password troppo corta");
         }
 
         if (!password.matches(".*[A-Z].*")) {
-            return ResponseEntity.badRequest().body("Serve una maiuscola");
+            throw new IllegalArgumentException("Serve una maiuscola");
         }
 
         if (!password.matches(".*\\d.*")) {
-            return ResponseEntity.badRequest().body("Serve un numero");
+            throw new IllegalArgumentException("Serve un numero");
         }
 
+        Utente utente = new Utente();
+        utente.setNome(nome);
+        utente.setCognome(cognome);
+        utente.setEmail(email);
         utente.setPassword(passwordEncoder.encode(password));
+
         Utente salvato = utenteRepository.save(utente);
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "id", salvato.getId(),
-                        "nome", salvato.getNome(),
-                        "cognome", salvato.getCognome(),
-                        "email", salvato.getEmail()));
+        return toResponse(salvato);
     }
 
-    public List<Utente> getAllUtenti() {
-        return utenteRepository.findAll();
-    }
-
-    public ResponseEntity<?> login(Utente utenteLogin, HttpSession session) { // <--- Aggiungi HttpSession
-        String email = utenteLogin.getEmail();
-        String password = utenteLogin.getPassword();
+    public UtenteResponse login(LoginRequest request, HttpSession session) {
+        String email = request.email();
+        String password = request.password();
 
         if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().body("Email obbligatoria");
+            throw new IllegalArgumentException("Email obbligatoria");
         }
 
         if (password == null || password.isBlank()) {
-            return ResponseEntity.badRequest().body("Password obbligatoria");
+            throw new IllegalArgumentException("Password obbligatoria");
         }
 
-        var utenteTrovato = utenteRepository.findByEmail(email);
-        if (utenteTrovato.isEmpty()) {
-            return ResponseEntity.status(400).body("Email non trovata"); // Meglio 401 che 400 per la sicurezza
-        }
-
-        Utente utente = utenteTrovato.get();
+        Utente utente = utenteRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Credenziali non valide"));
 
         if (!passwordEncoder.matches(password, utente.getPassword())) {
-            return ResponseEntity.status(400).body("Password errata");
+            throw new IllegalArgumentException("Credenziali non valide");
         }
 
-        // Salviamo l'ID nella sessione sul SERVER.
-        // Il client riceverà solo un cookie criptato (JSESSIONID) che punta a questa
-        // riga.
         session.setAttribute("userId", utente.getId());
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "nome", utente.getNome(),
-                        "cognome", utente.getCognome(),
-                        "email", utente.getEmail()
-                // Non serve più mandare l'ID al frontend!
-                ));
+        return toResponse(utente);
     }
 
-    public ResponseEntity<?> getLoggedUser(HttpSession session) {
+    public UtenteResponse getLoggedUser(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione non valida o scaduta");
+            throw new IllegalStateException("Sessione non valida o scaduta");
         }
 
-        Optional<Utente> userOpt = utenteRepository.findById(userId);
+        Utente user = utenteRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
 
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Utente non trovato");
-        }
-        Utente user = userOpt.get();
-        Map<String, String> response = Map.of(
-                "nome", user.getNome(),
-                "cognome", user.getCognome(),
-                "email", user.getEmail());
-        return ResponseEntity.ok(response);
-
+        return toResponse(user);
     }
 
+    private UtenteResponse toResponse(Utente utente) {
+        return new UtenteResponse(
+                utente.getId(),
+                utente.getNome(),
+                utente.getCognome(),
+                utente.getEmail()
+        );
+    }
 }

@@ -1,6 +1,8 @@
 package com.dem.ldp.controller;
 
-import com.dem.ldp.model.Utente;
+import com.dem.ldp.dto.LoginRequest;
+import com.dem.ldp.dto.UtenteRequest;
+import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.service.UtenteService;
 
 import jakarta.servlet.http.HttpSession;
@@ -8,11 +10,9 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/Utenti")
-@CrossOrigin(origins = "http://localhost:5173") // Permette le richieste da React
+@CrossOrigin(origins = "http://localhost:5173")
 public class UtenteController {
 
     private final UtenteService utenteService;
@@ -22,25 +22,34 @@ public class UtenteController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createUtente(@RequestBody Utente utente) {
-        return utenteService.registra(utente);
+    public ResponseEntity<?> createUtente(@RequestBody UtenteRequest request) {
+        try {
+            UtenteResponse response = utenteService.registra(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
-    @GetMapping
-    public List<Utente> getAllUtentes() {
-        return utenteService.getAllUtenti();
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpSession session) {
+        try {
+            UtenteResponse response = utenteService.login(request, session);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        }
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> getLoggedUser(HttpSession session) {
-        return utenteService.getLoggedUser(session);
-    }
-
-    // TO DO:
-    // Aggiungere DTO UtenteRequest
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Utente utente, HttpSession session) {
-        // 2. Passa la sessione al metodo del service
-        return utenteService.login(utente, session);
+        try {
+            UtenteResponse response = utenteService.getLoggedUser(session);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
     }
 }
