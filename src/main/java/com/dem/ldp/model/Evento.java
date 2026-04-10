@@ -1,7 +1,9 @@
 package com.dem.ldp.model;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 
@@ -133,11 +135,37 @@ public class Evento {
         this.durata = durata;
     }
 
-    public void setDurata(Double durata) {
-        this.durata = durata;
+    public Double getDurata() {
+        return durata;
     }
 
-    
+    @ManyToMany
+    @JoinTable(
+        name = "evento_partecipanti",
+        joinColumns = @JoinColumn(name = "evento_id"),
+        inverseJoinColumns = @JoinColumn(name = "utente_id")
+    )
+    private Set<Utente> partecipanti = new HashSet<>();
+
+    public Set<Utente> getPartecipanti() {
+        return partecipanti;
+    }
+
+    public void setPartecipanti(Set<Utente> partecipanti) {
+        this.partecipanti = partecipanti;
+    }
+
+    public void aggiungiPartecipante(Utente utente) {
+        this.partecipanti.add(utente);
+    }
+
+    public void rimuoviPartecipante(Utente utente) {
+        this.partecipanti.remove(utente);
+    }
+
+    public int getCurrentParticipants() {
+        return partecipanti != null ? partecipanti.size() : 0;
+    }
 
 
 }
