@@ -4,9 +4,7 @@ import com.dem.ldp.dto.LoginRequest;
 import com.dem.ldp.dto.UtenteRequest;
 import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.service.UtenteService;
-
 import jakarta.servlet.http.HttpSession;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,17 +32,19 @@ public class UtenteController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpSession session) {
         try {
-            UtenteResponse response = utenteService.login(request, session);
+            UtenteResponse response = utenteService.login(request);
+            session.setAttribute("userId", response.id());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(401).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> getLoggedUser(HttpSession session) {
         try {
-            UtenteResponse response = utenteService.getLoggedUser(session);
+            Long userId = (Long) session.getAttribute("userId");
+            UtenteResponse response = utenteService.getLoggedUser(userId);
             return ResponseEntity.ok(response);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(401).body(e.getMessage());

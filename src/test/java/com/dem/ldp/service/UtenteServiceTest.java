@@ -1,18 +1,16 @@
 package com.dem.ldp.service;
 
+import com.dem.ldp.dto.LoginRequest;
+import com.dem.ldp.dto.UtenteRequest;
+import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
-
 import jakarta.servlet.http.HttpSession;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,9 +18,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class UtenteServiceTest {
-
-    @Mock
-    private HttpSession session;
 
     private UtenteRepository utenteRepository;
     private PasswordEncoder passwordEncoder;
@@ -32,135 +27,119 @@ class UtenteServiceTest {
     void setUp() {
         utenteRepository = mock(UtenteRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        session = mock(HttpSession.class);
-
         utenteService = new UtenteService(utenteRepository, passwordEncoder);
     }
 
     @Test
-    void registra_nomeMancante_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("");
-        utente.setCognome("Rossi");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("Password123");
+    void registra_nomeMancante_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("", "Rossi", "mario@example.com", "Password123");
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Nome obbligatorio", response.getBody());
+        assertEquals("Nome obbligatorio", ex.getMessage());
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
-    void registra_cognomeMancante_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("Password123");
+    void registra_cognomeMancante_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("Mario", "", "mario@example.com", "Password123");
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Cognome obbligatorio", response.getBody());
+        assertEquals("Cognome obbligatorio", ex.getMessage());
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
-    void registra_emailNonValida_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("Rossi");
-        utente.setEmail("marioexample.com");
-        utente.setPassword("Password123");
+    void registra_emailNonValida_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("Mario", "Rossi", "marioexample.com", "Password123");
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Email non valida", response.getBody());
+        assertEquals("Email non valida", ex.getMessage());
         verify(utenteRepository, never()).findByEmail(any());
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
-    void registra_emailGiaRegistrata_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("Rossi");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("Password123");
+    void registra_emailGiaRegistrata_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("Mario", "Rossi", "mario@example.com", "Password123");
 
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.of(new Utente()));
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Email già registrata", response.getBody());
+        assertEquals("Email già registrata", ex.getMessage());
         verify(utenteRepository).findByEmail("mario@example.com");
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
-    void registra_passwordTroppoCorta_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("Rossi");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("Pass1");
+    void registra_passwordTroppoCorta_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("Mario", "Rossi", "mario@example.com", "Pass1");
 
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Password troppo corta", response.getBody());
+        assertEquals("Password troppo corta", ex.getMessage());
         verify(utenteRepository).findByEmail("mario@example.com");
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
-    void registra_passwordSenzaMaiuscola_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("Rossi");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("password123");
+    void registra_passwordSenzaMaiuscola_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("Mario", "Rossi", "mario@example.com", "password123");
 
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Serve una maiuscola", response.getBody());
+        assertEquals("Serve una maiuscola", ex.getMessage());
         verify(utenteRepository).findByEmail("mario@example.com");
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
-    void registra_passwordSenzaNumero_restituisce400() {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("Rossi");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("Password");
+    void registra_passwordSenzaNumero_lanciaEccezione() {
+        UtenteRequest request = new UtenteRequest("Mario", "Rossi", "mario@example.com", "Password");
 
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.registra(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Serve un numero", response.getBody());
+        assertEquals("Serve un numero", ex.getMessage());
         verify(utenteRepository).findByEmail("mario@example.com");
         verify(utenteRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
@@ -168,11 +147,7 @@ class UtenteServiceTest {
 
     @Test
     void registra_valido_codificaPasswordESalva() throws Exception {
-        Utente utente = new Utente();
-        utente.setNome("Mario");
-        utente.setCognome("Rossi");
-        utente.setEmail("mario@example.com");
-        utente.setPassword("Password123");
+        UtenteRequest request = new UtenteRequest("Mario", "Rossi", "mario@example.com", "Password123");
 
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.empty());
@@ -184,73 +159,66 @@ class UtenteServiceTest {
 
         when(utenteRepository.save(any(Utente.class))).thenReturn(salvato);
 
-        ResponseEntity<?> response = utenteService.registra(utente);
+        UtenteResponse response = utenteService.registra(request);
 
-        assertEquals(200, response.getStatusCode().value());
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
-
-        assertNotNull(body);
-        assertEquals(1L, body.get("id"));
-        assertEquals("Mario", body.get("nome"));
-        assertEquals("Rossi", body.get("cognome"));
-        assertEquals("mario@example.com", body.get("email"));
+        assertNotNull(response);
+        assertEquals(1L, response.id());
+        assertEquals("Mario", response.nome());
+        assertEquals("Rossi", response.cognome());
+        assertEquals("mario@example.com", response.email());
 
         verify(passwordEncoder).encode("Password123");
         verify(utenteRepository).save(any(Utente.class));
     }
 
     @Test
-    void login_emailObbligatoria_restituisce400() {
-        Utente utenteLogin = new Utente();
-        utenteLogin.setEmail("");
-        utenteLogin.setPassword("Password123");
+    void login_emailObbligatoria_lanciaEccezione() {
+        LoginRequest request = new LoginRequest("", "Password123");
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.login(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Email obbligatoria", response.getBody());
+        assertEquals("Email obbligatoria", ex.getMessage());
         verify(utenteRepository, never()).findByEmail(any());
         verify(passwordEncoder, never()).matches(any(), any());
     }
 
     @Test
-    void login_passwordObbligatoria_restituisce400() {
-        Utente utenteLogin = new Utente();
-        utenteLogin.setEmail("mario@example.com");
-        utenteLogin.setPassword("");
+    void login_passwordObbligatoria_lanciaEccezione() {
+        LoginRequest request = new LoginRequest("mario@example.com", "");
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.login(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Password obbligatoria", response.getBody());
+        assertEquals("Password obbligatoria", ex.getMessage());
         verify(utenteRepository, never()).findByEmail(any());
         verify(passwordEncoder, never()).matches(any(), any());
     }
 
     @Test
-    void login_emailNonTrovata_restituisce400() {
-        Utente utenteLogin = new Utente();
-        utenteLogin.setEmail("mario@example.com");
-        utenteLogin.setPassword("Password123");
+    void login_emailNonTrovata_lanciaEccezione() {
+        LoginRequest request = new LoginRequest("mario@example.com", "Password123");
 
         when(utenteRepository.findByEmail("mario@example.com"))
                 .thenReturn(Optional.empty());
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.login(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Email non trovata", response.getBody());
+        assertEquals("Credenziali non valide", ex.getMessage());
         verify(utenteRepository).findByEmail("mario@example.com");
         verify(passwordEncoder, never()).matches(any(), any());
     }
 
     @Test
-    void login_passwordErrata_restituisce400() {
-        Utente utenteLogin = new Utente();
-        utenteLogin.setEmail("mario@example.com");
-        utenteLogin.setPassword("Password123");
+    void login_passwordErrata_lanciaEccezione() {
+        LoginRequest request = new LoginRequest("mario@example.com", "Password123");
 
         Utente utenteDb = new Utente("Mario", "Rossi", "mario@example.com", "HASH");
         when(utenteRepository.findByEmail("mario@example.com"))
@@ -258,44 +226,81 @@ class UtenteServiceTest {
         when(passwordEncoder.matches("Password123", "HASH"))
                 .thenReturn(false);
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> utenteService.login(request)
+        );
 
-        assertEquals(400, response.getStatusCode().value());
-        assertEquals("Password errata", response.getBody());
+        assertEquals("Credenziali non valide", ex.getMessage());
         verify(utenteRepository).findByEmail("mario@example.com");
         verify(passwordEncoder).matches("Password123", "HASH");
     }
 
     @Test
-    void login_valido_restituisce200() throws Exception {
-        Utente utenteLogin = new Utente();
-        utenteLogin.setEmail("mario@example.com");
-        utenteLogin.setPassword("Password123");
+    void login_valido_restituisceUtenteResponse() throws Exception {
+    LoginRequest request = new LoginRequest("mario@example.com", "Password123");
 
-        Utente utenteDb = new Utente("Mario", "Rossi", "mario@example.com", "HASH");
-        setId(utenteDb, 1L);
+    Utente utenteDb = new Utente("Mario", "Rossi", "mario@example.com", "HASH");
+    setId(utenteDb, 1L);
 
-        when(utenteRepository.findByEmail("mario@example.com"))
-                .thenReturn(Optional.of(utenteDb));
-        when(passwordEncoder.matches("Password123", "HASH"))
-                .thenReturn(true);
+    when(utenteRepository.findByEmail("mario@example.com"))
+            .thenReturn(Optional.of(utenteDb));
+    when(passwordEncoder.matches("Password123", "HASH"))
+            .thenReturn(true);
 
-        ResponseEntity<?> response = utenteService.login(utenteLogin, session);
+    UtenteResponse response = utenteService.login(request);
 
-        assertEquals(200, response.getStatusCode().value());
+    assertNotNull(response);
+    assertEquals(1L, response.id());
+    assertEquals("Mario", response.nome());
+    assertEquals("Rossi", response.cognome());
+    assertEquals("mario@example.com", response.email());
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
+    verify(utenteRepository).findByEmail("mario@example.com");
+    verify(passwordEncoder).matches("Password123", "HASH");
+}
 
-        assertNotNull(body);
-        // assertEquals(1L, body.get("id"));
-        verify(session).setAttribute("userId", 1L);
-        assertEquals("Mario", body.get("nome"));
-        assertEquals("Rossi", body.get("cognome"));
-        assertEquals("mario@example.com", body.get("email"));
+    @Test
+    void getLoggedUser_senzaSessione_lanciaEccezione() {
 
-        verify(utenteRepository).findByEmail("mario@example.com");
-        verify(passwordEncoder).matches("Password123", "HASH");
+    IllegalStateException ex = assertThrows(
+            IllegalStateException.class,
+            () -> utenteService.getLoggedUser(null)
+    );
+
+    assertEquals("Sessione non valida o scaduta", ex.getMessage());
+    verify(utenteRepository, never()).findById(any());
+}
+
+    @Test
+    void getLoggedUser_utenteNonTrovato_lanciaEccezione() {
+
+    when(utenteRepository.findById(1L)).thenReturn(Optional.empty());
+
+    IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> utenteService.getLoggedUser(1L)
+    );
+
+    assertEquals("Utente non trovato", ex.getMessage());
+    verify(utenteRepository).findById(1L);
+}
+
+    @Test
+    void getLoggedUser_valido_restituisceUtenteResponse() throws Exception {
+
+        Utente utente = new Utente("Mario", "Rossi", "mario@example.com", "HASH");
+        setId(utente, 1L);
+
+        when(utenteRepository.findById(1L)).thenReturn(Optional.of(utente));
+
+        UtenteResponse response = utenteService.getLoggedUser(1L);
+
+        assertNotNull(response);
+        assertEquals(1L, response.id());
+        assertEquals("Mario", response.nome());
+        assertEquals("Rossi", response.cognome());
+        assertEquals("mario@example.com", response.email());
     }
 
     private void setId(Utente utente, Long id) throws Exception {

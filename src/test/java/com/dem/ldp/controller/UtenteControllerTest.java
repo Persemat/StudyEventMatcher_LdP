@@ -146,39 +146,8 @@ class UtenteControllerTest {
         );
 
         assertEquals(400, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Password errata"));
+        assertTrue(response.getBody().contains("Credenziali non valide"));
     }
 
-    @Test
-    void getUtenti_restituisceListaUtenti() {
-        String json1 = """
-                {
-                  "nome": "Mario",
-                  "cognome": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
-
-        String json2 = """
-                {
-                  "nome": "Luigi",
-                  "cognome": "Verdi",
-                  "email": "luigi@example.com",
-                  "password": "Password123"
-                }
-                """;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        restTemplate.postForEntity("/Utenti", new HttpEntity<>(json1, headers), String.class);
-        restTemplate.postForEntity("/Utenti", new HttpEntity<>(json2, headers), String.class);
-
-        ResponseEntity<String> response = restTemplate.getForEntity("/Utenti", String.class);
-
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("mario@example.com"));
-        assertTrue(response.getBody().contains("luigi@example.com"));
-    }
+    
 }

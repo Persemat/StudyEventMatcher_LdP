@@ -66,41 +66,37 @@ public class UtenteService {
         return toResponse(salvato);
     }
 
-    public UtenteResponse login(LoginRequest request, HttpSession session) {
-        String email = request.email();
-        String password = request.password();
+    public UtenteResponse login(LoginRequest request) {
+    String email = request.email();
+    String password = request.password();
 
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email obbligatoria");
-        }
-
-        if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Password obbligatoria");
-        }
-
-        Utente utente = utenteRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Credenziali non valide"));
-
-        if (!passwordEncoder.matches(password, utente.getPassword())) {
-            throw new IllegalArgumentException("Credenziali non valide");
-        }
-
-        session.setAttribute("userId", utente.getId());
-
-        return toResponse(utente);
+    if (email == null || email.isBlank()) {
+        throw new IllegalArgumentException("Email obbligatoria");
     }
 
-    public UtenteResponse getLoggedUser(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+    if (password == null || password.isBlank()) {
+        throw new IllegalArgumentException("Password obbligatoria");
+    }
 
-        if (userId == null) {
-            throw new IllegalStateException("Sessione non valida o scaduta");
-        }
+    Utente utente = utenteRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("Credenziali non valide"));
 
-        Utente user = utenteRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
+    if (!passwordEncoder.matches(password, utente.getPassword())) {
+        throw new IllegalArgumentException("Credenziali non valide");
+    }
 
-        return toResponse(user);
+    return toResponse(utente);
+    }
+
+    public UtenteResponse getLoggedUser(Long userId) {
+    if (userId == null) {
+        throw new IllegalStateException("Sessione non valida o scaduta");
+    }
+
+    Utente user = utenteRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
+
+    return toResponse(user);
     }
 
     private UtenteResponse toResponse(Utente utente) {

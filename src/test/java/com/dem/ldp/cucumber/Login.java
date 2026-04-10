@@ -109,7 +109,7 @@ public class Login {
 
     @And("non permette l'accesso all'area riservata")
     public void nonPermetteAccessoAreaRiservata() throws Exception {
-        result.andExpect(content().string(Matchers.containsString("Password errata")));
+        result.andExpect(content().string(Matchers.containsString("Credenziali non valide")));
     }
 
     @Then("il sistema non procede alla verifica")
