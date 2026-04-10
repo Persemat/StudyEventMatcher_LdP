@@ -10,15 +10,20 @@ export default function EventCard({
   // Se il backend non manda 'currentParticipants', per ora mettiamo 0
   const partecipantiAttuali = event.currentParticipants || 0;
   const isPieno = partecipantiAttuali >= event.maxPartecipanti;
+  const stato = event.stato || "sconosciuto";
+  const isChiuso = stato === "chiuso";
 
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 space-y-4 border border-gray-100">
-      
+    <div
+      className={`bg-white rounded-lg shadow transition-shadow p-6 space-y-4 border border-gray-100 ${
+        isChiuso ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
+      }`}
+    >
       {/* 1. Titolo e Tag (Dalla List<String> tag) */}
       <div>
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-bold text-lg text-gray-900">{event.titolo}</h3>
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap justify-end">
             {event.tag && event.tag.map((t, index) => (
               <span key={index} className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-semibold">
                 {t}
@@ -57,8 +62,16 @@ export default function EventCard({
       {/* 3. Info Extra (Durata e Stato) */}
       <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-3">
         <span>Durata: <strong>{event.durata}h</strong></span>
-        <span className={`font-bold ${event.stato === 'aperto' ? 'text-green-600' : 'text-red-600'}`}>
-          ● {event.stato?.toUpperCase()}
+        <span
+          className={`font-bold ${
+            stato === "aperto"
+              ? "text-green-600"
+              : stato === "chiuso"
+              ? "text-red-600"
+              : "text-gray-400"
+          }`}
+        >
+          ● {stato.toUpperCase()}
         </span>
       </div>
 
@@ -74,8 +87,13 @@ export default function EventCard({
           <div className="flex-1 flex gap-2">
             {/* Tasto Modifica */}
             <button 
+              disabled={isChiuso}
               onClick={() => onEdit(event.id)} 
-              className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-lg text-sm font-bold hover:bg-blue-100 border border-blue-200 flex items-center justify-center gap-2 transition-colors"
+              className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
+                isChiuso
+                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+              }`}
             >
               <Pencil className="w-4 h-4" />
               MODIFICA
@@ -83,8 +101,13 @@ export default function EventCard({
 
             {/* Tasto Annulla/Abbandona per il Creatore */}
             <button 
+              disabled={isChiuso}
               onClick={() => onCancelBooking(event.id)} 
-              className="flex-1 bg-purple-50 text-purple-700 py-2 rounded-lg text-sm font-bold hover:bg-purple-100 border border-purple-200 flex items-center justify-center gap-2 transition-colors"
+              className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
+                isChiuso
+                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
+              }`}
             >
               <X className="w-4 h-4" />
               {event.partecipazioneCreatoreNecessaria ? "ANNULLA" : "ABBANDONA"}
@@ -93,8 +116,13 @@ export default function EventCard({
         ) : event.isBooked ? (
           /* Tasto per l'utente prenotato */
           <button 
+            disabled={isChiuso}
             onClick={() => onCancelBooking(event.id)} 
-            className="flex-1 bg-orange-100 text-orange-700 py-2 rounded-lg text-sm font-bold hover:bg-orange-200 transition-colors flex items-center justify-center gap-2"
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+              isChiuso
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+            }`}
           >
             <X className="w-4 h-4" />
             ANNULLA PRENOTAZIONE
@@ -107,8 +135,13 @@ export default function EventCard({
         ) : (
           /* Tasto prenotazione standard */
           <button 
+            disabled={isChiuso}
             onClick={() => onBook(event.id)} 
-            className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+              isChiuso
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
           >
             <Check className="w-4 h-4" />
             PRENOTA POSTO
