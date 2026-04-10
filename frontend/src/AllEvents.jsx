@@ -8,75 +8,96 @@ import { useEventActions } from "./hooks/useEventActions";
 // Mock temporaneo (in futuro useremo una fetch)
 // TO DO: 
 // Rimuovere mockData una volta implementata la fetch
-const mockData = [
-  { 
-    id: 1, 
-    titolo: "Ripasso Analisi 1", 
-    descrizione: "Prepariamoci per lo scritto di lunedì!", 
-    dataOra: "2026-04-10T10:30:00", 
-    luogo: "Aula 4, Edificio A",
-    durata: 2.0,
-    tag: ["Matematica", "Analisi"],
-    maxPartecipanti: 10,
-    currentParticipants: 3,
-    isBooked: false,
-    isCreatedByMe: false, // Creato da qualcun altro
-    stato: "aperto",
-    creatore: { nome: "Mario", cognome: "Rossi" },
-    partecipazioneCreatoreNecessaria: true
-  },
-  { 
-    id: 2, 
-    titolo: "Progetto Backend Spring", 
-    descrizione: "Sistemiamo le pipeline e la sicurezza.", 
-    dataOra: "2026-04-12T15:00:00", 
-    luogo: "Laboratorio Informatica",
-    durata: 3.5,
-    tag: ["Informatica", "Java"],
-    maxPartecipanti: 5,
-    currentParticipants: 4,
-    isBooked: true,       // Già prenotato
-    isCreatedByMe: false,
-    stato: "aperto",
-    creatore: { nome: "Luigi", cognome: "Verdi" },
-    partecipazioneCreatoreNecessaria: false
-  },
-  { 
-    id: 3, 
-    titolo: "Workshop React", 
-    descrizione: "Creazione componenti modulari.", 
-    dataOra: "2026-04-15T09:00:00", 
-    luogo: "Online - Meet",
-    durata: 1.5,
-    tag: ["Informatica", "Frontend"],
-    maxPartecipanti: 20,
-    currentParticipants: 1,
-    isBooked: false,
-    isCreatedByMe: true,  // Creato da ME
-    stato: "aperto",
-    creatore: { nome: "Tu", cognome: "Utente" },
-    partecipazioneCreatoreNecessaria: true
-  }
-];
+// const mockData = [
+//   { 
+//     id: 1, 
+//     titolo: "Ripasso Analisi 1", 
+//     descrizione: "Prepariamoci per lo scritto di lunedì!", 
+//     dataOra: "2026-04-10T10:30:00", 
+//     luogo: "Aula 4, Edificio A",
+//     durata: 2.0,
+//     tag: ["Matematica", "Analisi"],
+//     maxPartecipanti: 10,
+//     currentParticipants: 3,
+//     isBooked: false,
+//     isCreatedByMe: false, // Creato da qualcun altro
+//     stato: "aperto",
+//     creatore: { nome: "Mario", cognome: "Rossi" },
+//     partecipazioneCreatoreNecessaria: true
+//   },
+//   { 
+//     id: 2, 
+//     titolo: "Progetto Backend Spring", 
+//     descrizione: "Sistemiamo le pipeline e la sicurezza.", 
+//     dataOra: "2026-04-12T15:00:00", 
+//     luogo: "Laboratorio Informatica",
+//     durata: 3.5,
+//     tag: ["Informatica", "Java"],
+//     maxPartecipanti: 5,
+//     currentParticipants: 4,
+//     isBooked: true,       // Già prenotato
+//     isCreatedByMe: false,
+//     stato: "aperto",
+//     creatore: { nome: "Luigi", cognome: "Verdi" },
+//     partecipazioneCreatoreNecessaria: false
+//   },
+//   { 
+//     id: 3, 
+//     titolo: "Workshop React", 
+//     descrizione: "Creazione componenti modulari.", 
+//     dataOra: "2026-04-15T09:00:00", 
+//     luogo: "Online - Meet",
+//     durata: 1.5,
+//     tag: ["Informatica", "Frontend"],
+//     maxPartecipanti: 20,
+//     currentParticipants: 1,
+//     isBooked: false,
+//     isCreatedByMe: true,  // Creato da ME
+//     stato: "aperto",
+//     creatore: { nome: "Tu", cognome: "Utente" },
+//     partecipazioneCreatoreNecessaria: true
+//   }
+// ];
+
+
 
 export default function AllEvents() {
-  const [events, setEvents] = useState(mockData);
+  const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState("Tutti");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
 
-  const fetchEvents = async () => {
-        setLoading(true);
-        // TO DO: 
-        // Qui va la fetch per recuperare tutti gli eventi: fetch('/eventi', { credentials: 'include' })
-        // Per ora simuliamo che la funzione sia in arrivo
-        setLoading(false);
-      };
 
+ const fetchEvents = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const response = await fetch("/Eventi", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Errore nel recupero degli eventi");
+    }
+
+    const data = await response.json();
+    console.log("Eventi ricevuti dal backend:", data);
+    setEvents(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Errore fetch eventi:", err);
+    setError("Impossibile caricare gli eventi");
+    setEvents([]);
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
-      fetchEvents();
-    }, []);
+    fetchEvents();
+  }, []);
 
   // Estrazione tag per il filtro
   const allTags = ["Tutti", ...new Set(events.flatMap((e) => e.tag || []))];

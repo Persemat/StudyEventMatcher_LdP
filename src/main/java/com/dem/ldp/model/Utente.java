@@ -1,4 +1,7 @@
 package com.dem.ldp.model;
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -44,4 +47,15 @@ public class Utente {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    @ManyToMany(mappedBy = "partecipanti")
+    private Set<Evento> eventiPrenotati = new HashSet<>();
+
+    public Set<Evento> getEventiPrenotati() {
+        return eventiPrenotati;
+    }
+
+    public void setEventiPrenotati(Set<Evento> eventiPrenotati) {
+        this.eventiPrenotati = eventiPrenotati;
+    }
 }

@@ -2,12 +2,14 @@ package com.dem.ldp.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dem.ldp.dto.EventoRequest;
+import com.dem.ldp.dto.EventoResponse;
 import com.dem.ldp.model.Evento;
 import com.dem.ldp.service.EventoService;
 
@@ -15,14 +17,17 @@ import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/Eventi")
-@CrossOrigin(origins = "http://localhost:5173") // Permette le richieste da React
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true") // Permette le richieste da React
 public class EventoController {
     private final EventoService eventoService;
 
     public EventoController(EventoService eventoService) {
         this.eventoService = eventoService;
     }
-
+    @GetMapping
+    public ResponseEntity<java.util.List<EventoResponse>> getAllEvents(HttpSession session) {
+    return ResponseEntity.ok(eventoService.getAllEvents(session));
+    }
     @PostMapping
     public ResponseEntity<?> creaEvento(@RequestBody EventoRequest request, HttpSession session) {
         // Validazione campi obbligatori
