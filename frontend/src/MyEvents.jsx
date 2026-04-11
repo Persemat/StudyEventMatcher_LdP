@@ -139,7 +139,13 @@ const fetchEvents = async () => {
             key={event.id}
             event={event}
             onBook={() => handleBook(event.id)}
-            onCancelBooking={() => handleCancelBooking(event.id, event.partecipazioneCreatoreNecessaria)}
+            onCancelBooking={() =>
+              handleCancelBooking(
+                event.id,
+                event.partecipazioneCreatoreNecessaria,
+                event.isCreatedByMe
+              )
+            }
             onEdit={() => handleEdit(event)}
           />
         ))}

@@ -13,32 +13,47 @@ export const useEventActions = (refreshCallback) => {
   };
 
   // Azione: ABBANDONA/ANNULLA PRENOTAZIONE
-  const handleCancelBooking = async (eventId, isCreatorRequired) => {
+  const handleCancelBooking = async (eventId, isCreatorRequired, isCreatedByMe) => {
     // 1. MESSAGGIO DI CONFERMA (Logica UI pronta)
-    const message = isCreatorRequired 
-      ? "Sei il creatore e la tua presenza è obbligatoria. L'INTERO evento verrà eliminato. Confermi?"
+    const message = isCreatedByMe
+      ? (isCreatorRequired
+          ? "Sei il creatore e la tua presenza è obbligatoria. L'INTERO evento verrà eliminato. Confermi?"
+          : "Sei il creatore. Verrai rimosso dall'evento. Se ci sono altri iscritti, il ruolo di creatore verrà riassegnato. Confermi?")
       : "Vuoi davvero annullare la tua partecipazione?";
 
     if (!window.confirm(message)) return;
 
     setIsProcessing(true);
-    
-    // 2. SIMULAZIONE CHIAMATA (Logica di business pronta)
-    console.log("--- SIMULAZIONE BACKEND ---");
-    if (isCreatorRequired) {
-      console.log(`📡 Azione: DELETE /Eventi/${eventId} (Eliminazione totale)`);
-    } else {
-      console.log(`📡 Azione: DELETE /Eventi/${eventId}/prenota (Solo abbandono)`);
-    }
 
-    // Simuliamo un ritardo del server di 1 secondo
-    setTimeout(() => {
-      console.log("✅ Simulazione completata con successo!");
+    try {
+      let response;
+
+      if (isCreatedByMe) {
+        response = await fetch(`/Eventi/${eventId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      } else {
+        response = await fetch(`/Eventi/${eventId}/prenota`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      }
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(text || "Operazione non riuscita");
+      }
+
+      console.log("✅ Operazione completata con successo!");
+      refreshCallback?.();
+    } catch (error) {
+      console.error("Errore durante l'operazione:", error);
+      alert(error.message || "Si è verificato un errore");
+    } finally {
       setIsProcessing(false);
-      
-      // Opzionale: chiamiamo il refresh per vedere se la UI reagisce
-      // refreshCallback?.(); 
-    }, 1000);
+    }
   };
 
   return {

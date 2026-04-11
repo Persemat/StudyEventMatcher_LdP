@@ -7,9 +7,13 @@ import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.EventoRepository;
 import com.dem.ldp.repository.UtenteRepository;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class EventoService {
@@ -55,28 +59,71 @@ public class EventoService {
     }
 
     public List<EventoResponse> getAllEvents(HttpSession session) {
-    Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute("userId");
 
-    List<Evento> eventi = eventoRepository.findAll();
+        List<Evento> eventi = eventoRepository.findAll();
 
-    boolean daSalvare = false;
+        boolean daSalvare = false;
 
-    for (Evento evento : eventi) {
-        if (evento.getDataOra().isBefore(java.time.LocalDateTime.now())
-                && evento.getStato().equals("aperto")) {
-            evento.setStato("chiuso");
-            daSalvare = true;
+        for (Evento evento : eventi) {
+            if (evento.getDataOra().isBefore(java.time.LocalDateTime.now())
+                    && evento.getStato().equals("aperto")) {
+                evento.setStato("chiuso");
+                daSalvare = true;
+            }
         }
+
+        if (daSalvare) {
+            eventoRepository.saveAll(eventi);
+        }
+
+        return eventi.stream()
+                .map(evento -> toResponse(evento, userId))
+                .toList();
     }
 
-    if (daSalvare) {
-        eventoRepository.saveAll(eventi);
-    }
+    @Transactional
+    public String cancellaEventoCreato(long eventoId, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
 
-    return eventi.stream()
-            .map(evento -> toResponse(evento, userId))
-            .toList();
-}
+        if (userId == null) {
+            throw new RuntimeException("Sessione non valida o scaduta");
+        }
+
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        if (evento.getCreatore() == null || !evento.getCreatore().getId().equals(userId)) {
+            throw new RuntimeException("Solo il creatore può cancellare l'evento");
+        }
+
+        Utente creatore = evento.getCreatore();
+
+        if (evento.isPartecipazioneCreatoreNecessaria()) {
+            evento.getPartecipanti().clear();
+            eventoRepository.delete(evento);
+            return "Evento cancellato con successo";
+        }
+
+        evento.rimuoviPartecipante(creatore);
+
+        Set<Utente> partecipantiResidui = evento.getPartecipanti();
+
+        if (partecipantiResidui.isEmpty()) {
+            eventoRepository.delete(evento);
+            return "Evento cancellato con successo";
+        }
+
+        Utente nuovoCreatore = new ArrayList<>(partecipantiResidui).stream()
+                .sorted(Comparator.comparing(Utente::getId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Impossibile riassegnare il creatore"));
+
+        evento.setCreatore(nuovoCreatore);
+        eventoRepository.save(evento);
+
+        return "Creatore rimosso e ruolo riassegnato con successo";
+    }
 
     private EventoResponse toResponse(Evento evento, Long userId) {
         Utente creatore = evento.getCreatore();
