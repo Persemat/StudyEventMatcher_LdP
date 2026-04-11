@@ -5,7 +5,6 @@ import com.dem.ldp.dto.UtenteRequest;
 import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
-import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;

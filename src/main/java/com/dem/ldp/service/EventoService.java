@@ -55,13 +55,28 @@ public class EventoService {
     }
 
     public List<EventoResponse> getAllEvents(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
+    Long userId = (Long) session.getAttribute("userId");
 
-        return eventoRepository.findAll()
-                .stream()
-                .map(evento -> toResponse(evento, userId))
-                .toList();
+    List<Evento> eventi = eventoRepository.findAll();
+
+    boolean daSalvare = false;
+
+    for (Evento evento : eventi) {
+        if (evento.getDataOra().isBefore(java.time.LocalDateTime.now())
+                && evento.getStato().equals("aperto")) {
+            evento.setStato("chiuso");
+            daSalvare = true;
+        }
     }
+
+    if (daSalvare) {
+        eventoRepository.saveAll(eventi);
+    }
+
+    return eventi.stream()
+            .map(evento -> toResponse(evento, userId))
+            .toList();
+}
 
     private EventoResponse toResponse(Evento evento, Long userId) {
         Utente creatore = evento.getCreatore();
