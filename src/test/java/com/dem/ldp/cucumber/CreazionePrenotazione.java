@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
+
 public class CreazionePrenotazione {
 
     @Autowired
@@ -42,6 +42,7 @@ public class CreazionePrenotazione {
     private Utente utente;
     private Evento evento;
     private ResultActions result;
+    private ResultActions resultGet;
 
     private static final String EVENTI_URL = "/Eventi";
 
@@ -191,13 +192,12 @@ public class CreazionePrenotazione {
     public void ilSistemaRegistraLaPrenotazioneAllEvento() throws Exception {
         result.andExpect(status().isOk());
 
-        Evento eventoAggiornato = eventoRepository.findById(evento.getId()).orElseThrow();
+        resultGet = mockMvc.perform(get("/Eventi").session(session));
 
-        boolean prenotato = eventoAggiornato.getPartecipanti()
-                .stream()
-                .anyMatch(u -> u.getId().equals(utente.getId()));
-
-        Assertions.assertTrue(prenotato);
+        resultGet.andExpect(status().isOk());
+        resultGet.andExpect(jsonPath("$[0].titolo").value(evento.getTitolo()));
+        resultGet.andExpect(jsonPath("$[0].isBooked").value(true));
+        resultGet.andExpect(jsonPath("$[0].currentParticipants").value(2));
     }
 
     @And("il sistema mostra il messaggio di successo della prenotazione")
