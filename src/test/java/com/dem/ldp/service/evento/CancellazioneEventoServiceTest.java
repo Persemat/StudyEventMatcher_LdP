@@ -1,14 +1,10 @@
-package com.dem.ldp.service;
+package com.dem.ldp.service.evento;
 
 import com.dem.ldp.model.Evento;
 import com.dem.ldp.model.Utente;
-import com.dem.ldp.repository.EventoRepository;
-import com.dem.ldp.repository.UtenteRepository;
-import jakarta.servlet.http.HttpSession;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashSet;
@@ -16,22 +12,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CancellazioneEventoServiceTest {
+public class CancellazioneEventoServiceTest extends BaseEventoServiceTest  {
 
-    @InjectMocks
-    private EventoService eventoService;
-
-    @Mock
-    private EventoRepository eventoRepository;
-
-    @Mock
-    private UtenteRepository utenteRepository;
-
-    @Mock
-    private HttpSession session;
 
     @Test
     void cancellaEventoCreato_presenzaCreatoreObbligatoria_eliminaEvento() {

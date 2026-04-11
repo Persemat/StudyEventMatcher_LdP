@@ -1,16 +1,11 @@
-package com.dem.ldp.controller;
+package com.dem.ldp.controller.evento;
 
 import com.dem.ldp.model.Evento;
 import com.dem.ldp.model.Utente;
-import com.dem.ldp.repository.EventoRepository;
-import com.dem.ldp.repository.UtenteRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,36 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class CancellazioneEventoControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private EventoRepository eventoRepository;
-
-    @Autowired
-    private UtenteRepository utenteRepository;
-
-    private Long utenteId;
-
-    @BeforeEach
-    void preparaDatabase() {
-        eventoRepository.deleteAll();
-        eventoRepository.flush();
-        utenteRepository.deleteAll();
-        utenteRepository.flush();
-
-        Utente utenteTest = new Utente();
-        utenteTest.setNome("Luca");
-        utenteTest.setCognome("Rossi");
-        utenteTest.setEmail("luca@example.com");
-        utenteTest.setPassword("Pass123");
-        utenteRepository.saveAndFlush(utenteTest);
-
-        this.utenteId = utenteTest.getId();
-    }
-
+class CancellazioneEventoControllerTest extends BaseEventoControllerTest  {
     @Test
     void cancellaEvento_presenzaCreatoreObbligatoria_eliminaEvento() throws Exception {
         Utente creatore = utenteRepository.findById(utenteId).orElseThrow();
