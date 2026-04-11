@@ -41,14 +41,16 @@ class CancellazioneEventoControllerTest {
     @BeforeEach
     void preparaDatabase() {
         eventoRepository.deleteAll();
+        eventoRepository.flush();
         utenteRepository.deleteAll();
+        utenteRepository.flush();
 
         Utente utenteTest = new Utente();
         utenteTest.setNome("Luca");
         utenteTest.setCognome("Rossi");
         utenteTest.setEmail("luca@example.com");
         utenteTest.setPassword("Pass123");
-        utenteRepository.save(utenteTest);
+        utenteRepository.saveAndFlush(utenteTest);
 
         this.utenteId = utenteTest.getId();
     }
