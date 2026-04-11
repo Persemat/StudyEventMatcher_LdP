@@ -5,9 +5,6 @@ import com.dem.ldp.dto.UtenteRequest;
 import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
-
-import jakarta.servlet.http.HttpSession;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

@@ -8,45 +8,46 @@ import ModalCreateEvent from "./ModalCreateEvent";
 // Mock temporaneo (in futuro useremo una fetch)
 // TO DO: 
 // Rimuovere mockData una volta implementata la fetch
-const mockData = [
-  { id: 1, 
-    titolo: "Studio Basi di Dati", 
-    descrizione: "Ripasso SQL", 
-    dataOra: "2026-04-10T15:00:00", 
-    luogo: "Aula 2", 
-    durata: 2.0, 
-    maxPartecipanti: 5, 
-    currentParticipants: 2, 
-    isCreatedByMe: true, 
-    isBooked: false, 
-    tag: ["Informatica"], 
-    stato: "aperto", 
-    creatore: { nome: "Mario", cognome: "Rossi" }, 
-    partecipazioneCreatoreNecessaria: false 
-  },
+// const mockData = [
+//   { id: 1, 
+//     titolo: "Studio Basi di Dati", 
+//     descrizione: "Ripasso SQL", 
+//     dataOra: "2026-04-10T15:00:00", 
+//     luogo: "Aula 2", 
+//     durata: 2.0, 
+//     maxPartecipanti: 5, 
+//     currentParticipants: 2, 
+//     isCreatedByMe: true, 
+//     isBooked: false, 
+//     tag: ["Informatica"], 
+//     stato: "aperto", 
+//     creatore: { nome: "Mario", cognome: "Rossi" }, 
+//     partecipazioneCreatoreNecessaria: false 
+//   },
 
-  { id: 2, 
-    titolo: "Analisi 1", 
-    descrizione: "Esercizi limiti", 
-    dataOra: "2026-04-12T10:00:00", 
-    luogo: "Biblioteca", 
-    durata: 3.0, 
-    maxPartecipanti: 10, 
-    currentParticipants: 8, 
-    isCreatedByMe: false, 
-    isBooked: true, 
-    tag: ["Matematica"], 
-    stato: "aperto", 
-    creatore: { nome: "Marco", cognome: "Verdi" }, 
-    partecipazioneCreatoreNecessaria: true 
-  }
-];
+//   { id: 2, 
+//     titolo: "Analisi 1", 
+//     descrizione: "Esercizi limiti", 
+//     dataOra: "2026-04-12T10:00:00", 
+//     luogo: "Biblioteca", 
+//     durata: 3.0, 
+//     maxPartecipanti: 10, 
+//     currentParticipants: 8, 
+//     isCreatedByMe: false, 
+//     isBooked: true, 
+//     tag: ["Matematica"], 
+//     stato: "aperto", 
+//     creatore: { nome: "Marco", cognome: "Verdi" }, 
+//     partecipazioneCreatoreNecessaria: true 
+//   }
+// ];
 
 export default function MyEvents() {
-  const [events, setEvents] = useState(mockData);
+  const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("created"); // Rimosso il tipo TS
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Filtriamo gli eventi in base al flag
   const createdEvents = events.filter((e) => e.isCreatedByMe);
@@ -75,8 +76,8 @@ export default function MyEvents() {
 };
 
   useEffect(() => {
-      fetchEvents();
-    }, []);
+    fetchEvents();
+  }, []);
 
   //Passi la funzione all'hook così lui può richiamarla dopo un'azione (es. dopo prenota)
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
@@ -135,7 +136,13 @@ export default function MyEvents() {
             key={event.id}
             event={event}
             onBook={() => handleBook(event.id)}
-            onCancelBooking={() => handleCancelBooking(event.id, event.partecipazioneCreatoreNecessaria)}
+            onCancelBooking={() =>
+              handleCancelBooking(
+                event.id,
+                event.partecipazioneCreatoreNecessaria,
+                event.isCreatedByMe
+              )
+            }
             onEdit={() => handleEdit(event)}
           />
         ))}
@@ -154,7 +161,7 @@ export default function MyEvents() {
       {showCreateModal && (
         <ModalCreateEvent 
         onClose={() => setShowCreateModal(false)} 
-        onSuccess={() => fetchEvents()} // <--- DA IMPLEMENTARE
+        onSuccess={() => fetchEvents()} 
         />
       )}
     </div>
