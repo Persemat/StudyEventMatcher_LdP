@@ -1,4 +1,4 @@
-package com.dem.ldp.controller;
+package com.dem.ldp.controller.evento;
 
 import com.dem.ldp.model.Evento;
 import com.dem.ldp.model.Utente;
@@ -25,18 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class CancellazioneEventoControllerTest {
+class CancellazioneEventoControllerTest extends BaseEventoControllerTest  {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private EventoRepository eventoRepository;
-
-    @Autowired
-    private UtenteRepository utenteRepository;
-
-    private Long utenteId;
 
     @BeforeEach
     void preparaDatabase() {
