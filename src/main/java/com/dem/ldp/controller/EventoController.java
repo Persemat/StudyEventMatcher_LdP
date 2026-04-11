@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.PathVariable;
 import com.dem.ldp.dto.EventoRequest;
 import com.dem.ldp.dto.EventoResponse;
 import com.dem.ldp.model.Evento;
@@ -51,6 +51,16 @@ public class EventoController {
             e.printStackTrace();
 
             return ResponseEntity.status(404).body("Errore: " + e.getMessage());
+        }
+    }
+    @PostMapping("/{id}/prenota")
+    public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
+        try {
+            eventoService.prenotaEvento(id, session);
+            return ResponseEntity.ok("Prenotazione completata con successo");
+        } catch (RuntimeException e) {
+            System.out.println("⚠️ ERRORE PRENOTAZIONE: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }
 

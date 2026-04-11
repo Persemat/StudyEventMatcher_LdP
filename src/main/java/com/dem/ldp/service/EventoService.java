@@ -63,6 +63,44 @@ public class EventoService {
                 .toList();
     }
 
+    
+    public void prenotaEvento(Long eventId, HttpSession session) {
+    Long userId = (Long) session.getAttribute("userId");
+
+    if (userId == null) {
+        throw new RuntimeException("Utente non autenticato");
+    }
+
+    Utente utente = utenteRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+    Evento evento = eventoRepository.findById(eventId)
+            .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+    // Controllo: non puoi prenotarti due volte
+    boolean giaPrenotato = evento.getPartecipanti().stream()
+            .anyMatch(partecipante -> partecipante.getId().equals(userId));
+
+    if (giaPrenotato) {
+        throw new RuntimeException("Sei già prenotato a questo evento");
+    }
+
+    // Controllo: evento pieno
+    if (evento.getMaxPartecipanti() != null &&
+            evento.getPartecipanti().size() >= evento.getMaxPartecipanti()) {
+        throw new RuntimeException("Evento al completo");
+    }
+
+    // Controllo opzionale: evento chiuso
+    if (evento.getStato() != null && !"aperto".equalsIgnoreCase(evento.getStato().toString())) {
+        throw new RuntimeException("Le prenotazioni per questo evento non sono disponibili");
+    }
+
+    evento.aggiungiPartecipante(utente);
+    eventoRepository.save(evento);
+    }
+
+
     private EventoResponse toResponse(Evento evento, Long userId) {
         Utente creatore = evento.getCreatore();
 

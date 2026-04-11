@@ -53,13 +53,26 @@ export default function MyEvents() {
   const bookedEvents = events.filter((e) => e.isBooked);
 
   const fetchEvents = async () => {
-        setLoading(true);
-        // TO DO: 
-        // Qui va la fetch per recuperare tutti i miei eventi: 
-        // fetch('/eventi/miei-eventi', { credentials: 'include' })
-        // Per ora simuliamo che la funzione sia in arrivo
-        setLoading(false);
-      };
+  setLoading(true);
+  try {
+    const response = await fetch("http://localhost:8080/Eventi", {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Errore nel recupero eventi");
+    }
+
+    const data = await response.json();
+    console.log("EVENTI DAL BACKEND:", data);
+    setEvents(data);
+  } catch (error) {
+    console.error("Errore fetch eventi:", error);
+    setEvents([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
       fetchEvents();

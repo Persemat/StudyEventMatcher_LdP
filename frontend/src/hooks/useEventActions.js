@@ -6,11 +6,30 @@ export const useEventActions = (refreshCallback) => {
   // Azione: PRENOTA
   const handleBook = async (eventId) => {
     setIsProcessing(true);
-    console.log("📡 Backend: Chiamata POST /Eventi/" + eventId + "/prenota");
-    // TODO: implementare fetch vera
-    // if (res.ok) refreshCallback?.();
-    setIsProcessing(false);
-  };
+    try {
+      const response = await fetch(`/Eventi/${eventId}/prenota`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Errore nella prenotazione");
+      }
+
+      console.log("✅ Prenotazione effettuata con successo!");
+
+      // aggiorna lista eventi
+      refreshCallback?.();
+
+    } catch (error) {
+      console.error("❌ Errore:", error);
+      alert("Errore durante la prenotazione");
+    } finally {
+      setIsProcessing(false);
+    }
+};
 
   // Azione: ABBANDONA/ANNULLA PRENOTAZIONE
   const handleCancelBooking = async (eventId, isCreatorRequired) => {
