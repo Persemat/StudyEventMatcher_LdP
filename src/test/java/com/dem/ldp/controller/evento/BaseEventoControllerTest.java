@@ -29,7 +29,9 @@ public abstract class BaseEventoControllerTest {
     @BeforeEach
     void preparaDatabaseBase() {
         eventoRepository.deleteAll();
+        eventoRepository.flush();
         utenteRepository.deleteAll();
+        utenteRepository.flush();
 
         Utente utenteTest = new Utente();
         utenteTest.setNome("Luca");
@@ -37,7 +39,7 @@ public abstract class BaseEventoControllerTest {
         utenteTest.setEmail("luca@example.com");
         utenteTest.setPassword("Pass123");
 
-        utenteTest = utenteRepository.save(utenteTest);
+        utenteTest = utenteRepository.saveAndFlush(utenteTest);
         this.utenteId = utenteTest.getId();
     }
 }
