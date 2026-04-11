@@ -102,7 +102,7 @@ export default function EventCard({
             {/* Tasto Annulla/Abbandona per il Creatore */}
             <button 
               disabled={isChiuso}
-              onClick={() => onCancelBooking(event.id)} 
+              onClick={onCancelBooking} 
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
                 isChiuso
                   ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
@@ -117,7 +117,7 @@ export default function EventCard({
           /* Tasto per l'utente prenotato */
           <button 
             disabled={isChiuso}
-            onClick={() => onCancelBooking(event.id)} 
+            onClick={onCancelBooking} 
             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
               isChiuso
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
