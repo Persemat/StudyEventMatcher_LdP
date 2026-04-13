@@ -3,11 +3,6 @@ import { Search, Filter } from "lucide-react";
 import EventCard from "./EventCard"; // Assicurati che il file si chiami così
 import { useEventActions } from "./hooks/useEventActions";
 
-
-
-// Mock temporaneo (in futuro useremo una fetch)
-// TO DO: 
-// Rimuovere mockData una volta implementata la fetch
 // const mockData = [
 //   { 
 //     id: 1, 
@@ -48,9 +43,9 @@ import { useEventActions } from "./hooks/useEventActions";
 //     dataOra: "2026-04-15T09:00:00", 
 //     luogo: "Online - Meet",
 //     durata: 1.5,
-//     tag: ["Informatica", "Frontend"],
 //     maxPartecipanti: 20,
 //     currentParticipants: 1,
+//     tag: ["Informatica", "Frontend"],
 //     isBooked: false,
 //     isCreatedByMe: true,  // Creato da ME
 //     stato: "aperto",
@@ -67,6 +62,7 @@ export default function AllEvents() {
   const [selectedTag, setSelectedTag] = useState("Tutti");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedState, setSelectedState] = useState("aperti");
 
 
 
@@ -99,11 +95,13 @@ export default function AllEvents() {
     fetchEvents();
   }, []);
 
-  // Estrazione tag per il filtro
-  const allTags = ["Tutti", ...new Set(events.flatMap((e) => e.tag || []))];
-
+  const visibleEvents = events.filter((event) => {
+    if (selectedState === "tutti") return true;
+    return event.stato === "aperto";
+  });  // Estrazione tag per il filtro
+  const allTags = ["Tutti", ...new Set(visibleEvents.flatMap((e) => e.tag || []))];
   // Logica di filtraggio
-  const filteredEvents = events.filter((event) => {
+  const filteredEvents = visibleEvents.filter((event) => {
     const matchesSearch =
       event.titolo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (event.descrizione && event.descrizione.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -153,6 +151,17 @@ const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
             {allTags.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
+
+        <div className="flex items-center gap-2">
+            <select
+              className="border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+            >
+              <option value="aperti">Solo aperti</option>
+              <option value="tutti">Tutti</option>
+            </select>
+          </div>
       </div>
 
       {/* Griglia che richiama EventCard */}
@@ -163,7 +172,13 @@ const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
               key={event.id} 
               event={event} 
               onBook={() => handleBook(event.id)}
-              onCancelBooking={() => handleCancelBooking(event.id, event.partecipazioneCreatoreNecessaria)}
+              onCancelBooking={() =>
+                handleCancelBooking(
+                  event.id,
+                  event.partecipazioneCreatoreNecessaria,
+                  event.isCreatedByMe
+                )
+              }
               onEdit={() => handleEdit(event)}
             />
           ))}
