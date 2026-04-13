@@ -3,7 +3,7 @@ Feature: Logout utente
     Come utente, voglio poter uscire dal mio account, così da disconnettermi dalla piattaforma
 
     Scenario: Disconnessione riuscita
-        Given l'utente è autenticato
+        Given l'utente è autenticato e pronto al logout
         And l'utente ha una sessione attiva
         When l'utente richiede il logout
         Then il sistema termina la sessione

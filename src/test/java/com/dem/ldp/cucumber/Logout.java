@@ -33,8 +33,8 @@ public class Logout {
     private MockHttpSession sessioneAttiva;
     private ResultActions response;
 
-    @Given("l'utente è autenticato")
-    public void autenticazioneUtente() throws Exception {
+    @Given("l'utente è autenticato e pronto al logout")
+    public void autenticazioneUtentePerLogout() throws Exception {
         // Pulizia preventiva per evitare conflitti di email duplicata
         utenteRepository.deleteAll();
 
