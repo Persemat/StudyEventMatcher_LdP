@@ -42,7 +42,7 @@ useEffect(() => {
 const handleLogout = async () => {
     try {
       // Avvisiamo Spring Boot di distruggere la sessione
-      // await fetch('/logout', { method: 'POST' });   DA IMPLEMENTARE
+      await fetch('/Utenti/logout', { method: 'POST' });   
     } catch (err) {
       console.error("Errore durante il logout", err);
     } finally {

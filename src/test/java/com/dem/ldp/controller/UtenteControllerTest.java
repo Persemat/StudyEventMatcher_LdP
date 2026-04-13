@@ -21,133 +21,188 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 class UtenteControllerTest {
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+        @Autowired
+        private TestRestTemplate restTemplate;
 
-    @Autowired
-    private UtenteRepository utenteRepository;
+        @Autowired
+        private UtenteRepository utenteRepository;
 
-    @BeforeEach
-    void cleanDatabase() {
-        utenteRepository.deleteAll();
-    }
+        @BeforeEach
+        void cleanDatabase() {
+                utenteRepository.deleteAll();
+        }
 
-    @Test
-    void registrazioneValida_restituisce200ESalvaUtente() {
-        String json = """
-                {
-                  "nome": "Mario",
-                  "cognome": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void registrazioneValida_restituisce200ESalvaUtente() {
+                String json = """
+                                {
+                                  "nome": "Mario",
+                                  "cognome": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123"
+                                }
+                                """;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "/Utenti",
-                new HttpEntity<>(json, headers),
-                String.class
-        );
+                ResponseEntity<String> response = restTemplate.postForEntity(
+                                "/Utenti",
+                                new HttpEntity<>(json, headers),
+                                String.class);
 
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("mario@example.com"));
-        assertTrue(utenteRepository.findByEmail("mario@example.com").isPresent());
-    }
+                assertEquals(200, response.getStatusCode().value());
+                assertTrue(response.getBody().contains("mario@example.com"));
+                assertTrue(utenteRepository.findByEmail("mario@example.com").isPresent());
+        }
 
-    @Test
-    void registrazioneEmailGiaPresente_restituisce400() {
-        String json = """
-                {
-                  "nome": "Mario",
-                  "cognome": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void registrazioneEmailGiaPresente_restituisce400() {
+                String json = """
+                                {
+                                  "nome": "Mario",
+                                  "cognome": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123"
+                                }
+                                """;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.postForEntity("/Utenti", new HttpEntity<>(json, headers), String.class);
+                restTemplate.postForEntity("/Utenti", new HttpEntity<>(json, headers), String.class);
 
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "/Utenti",
-                new HttpEntity<>(json, headers),
-                String.class
-        );
+                ResponseEntity<String> response = restTemplate.postForEntity(
+                                "/Utenti",
+                                new HttpEntity<>(json, headers),
+                                String.class);
 
-        assertEquals(400, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Email già registrata"));
-    }
+                assertEquals(400, response.getStatusCode().value());
+                assertTrue(response.getBody().contains("Email già registrata"));
+        }
 
-    @Test
-    void loginValido_restituisce200() {
-        String registrazione = """
-                {
-                  "nome": "Mario",
-                  "cognome": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void loginValido_restituisce200() {
+                String registrazione = """
+                                {
+                                  "nome": "Mario",
+                                  "cognome": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123"
+                                }
+                                """;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.postForEntity("/Utenti", new HttpEntity<>(registrazione, headers), String.class);
+                restTemplate.postForEntity("/Utenti", new HttpEntity<>(registrazione, headers), String.class);
 
-        String login = """
-                {
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+                String login = """
+                                {
+                                  "email": "mario@example.com",
+                                  "password": "Password123"
+                                }
+                                """;
 
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "/Utenti/login",
-                new HttpEntity<>(login, headers),
-                String.class
-        );
+                ResponseEntity<String> response = restTemplate.postForEntity(
+                                "/Utenti/login",
+                                new HttpEntity<>(login, headers),
+                                String.class);
 
-        assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("mario@example.com"));
-    }
+                assertEquals(200, response.getStatusCode().value());
+                assertTrue(response.getBody().contains("mario@example.com"));
+        }
 
-    @Test
-    void loginPasswordErrata_restituisce400() {
-        String registrazione = """
-                {
-                  "nome": "Mario",
-                  "cognome": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void loginPasswordErrata_restituisce400() {
+                String registrazione = """
+                                {
+                                  "nome": "Mario",
+                                  "cognome": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123"
+                                }
+                                """;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-        restTemplate.postForEntity("/Utenti", new HttpEntity<>(registrazione, headers), String.class);
+                restTemplate.postForEntity("/Utenti", new HttpEntity<>(registrazione, headers), String.class);
 
-        String login = """
-                {
-                  "email": "mario@example.com",
-                  "password": "Password999"
-                }
-                """;
+                String login = """
+                                {
+                                  "email": "mario@example.com",
+                                  "password": "Password999"
+                                }
+                                """;
 
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "/Utenti/login",
-                new HttpEntity<>(login, headers),
-                String.class
-        );
+                ResponseEntity<String> response = restTemplate.postForEntity(
+                                "/Utenti/login",
+                                new HttpEntity<>(login, headers),
+                                String.class);
 
-        assertEquals(400, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("Credenziali non valide"));
-    }
+                assertEquals(400, response.getStatusCode().value());
+                assertTrue(response.getBody().contains("Credenziali non valide"));
+        }
 
-    
+        @Test
+        void flussoCompleto_LoginLogoutAccessoNegato() {
+                // --- 0. PREPARAZIONE (Indispensabile!) ---
+                String registrazione = """
+                                {
+                                "nome": "Mario",
+                                "cognome": "Rossi",
+                                "email": "mario@example.com",
+                                "password": "Password123"
+                                }
+                                """;
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                // Devo salvarlo, altrimenti il login non troverà nulla nel DB
+                restTemplate.postForEntity("/Utenti", new HttpEntity<>(registrazione, headers), String.class);
+
+                // --- 1. LOGIN ---
+                String login = """
+                                {
+                                "email": "mario@example.com",
+                                "password": "Password123"
+                                }
+                                """;
+
+                ResponseEntity<String> loginResponse = restTemplate.postForEntity(
+                                "/Utenti/login",
+                                new HttpEntity<>(login, headers),
+                                String.class);
+
+                // Recupero il cookie JSESSIONID
+                String cookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+
+                // --- 2. VERIFICA ACCESSO (OK) ---
+                HttpHeaders authHeaders = new HttpHeaders();
+                authHeaders.add(HttpHeaders.COOKIE, cookie);
+
+                ResponseEntity<String> meResponseOk = restTemplate.exchange(
+                                "/Utenti/me",
+                                org.springframework.http.HttpMethod.GET,
+                                new HttpEntity<>(authHeaders),
+                                String.class);
+                assertEquals(200, meResponseOk.getStatusCode().value());
+
+                // --- 3. LOGOUT ---
+                restTemplate.postForEntity(
+                                "/Utenti/logout",
+                                new HttpEntity<>(null, authHeaders),
+                                String.class);
+
+                // --- 4. VERIFICA ACCESSO (NEGATO) ---
+                ResponseEntity<String> meResponseFail = restTemplate.exchange(
+                                "/Utenti/me",
+                                org.springframework.http.HttpMethod.GET,
+                                new HttpEntity<>(authHeaders),
+                                String.class);
+
+                assertEquals(401, meResponseFail.getStatusCode().value());
+        }
+
 }

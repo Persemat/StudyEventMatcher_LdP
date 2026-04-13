@@ -4,7 +4,10 @@ import com.dem.ldp.dto.LoginRequest;
 import com.dem.ldp.dto.UtenteRequest;
 import com.dem.ldp.dto.UtenteResponse;
 import com.dem.ldp.service.UtenteService;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,4 +55,22 @@ public class UtenteController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+
+        if (session != null) {
+            try {
+                session.invalidate();
+                return ResponseEntity.ok("Logout effettuato con successo");
+            } catch (IllegalStateException e) {
+                // La sessione era già invalida: per l'utente è come se il logout fosse riuscito
+                return ResponseEntity.ok("Sessione già terminata");
+            }
+        }
+
+        return ResponseEntity.ok("Nessuna sessione attiva, utente già sloggato");
+    }
+
 }
