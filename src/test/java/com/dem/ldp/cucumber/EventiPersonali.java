@@ -33,8 +33,8 @@ public class EventiPersonali {
     private ResultActions result;
     private Long utenteId;
 
-    @Given("l'utente è autenticato")
-    public void utenteEAutenticato() {
+    @Given("l'utente è autenticato per eventi personali")
+    public void utenteEAutenticatoPerEventiPersonali() {
         eventoRepository.deleteAll();
         utenteRepository.deleteAll();
 
@@ -91,7 +91,6 @@ public class EventiPersonali {
         eventoRepository.save(evento);
     }
 
-
     @When("l'utente visualizza la lista degli eventi personali")
     public void utenteVisualizzaLaListaDegliEventiPersonali() throws Exception {
         if (utenteId != null) {
@@ -100,6 +99,7 @@ public class EventiPersonali {
             result = mockMvc.perform(get("/Eventi"));
         }
     }
+
     @Then("per ogni evento personale vengono mostrati titolo, data e luogo")
     public void perOgniEventoPersonaleVengonoMostratiTitoloDataELuogo() throws Exception {
         String response = result.andReturn().getResponse().getContentAsString();
@@ -121,8 +121,6 @@ public class EventiPersonali {
         result.andExpect(status().isOk())
                 .andExpect(content().string(Matchers.not(Matchers.containsString("\"isCreatedByMe\":true"))));
     }
-
-
 
     @Then("il sistema impedisce l'accesso")
     public void ilSistemaImpedisceLAccesso() throws Exception {
