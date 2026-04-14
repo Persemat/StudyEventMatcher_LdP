@@ -47,7 +47,7 @@ unit-tests:
   dependencies:
     - backend-prepare
   script:
-    - mvn clean test -Dspring.profiles.active=test
+    - mvn clean test -DtestGroups=unit -Dspring.profiles.active=test
   artifacts:
     when: always
     paths:
@@ -60,7 +60,11 @@ integration-tests:
   dependencies:
     - backend-prepare
   script:
-    - mvn verify -Dspring.profiles.active=test
+    - mvn failsafe:integration-test failsafe:verify -DtestGroups=integration -Dspring.profiles.active=test
+  artifacts:
+    when: always
+    paths:
+      - target/failsafe-reports/
 
 # 5️⃣ Package final application
 package:
