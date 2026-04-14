@@ -1,20 +1,109 @@
+# stages:
+#   - frontend
+#   - backend
+#   - test
+#   - package
+
+# cache:
+#   # Maven
+#   - key: maven
+#     paths:
+#       - ~/.m2/repository
+#   # Node/NPM
+#   - key: frontend
+#     paths:
+#       - frontend/node_modules/
+
+# # 1️⃣ Build frontend
+# frontend-build:
+#   stage: frontend
+#   image: node:20
+#   before_script:
+#     - cd frontend
+#     - npm install
+#   script:
+#     - npm run build
+#   artifacts:
+#     paths:
+#       - frontend/dist/
+
+# # 2️⃣ Prepare backend (copy frontend build)
+# backend-prepare:
+#   stage: backend
+#   image: maven:3.9-eclipse-temurin-17
+#   dependencies:
+#     - frontend-build
+#   script:
+#     - mkdir -p src/main/resources/static
+#     - cp -r frontend/dist/* src/main/resources/static/
+#   artifacts:
+#     paths:
+#       - src/main/resources/static/
+
+# # 3️⃣ Unit tests
+# unit-tests:
+#   stage: test
+#   image: maven:3.9-eclipse-temurin-17
+#   dependencies:
+#     - backend-prepare
+#   script:
+#     - mvn clean test -Dspring.profiles.active=test
+#   artifacts:
+#     when: always
+#     paths:
+#       - target/surefire-reports/
+
+# # 4️⃣ Integration tests
+# integration-tests:
+#   stage: test
+#   image: maven:3.9-eclipse-temurin-17
+#   dependencies:
+#     - backend-prepare
+#   script:
+#     - mvn verify -Dspring.profiles.active=test
+
+# # cucumber-tests:
+# #   stage: bdd
+# #   image: maven:3.9-eclipse-temurin-17
+# #   dependencies:
+# #     - backend-prepare
+# #   script:
+# #     - mvn test -Dspring.profiles.active=test -Dtest=*Cucumber
+# #   artifacts:
+# #     when: always
+# #     paths:
+# #       - target/cucumber-reports/
+
+
+# # 5️⃣ Package final application
+# package:
+#   stage: package
+#   image: maven:3.9-eclipse-temurin-17
+#   dependencies:
+#     - unit-tests
+#     - integration-tests
+#   script:
+#     - mvn clean package -DskipTests
+#   artifacts:
+#     paths:
+#       - target/*.jar
 stages:
   - frontend
   - backend
-  - test
+  - unit-test
+  - integration-test
+  - bdd
   - package
 
 cache:
-  # Maven
   - key: maven
     paths:
       - ~/.m2/repository
-  # Node/NPM
   - key: frontend
     paths:
       - frontend/node_modules/
 
-# 1️⃣ Build frontend
+# 1️⃣ FRONTEND
 frontend-build:
   stage: frontend
   image: node:20
@@ -27,7 +116,7 @@ frontend-build:
     paths:
       - frontend/dist/
 
-# 2️⃣ Prepare backend (copy frontend build)
+# 2️⃣ BACKEND PREP
 backend-prepare:
   stage: backend
   image: maven:3.9-eclipse-temurin-17
@@ -40,9 +129,9 @@ backend-prepare:
     paths:
       - src/main/resources/static/
 
-# 3️⃣ Unit tests
+# 3️⃣ UNIT TEST
 unit-tests:
-  stage: test
+  stage: unit-test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
     - backend-prepare
@@ -53,16 +142,33 @@ unit-tests:
     paths:
       - target/surefire-reports/
 
-# 4️⃣ Integration tests
+# 4️⃣ INTEGRATION TEST
 integration-tests:
-  stage: test
+  stage: integration-test
   image: maven:3.9-eclipse-temurin-17
   dependencies:
     - backend-prepare
   script:
-    - mvn verify -Dspring.profiles.active=test
+    - mvn clean verify -Dspring.profiles.active=test
+  artifacts:
+    when: always
+    paths:
+      - target/failsafe-reports/
 
-# 5️⃣ Package final application
+# 5️⃣ CUCUMBER TEST (BDD)
+cucumber-tests:
+  stage: bdd
+  image: maven:3.9-eclipse-temurin-17
+  dependencies:
+    - backend-prepare
+  script:
+    - mvn test -Dspring.profiles.active=test -Dtest=*Cucumber*
+  artifacts:
+    when: always
+    paths:
+      - target/cucumber-reports/
+
+# 6️⃣ PACKAGE
 package:
   stage: package
   image: maven:3.9-eclipse-temurin-17
