@@ -1,8 +1,6 @@
 package com.dem.ldp.cucumber;
 
 import io.cucumber.java.en.*;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.Cookie;
 import com.dem.ldp.model.Utente;
 import com.dem.ldp.repository.UtenteRepository;
 import org.springframework.beans.factory.annotation.Autowired;

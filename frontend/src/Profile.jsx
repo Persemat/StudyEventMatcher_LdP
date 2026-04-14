@@ -43,7 +43,7 @@ export default function Profile({ user, onLogout }) {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {user.nome || user.name}
+                {user.nome + " "+ user.cognome}
               </h2>
               <p className="text-gray-600 font-medium">{user.email}</p>
             </div>
@@ -63,7 +63,7 @@ export default function Profile({ user, onLogout }) {
                   Nome Completo
                 </p>
                 <p className="text-lg font-medium text-gray-900 mt-1">
-                  {user.nome || user.name}
+                  {user.nome + " "+ user.cognome}
                 </p>
               </div>
             </div>
