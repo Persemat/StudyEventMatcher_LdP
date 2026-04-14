@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Plus, Info, MapPin } from "lucide-react"; // Aggiunto MapPin per l'icona se vuoi usarla
+import React, { useState, useRef } from 'react';
+import { X, Plus, Info } from "lucide-react";
 
 export default function ModalCreateEvent({ onClose, onSuccess }) {
   const [titolo, setTitolo] = useState('');
@@ -7,56 +7,67 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
   const [data, setData] = useState('');
   const [ora, setOra] = useState('');
   const [durata, setDurata] = useState('');
-  const [luogo, setLuogo] = useState(''); // Lo stato c'era, mancava l'input!
+  const [luogo, setLuogo] = useState('');
   const [maxPartecipanti, setMaxPartecipanti] = useState('');
   const [partecipazioneNecessaria, setPartecipazioneNecessaria] = useState(true);
-  const [tags, setTags] = useState([]); 
+  const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [messaggio, setMessaggio] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const submitLock = useRef(false);
   const MAX_TAGS = 3;
 
-  // ... (handleAddTag, handleKeyDown, handleRemoveTag rimangono uguali) ...
   const handleAddTag = (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     const trimmedTag = tagInput.trim();
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < MAX_TAGS) {
+
+    if (
+      trimmedTag &&
+      !tags.includes(trimmedTag) &&
+      tags.length < MAX_TAGS
+    ) {
       setTags([...tags, trimmedTag]);
-      setTagInput(''); 
+      setTagInput('');
     }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      e.preventDefault(); 
+      e.preventDefault();
       handleAddTag(e);
     }
   };
 
   const handleRemoveTag = (tagToRemove) => {
-    setTags(tags.filter(t => t !== tagToRemove));
+    setTags(tags.filter((t) => t !== tagToRemove));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (submitLock.current) return;
+
     if (tags.length === 0) {
       setMessaggio("Errore: Inserisci almeno un tag.");
       return;
     }
 
+    submitLock.current = true;
     setIsLoading(true);
+    setMessaggio('');
+
     const dataOraFormattata = `${data}T${ora}:00`;
 
     const payload = {
       titolo,
       dataOra: dataOraFormattata,
       durata: parseFloat(durata),
-      luogo, // Ora verrà inviato correttamente!
+      luogo,
       tag: tags,
       descrizione,
       maxPartecipanti: parseInt(maxPartecipanti),
-      partecipazioneCreatoreNecessaria: partecipazioneNecessaria 
+      partecipazioneCreatoreNecessaria: partecipazioneNecessaria
     };
 
     try {
@@ -68,8 +79,14 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
 
       if (response.ok) {
         setMessaggio('Evento creato con successo!');
-        if (onSuccess) onSuccess(); 
-        setTimeout(() => onClose && onClose(), 2000);
+
+        if (onSuccess) {
+          await onSuccess();
+        }
+
+        if (onClose) {
+          onClose();
+        }
       } else {
         const erroreText = await response.text();
         setMessaggio(`Errore: ${erroreText}`);
@@ -78,6 +95,7 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
       setMessaggio('Errore di connessione al server.');
     } finally {
       setIsLoading(false);
+      submitLock.current = false;
     }
   };
 
@@ -87,16 +105,24 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
         
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">Crea Nuovo Evento</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button
+            onClick={isLoading ? undefined : onClose}
+            disabled={isLoading}
+            className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <div className="overflow-y-auto p-6">
           {messaggio && (
-            <div className={`p-4 mb-6 rounded-lg font-medium ${
-              messaggio.includes('Errore') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
-            }`}>
+            <div
+              className={`p-4 mb-6 rounded-lg font-medium ${
+                messaggio.includes('Errore')
+                  ? 'bg-red-50 text-red-700'
+                  : 'bg-green-50 text-green-700'
+              }`}
+            >
               {messaggio}
             </div>
           )}
@@ -104,43 +130,102 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Titolo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Titolo *</label>
-              <input type="text" value={titolo} onChange={(e) => setTitolo(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Es. Sessione di Studio" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Titolo *
+              </label>
+              <input
+                type="text"
+                value={titolo}
+                onChange={(e) => setTitolo(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                placeholder="Es. Sessione di Studio"
+              />
             </div>
 
-            {/* --- LUOGO (REINSERITO QUI) --- */}
+            {/* Luogo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Luogo *</label>
-              <input 
-                type="text" 
-                value={luogo} 
-                onChange={(e) => setLuogo(e.target.value)} 
-                required 
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                placeholder="Es. Aula Magna, Biblioteca, Teams..." 
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Luogo *
+              </label>
+              <input
+                type="text"
+                value={luogo}
+                onChange={(e) => setLuogo(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                placeholder="Es. Aula Magna, Biblioteca, Teams..."
               />
             </div>
 
             {/* Descrizione */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione *</label>
-              <textarea value={descrizione} onChange={(e) => setDescrizione(e.target.value)} required rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none resize-y" placeholder="Cosa studierete?" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descrizione *
+              </label>
+              <textarea
+                value={descrizione}
+                onChange={(e) => setDescrizione(e.target.value)}
+                required
+                rows={2}
+                disabled={isLoading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none resize-y disabled:bg-gray-100"
+                placeholder="Cosa studierete?"
+              />
             </div>
 
-            {/* Tag (rimane uguale) */}
+            {/* Tag */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-bold text-gray-700">Tag dell'evento *</label>
-                <span className={`text-xs font-bold ${tags.length === MAX_TAGS ? 'text-orange-500' : 'text-gray-500'}`}>{tags.length} / {MAX_TAGS}</span>
+                <label className="block text-sm font-bold text-gray-700">
+                  Tag dell'evento *
+                </label>
+                <span
+                  className={`text-xs font-bold ${
+                    tags.length === MAX_TAGS ? 'text-orange-500' : 'text-gray-500'
+                  }`}
+                >
+                  {tags.length} / {MAX_TAGS}
+                </span>
               </div>
+
               <div className="flex gap-2 mb-3">
-                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleKeyDown} disabled={tags.length >= MAX_TAGS} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white disabled:bg-gray-100" placeholder={tags.length >= MAX_TAGS ? "Limite raggiunto" : "Aggiungi tag..."} />
-                <button type="button" onClick={handleAddTag} disabled={!tagInput.trim() || tags.length >= MAX_TAGS} className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"><Plus size={20} /></button>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={tags.length >= MAX_TAGS || isLoading}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white disabled:bg-gray-100"
+                  placeholder={tags.length >= MAX_TAGS ? "Limite raggiunto" : "Aggiungi tag..."}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim() || tags.length >= MAX_TAGS || isLoading}
+                  className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus size={20} />
+                </button>
               </div>
+
               <div className="flex flex-wrap gap-2">
                 {tags.map((t, index) => (
-                  <span key={index} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full">
-                    {t}<button type="button" onClick={() => handleRemoveTag(t)}><X size={14} /></button>
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full"
+                  >
+                    {t}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(t)}
+                      disabled={isLoading}
+                      className="disabled:opacity-50"
+                    >
+                      <X size={14} />
+                    </button>
                   </span>
                 ))}
               </div>
@@ -149,38 +234,80 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
             {/* Data e Ora */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
-                <input type="date" value={data} onChange={(e) => setData(e.target.value)} required min={new Date().toISOString().split("T")[0]} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data *
+                </label>
+                <input
+                  type="date"
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none disabled:bg-gray-100"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ora *</label>
-                <input type="time" value={ora} onChange={(e) => setOra(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ora *
+                </label>
+                <input
+                  type="time"
+                  value={ora}
+                  onChange={(e) => setOra(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none disabled:bg-gray-100"
+                />
               </div>
             </div>
 
             {/* Durata e Partecipanti */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Durata (h) *</label>
-                <input type="number" step="0.5" value={durata} onChange={(e) => setDurata(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Durata (h) *
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={durata}
+                  onChange={(e) => setDurata(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none disabled:bg-gray-100"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Persone *</label>
-                <input type="number" value={maxPartecipanti} onChange={(e) => setMaxPartecipanti(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Max Persone *
+                </label>
+                <input
+                  type="number"
+                  value={maxPartecipanti}
+                  onChange={(e) => setMaxPartecipanti(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none disabled:bg-gray-100"
+                />
               </div>
             </div>
 
-            {/* Flag Partecipazione (rimane uguale) */}
+            {/* Flag partecipazione */}
             <div className="flex items-center gap-3 p-4 bg-blue-50/50 rounded-lg border border-blue-100">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="creatorRequired"
                 checked={partecipazioneNecessaria}
                 onChange={(e) => setPartecipazioneNecessaria(e.target.checked)}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                disabled={isLoading}
+                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
               />
               <div className="flex-1">
-                <label htmlFor="creatorRequired" className="text-sm font-bold text-gray-800 cursor-pointer flex items-center gap-2">
+                <label
+                  htmlFor="creatorRequired"
+                  className="text-sm font-bold text-gray-800 cursor-pointer flex items-center gap-2"
+                >
                   La mia presenza è obbligatoria
                   <Info size={14} className="text-blue-400" />
                 </label>
@@ -190,9 +317,26 @@ export default function ModalCreateEvent({ onClose, onSuccess }) {
               </div>
             </div>
 
+            {/* Bottoni */}
             <div className="flex gap-3 pt-4 border-t border-gray-100">
-              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50">Annulla</button>
-              <button type="submit" disabled={isLoading} className={`flex-1 px-4 py-2 text-white rounded-lg font-bold ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Annulla
+              </button>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`flex-1 px-4 py-2 text-white rounded-lg font-bold ${
+                  isLoading
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
                 {isLoading ? 'Creazione...' : 'Crea Evento'}
               </button>
             </div>

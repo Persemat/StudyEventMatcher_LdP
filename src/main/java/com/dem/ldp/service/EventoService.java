@@ -32,9 +32,22 @@ public class EventoService {
         if (userId == null) {
             throw new RuntimeException("Sessione non valida o scaduta");
         }
-
         Utente creatore = utenteRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        boolean eventoGiaEsistente = eventoRepository
+                .findByCreatoreIdAndTitoloAndDataOraAndLuogo(
+                        creatore.getId(),
+                        request.titolo(),
+                        request.dataOra(),
+                        request.luogo()
+                )
+                .isPresent();
+
+        if (eventoGiaEsistente) {
+            throw new RuntimeException("Esiste già un evento identico creato da questo utente");
+        }
+        
 
         Evento nuovoEvento = new Evento();
         nuovoEvento.setTitolo(request.titolo());
@@ -45,12 +58,7 @@ public class EventoService {
         nuovoEvento.setDescrizione(request.descrizione());
         nuovoEvento.setMaxPartecipanti(request.maxPartecipanti());
         nuovoEvento.setPartecipazioneCreatoreNecessaria(request.partecipazioneCreatoreNecessaria());
-
-        // Se stato è String:
         nuovoEvento.setStato("aperto");
-
-        // Se stato è enum, usa invece:
-        // nuovoEvento.setStato(StatoEvento.APERTO);
 
         nuovoEvento.setCreatore(creatore);
         nuovoEvento.aggiungiPartecipante(creatore);
