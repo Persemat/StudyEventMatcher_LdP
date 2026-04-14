@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.dem.ldp.dto.EventoRequest;
 import com.dem.ldp.model.Evento;
 import com.dem.ldp.service.EventoService;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -85,6 +86,33 @@ public class EventoController {
             String messaggio = eventoService.cancellaEventoCreato(id, session);
             return ResponseEntity.ok(messaggio);
         } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> modificaEvento(@PathVariable Long id, @RequestBody EventoRequest request,
+                                        HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione non valida o scaduta");
+        }
+
+        if (request.titolo() == null || request.titolo().isBlank() ||
+                request.dataOra() == null || request.durata() == null ||
+                request.luogo() == null || request.luogo().isBlank() ||
+                request.tag() == null || request.tag().isEmpty()) {
+
+            return ResponseEntity.badRequest().body("Campi obbligatori mancanti");
+        }
+
+        try {
+            Evento eventoModificato = eventoService.modificaEvento(id, request, session);
+            return ResponseEntity.ok("Evento '" + eventoModificato.getTitolo() + "' modificato con successo!");
+        } catch (RuntimeException e) {
+            System.out.println("⚠️ ERRORE MODIFICA EVENTO: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }

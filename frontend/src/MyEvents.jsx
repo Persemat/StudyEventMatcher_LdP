@@ -4,6 +4,7 @@ import { useEventActions } from "./hooks/useEventActions";
 import EventCard from "./EventCard"; 
 import CreaEvento from "./creaEvento"; 
 import ModalCreateEvent from "./ModalCreateEvent";
+import ModalEditEvent from "./ModalEditEvent";
 
 // Mock temporaneo (in futuro useremo una fetch)
 // TO DO: 
@@ -48,7 +49,7 @@ export default function MyEvents() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [eventToEdit, setEventToEdit] = useState(null);
   // Filtriamo gli eventi in base al flag
   const createdEvents = events.filter((e) => e.isCreatedByMe);
   const bookedEvents = events.filter((e) => e.isBooked);
@@ -83,8 +84,7 @@ export default function MyEvents() {
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
   const handleEdit = (event) => {
-    console.log("Modifica evento ID:", event.id);
-    // Qui andrà la logica per aprire la modale di modifica
+    setEventToEdit(event);
   };
 
   return (
@@ -164,6 +164,18 @@ export default function MyEvents() {
         onSuccess={() => fetchEvents()} 
         />
       )}
+
+      {/* Modale ModificaEvento */}
+      {eventToEdit && (
+        <ModalEditEvent
+          event={eventToEdit}
+          onClose={() => setEventToEdit(null)}
+          onSuccess={() => {
+            setEventToEdit(null);
+            fetchEvents();
+          }}
+          />
+        )}
     </div>
   );
 }

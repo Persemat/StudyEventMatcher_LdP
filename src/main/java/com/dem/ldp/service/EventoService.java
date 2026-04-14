@@ -57,6 +57,38 @@ public class EventoService {
 
         return eventoRepository.save(nuovoEvento);
     }
+    @Transactional
+    public Evento modificaEvento(Long id, EventoRequest request, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            throw new RuntimeException("Sessione non valida o scaduta");
+        }
+
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        if (evento.getCreatore() == null || !evento.getCreatore().getId().equals(userId)) {
+            throw new RuntimeException("Solo il creatore può modificare l'evento");
+        }
+
+        // Controllo importante: maxPartecipanti non può essere minore dei partecipanti attuali
+        if (request.maxPartecipanti() != null &&
+                request.maxPartecipanti() < evento.getPartecipanti().size()) {
+            throw new RuntimeException("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
+        }
+
+        evento.setTitolo(request.titolo());
+        evento.setDataOra(request.dataOra());
+        evento.setDurata(request.durata());
+        evento.setLuogo(request.luogo());
+        evento.setTag(request.tag());
+        evento.setDescrizione(request.descrizione());
+        evento.setMaxPartecipanti(request.maxPartecipanti());
+        evento.setPartecipazioneCreatoreNecessaria(request.partecipazioneCreatoreNecessaria());
+
+        return eventoRepository.save(evento);
+    }
 
     public List<EventoResponse> getAllEvents(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import EventCard from "./EventCard"; // Assicurati che il file si chiami così
 import { useEventActions } from "./hooks/useEventActions";
+import ModalEditEvent from "./ModalEditEvent";
 
 // const mockData = [
 //   { 
@@ -63,7 +64,7 @@ export default function AllEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedState, setSelectedState] = useState("aperti");
-
+  const [eventToEdit, setEventToEdit] = useState(null);
 
 
  const fetchEvents = async () => {
@@ -117,9 +118,9 @@ export default function AllEvents() {
 const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
   const handleEdit = (event) => {
-    console.log("Modifica evento ID:", event.id);
-    // Qui andrà la logica per aprire la modale di modifica
-  };
+  if (!event.isCreatedByMe) return;
+  setEventToEdit(event);
+};
 
   return (
     <div className="p-6 space-y-6">
@@ -179,7 +180,7 @@ const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
                   event.isCreatedByMe
                 )
               }
-              onEdit={() => handleEdit(event)}
+              onEdit={event.isCreatedByMe ? () => handleEdit(event) : undefined}
             />
           ))}
         </div>
@@ -189,6 +190,18 @@ const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
           <p className="text-gray-500 font-medium">Nessun evento trovato</p>
         </div>
       )}
-    </div>
+    
+    {/* lista eventi */}
+     {eventToEdit && (
+      <ModalEditEvent
+        event={eventToEdit}
+        onClose={() => setEventToEdit(null)}
+        onSuccess={() => {
+          setEventToEdit(null);
+          fetchEvents();
+        }}
+      />
+    )}
+  </div>
   );
 }
