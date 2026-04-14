@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function ForgotPasswordPage() {
@@ -10,6 +10,7 @@ export default function ForgotPasswordPage() {
   const [confermaNuovaPassword, setConfermaNuovaPassword] = useState('')
 
   const [codiceInviato, setCodiceInviato] = useState(false)
+  const [invioInCorso, setInvioInCorso] = useState(false)
 
   const [mostraNuovaPassword, setMostraNuovaPassword] = useState(false)
   const [mostraConfermaNuovaPassword, setMostraConfermaNuovaPassword] = useState(false)
@@ -17,16 +18,47 @@ export default function ForgotPasswordPage() {
   const [messaggio, setMessaggio] = useState('')
   const [errore, setErrore] = useState('')
 
+  // Countdown per richiedere un nuovo codice
+  const [secondiRimanenti, setSecondiRimanenti] = useState(0)
+
   function resetMessaggi() {
     setMessaggio('')
     setErrore('')
   }
 
+  useEffect(() => {
+    if (secondiRimanenti <= 0) {
+      return
+    }
+
+    const timer = setInterval(() => {
+      setSecondiRimanenti((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [secondiRimanenti])
+
+  function formattaTempo(secondi) {
+    const minuti = String(Math.floor(secondi / 60)).padStart(2, '0')
+    const sec = String(secondi % 60).padStart(2, '0')
+    return `${minuti}:${sec}`
+  }
+
   async function handleInviaCodice(event) {
     event.preventDefault()
     resetMessaggi()
-     console.log("handleInviaCodice partito")
-  console.log("email:", email)
+
+    if (invioInCorso) {
+      return
+    }
+
+    setInvioInCorso(true)
 
     try {
       const response = await fetch('/password-reset/forgot', {
@@ -44,9 +76,14 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
       setCodiceInviato(true)
       setMessaggio(data.message)
+
+      // Ad ogni nuovo invio riparte il countdown
+      setSecondiRimanenti(30)
     } catch (error) {
       console.error(error)
       setErrore(error.message)
+    } finally {
+      setInvioInCorso(false)
     }
   }
 
@@ -79,6 +116,11 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
       setMessaggio(data.message)
 
+      setEmail('')
+      setCodiceReset('')
+      setNuovaPassword('')
+      setConfermaNuovaPassword('')
+
       // Dopo il reset torniamo alla login
       setTimeout(() => {
         navigate('/login')
@@ -109,13 +151,24 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="mario.rossi@example.com"
                 required
-                style={styles.input}
+                disabled={codiceInviato}
+                style={{
+                  ...styles.input,
+                  ...(codiceInviato ? styles.inputDisabled : {})
+                }}
               />
             </div>
 
             {!codiceInviato && (
-              <button type="submit" style={styles.submitButton}>
-                Invia codice di recupero
+              <button
+                type="submit"
+                style={{
+                  ...styles.submitButton,
+                  ...(invioInCorso ? styles.submitButtonDisabled : {})
+                }}
+                disabled={invioInCorso}
+              >
+                {invioInCorso ? 'Invio in corso...' : 'Invia codice di recupero'}
               </button>
             )}
           </form>
@@ -133,6 +186,24 @@ export default function ForgotPasswordPage() {
                   required
                   style={styles.input}
                 />
+              </div>
+
+              {/* Countdown per nuovo invio */}
+              <div style={styles.countdownBox}>
+                {secondiRimanenti > 0 ? (
+                <p style={styles.countdownText}>
+                  Potrai richiedere un nuovo codice tra {formattaTempo(secondiRimanenti)}
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleInviaCodice}
+                  style={styles.linkAction}
+                  disabled={invioInCorso}
+                >
+                  {invioInCorso ? 'Invio in corso...' : 'Richiedi un nuovo codice'}
+                </button>
+              )}
               </div>
 
               <div style={styles.field}>
@@ -263,6 +334,11 @@ const styles = {
     fontSize: '16px',
     outline: 'none',
   },
+  inputDisabled: {
+    backgroundColor: '#f5f5f5',
+    color: '#777',
+    cursor: 'not-allowed',
+  },
   passwordWrapper: {
     display: 'flex',
     alignItems: 'center',
@@ -293,6 +369,21 @@ const styles = {
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
+  }, 
+  submitButtonDisabled: {
+    opacity: 0.7,
+    cursor: 'not-allowed',
+  },
+  countdownBox: {
+    marginTop: '-5px',
+    marginBottom: '5px',
+    textAlign: 'left', 
+  },
+  countdownText: {
+    margin: 0,
+    fontSize: '14px',
+    color: '#555',
+    textAlign: 'left',
   },
   linkButton: {
     display: 'inline-block',
@@ -312,4 +403,16 @@ const styles = {
     color: 'red',
     fontWeight: '600',
   },
+  linkAction: {
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  margin: 0,
+  color: '#667eea',
+  fontSize: '14px',
+  fontWeight: '600',
+  //textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+},
 }

@@ -13,4 +13,7 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     void deleteByScadenzaBefore(LocalDateTime now);
 
     void deleteByEmail(String email);
+
+    Optional<PasswordResetToken> findTopByEmailOrderByCreatoIlDesc(String email);
+    
 }

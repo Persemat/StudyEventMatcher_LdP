@@ -23,6 +23,17 @@ public class PasswordResetToken {
     @Column(nullable = false)
     private boolean usato = false;
 
+    @Column(nullable = false)
+    private LocalDateTime creatoIl;
+
+    public LocalDateTime getCreatoIl() {
+        return creatoIl;
+    }
+
+    public void setCreatoIl(LocalDateTime creatoIl) {
+        this.creatoIl = creatoIl;
+    }
+
     public PasswordResetToken() {
     }
 

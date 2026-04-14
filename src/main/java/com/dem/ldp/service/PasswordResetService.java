@@ -8,6 +8,7 @@ import com.dem.ldp.repository.PasswordResetTokenRepository;
 import com.dem.ldp.repository.UtenteRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -30,6 +31,7 @@ public class PasswordResetService {
         this.emailService = emailService;
     }
 
+    @Transactional
     public String forgotPassword(ForgotPasswordRequest request) {
         String email = request.email();
 
@@ -40,18 +42,36 @@ public class PasswordResetService {
         Utente utente = utenteRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Nessun utente trovato con questa email"));
 
-        // Pulizia dei token scaduti
-        passwordResetTokenRepository.deleteByScadenzaBefore(LocalDateTime.now());
+        LocalDateTime adesso = LocalDateTime.now();
 
-        // Un solo token attivo per email
-        passwordResetTokenRepository.deleteByEmail(utente.getEmail());
+        // Pulizia dei token scaduti
+        passwordResetTokenRepository.deleteByScadenzaBefore(adesso);
+
+        // Evita richieste troppo ravvicinate
+        PasswordResetToken ultimoToken = passwordResetTokenRepository
+                .findTopByEmailOrderByCreatoIlDesc(email)
+                .orElse(null);
+
+        if (ultimoToken != null) {
+            long secondiPassati = java.time.Duration
+                    .between(ultimoToken.getCreatoIl(), adesso)
+                    .getSeconds();
+
+            if (secondiPassati < 30) {
+                throw new IllegalArgumentException("Attendi almeno 30 secondi prima di richiedere un nuovo codice");
+            }
+        }
+
+        // Se richiede un nuovo codice, elimino quelli vecchi
+        passwordResetTokenRepository.deleteByEmail(email);
 
         String codice = generaCodiceReset();
 
         PasswordResetToken token = new PasswordResetToken();
         token.setEmail(utente.getEmail());
         token.setCodice(codice);
-        token.setScadenza(LocalDateTime.now().plusMinutes(10));
+        token.setCreatoIl(adesso);
+        token.setScadenza(adesso.plusMinutes(10));
         token.setUsato(false);
 
         passwordResetTokenRepository.save(token);
@@ -61,6 +81,7 @@ public class PasswordResetService {
         return "Codice di recupero inviato via email";
     }
 
+    @Transactional
     public String resetPassword(ResetPasswordRequest request) {
         String email = request.email();
         String codice = request.codice();
