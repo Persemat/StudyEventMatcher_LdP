@@ -14,7 +14,11 @@ export default function MyEvents() {
   // Filtriamo gli eventi in base al flag
   const createdEvents = events.filter((e) => e.isCreatedByMe);
   const bookedEvents = events.filter((e) => e.isBooked);
-
+  const canEdit = (event) => {
+    const inizioEvento = new Date(event.dataOra);
+    const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return event.isCreatedByMe && inizioEvento > tra24Ore;
+  };
   const fetchEvents = async () => {
   setLoading(true);
   try {
@@ -104,7 +108,8 @@ export default function MyEvents() {
                 event.isCreatedByMe
               )
             }
-            onEdit={() => handleEdit(event)}
+            onEdit={canEdit(event) ? () => handleEdit(event) : undefined}
+            canEdit={canEdit(event)}
           />
         ))}
 

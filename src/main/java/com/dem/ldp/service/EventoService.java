@@ -9,7 +9,7 @@ import com.dem.ldp.repository.UtenteRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -60,7 +60,7 @@ public class EventoService {
     @Transactional
     public Evento modificaEvento(Long id, EventoRequest request, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
-
+        
         if (userId == null) {
             throw new RuntimeException("Sessione non valida o scaduta");
         }
@@ -71,7 +71,9 @@ public class EventoService {
         if (evento.getCreatore() == null || !evento.getCreatore().getId().equals(userId)) {
             throw new RuntimeException("Solo il creatore può modificare l'evento");
         }
-
+        if (!evento.getDataOra().isAfter(LocalDateTime.now().plusHours(24))) {
+            throw new RuntimeException("Non è possibile modificare un evento entro 24 ore dall'inizio");
+        }
         // Controllo importante: maxPartecipanti non può essere minore dei partecipanti attuali
         if (request.maxPartecipanti() != null &&
                 request.maxPartecipanti() < evento.getPartecipanti().size()) {

@@ -60,7 +60,7 @@ public class EventoController {
             System.out.println("⚠️ ERRORE INTERNO NEL SERVICE: " + e.getMessage());
             e.printStackTrace();
 
-            return ResponseEntity.status(404).body("Errore: " + e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
         }
     }
     @PostMapping("/{id}/prenota")
@@ -70,7 +70,7 @@ public class EventoController {
             return ResponseEntity.ok("Prenotazione completata con successo");
         } catch (RuntimeException e) {
             System.out.println("⚠️ ERRORE PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -86,7 +86,7 @@ public class EventoController {
             String messaggio = eventoService.cancellaEventoCreato(id, session);
             return ResponseEntity.ok(messaggio);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -113,7 +113,7 @@ public class EventoController {
         } catch (RuntimeException e) {
             System.out.println("⚠️ ERRORE MODIFICA EVENTO: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

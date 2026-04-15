@@ -14,7 +14,11 @@ export default function AllEvents() {
   const [selectedState, setSelectedState] = useState("aperti");
   const [eventToEdit, setEventToEdit] = useState(null);
 
-
+ const canEdit = (event) => {
+  const inizioEvento = new Date(event.dataOra);
+  const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return event.isCreatedByMe && inizioEvento > tra24Ore;
+};
  const fetchEvents = async () => {
   try {
     setLoading(true);
@@ -128,7 +132,8 @@ const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
                   event.isCreatedByMe
                 )
               }
-              onEdit={event.isCreatedByMe ? () => handleEdit(event) : undefined}
+              onEdit={canEdit(event) ? () => handleEdit(event) : undefined}
+              canEdit={canEdit(event)}
             />
           ))}
         </div>

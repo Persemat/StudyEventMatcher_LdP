@@ -7,7 +7,6 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
 
   const initialDate = event?.dataOra ? event.dataOra.slice(0, 10) : "";
   const initialTime = event?.dataOra ? event.dataOra.slice(11, 16) : "";
-
   const [titolo, setTitolo] = useState(event?.titolo || '');
   const [descrizione, setDescrizione] = useState(event?.descrizione || '');
   const [data, setData] = useState(initialDate);
@@ -23,6 +22,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
   const [messaggio, setMessaggio] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+    
   const tagInputRef = useRef(null);
   const MAX_TAGS = 3;
 
@@ -234,6 +234,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Durata (h) *</label>
                 <input
                   type="number"
+                  min = "1"
                   step="0.5"
                   value={durata}
                   onChange={(e) => setDurata(e.target.value)}
@@ -245,6 +246,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Max Persone *</label>
                 <input
                   type="number"
+                  min = "2"
                   value={maxPartecipanti}
                   onChange={(e) => setMaxPartecipanti(e.target.value)}
                   required
