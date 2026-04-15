@@ -2,46 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
 import EventCard from "./EventCard"; 
-import CreaEvento from "./creaEvento"; 
-import ModalCreateEvent from "./ModalCreateEvent";
-import ModalEditEvent from "./ModalEditEvent";
-
-// Mock temporaneo (in futuro useremo una fetch)
-// TO DO: 
-// Rimuovere mockData una volta implementata la fetch
-// const mockData = [
-//   { id: 1, 
-//     titolo: "Studio Basi di Dati", 
-//     descrizione: "Ripasso SQL", 
-//     dataOra: "2026-04-10T15:00:00", 
-//     luogo: "Aula 2", 
-//     durata: 2.0, 
-//     maxPartecipanti: 5, 
-//     currentParticipants: 2, 
-//     isCreatedByMe: true, 
-//     isBooked: false, 
-//     tag: ["Informatica"], 
-//     stato: "aperto", 
-//     creatore: { nome: "Mario", cognome: "Rossi" }, 
-//     partecipazioneCreatoreNecessaria: false 
-//   },
-
-//   { id: 2, 
-//     titolo: "Analisi 1", 
-//     descrizione: "Esercizi limiti", 
-//     dataOra: "2026-04-12T10:00:00", 
-//     luogo: "Biblioteca", 
-//     durata: 3.0, 
-//     maxPartecipanti: 10, 
-//     currentParticipants: 8, 
-//     isCreatedByMe: false, 
-//     isBooked: true, 
-//     tag: ["Matematica"], 
-//     stato: "aperto", 
-//     creatore: { nome: "Marco", cognome: "Verdi" }, 
-//     partecipazioneCreatoreNecessaria: true 
-//   }
-// ];
+import EventFormModal from "./EventFormModal"
 
 export default function MyEvents() {
   const [events, setEvents] = useState([]);
@@ -159,23 +120,28 @@ export default function MyEvents() {
 
       {/* Modale CreaEvento */}
       {showCreateModal && (
-        <ModalCreateEvent 
-        onClose={() => setShowCreateModal(false)} 
-        onSuccess={() => fetchEvents()} 
+        <EventFormModal
+          mode="create"
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            fetchEvents();
+          }}
         />
       )}
 
       {/* Modale ModificaEvento */}
       {eventToEdit && (
-        <ModalEditEvent
+        <EventFormModal
+          mode="edit"
           event={eventToEdit}
           onClose={() => setEventToEdit(null)}
           onSuccess={() => {
             setEventToEdit(null);
             fetchEvents();
           }}
-          />
-        )}
+        />
+      )}
     </div>
   );
 }

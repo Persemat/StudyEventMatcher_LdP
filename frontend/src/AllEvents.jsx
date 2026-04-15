@@ -2,59 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import EventCard from "./EventCard"; // Assicurati che il file si chiami così
 import { useEventActions } from "./hooks/useEventActions";
-import ModalEditEvent from "./ModalEditEvent";
-
-// const mockData = [
-//   { 
-//     id: 1, 
-//     titolo: "Ripasso Analisi 1", 
-//     descrizione: "Prepariamoci per lo scritto di lunedì!", 
-//     dataOra: "2026-04-10T10:30:00", 
-//     luogo: "Aula 4, Edificio A",
-//     durata: 2.0,
-//     tag: ["Matematica", "Analisi"],
-//     maxPartecipanti: 10,
-//     currentParticipants: 3,
-//     isBooked: false,
-//     isCreatedByMe: false, // Creato da qualcun altro
-//     stato: "aperto",
-//     creatore: { nome: "Mario", cognome: "Rossi" },
-//     partecipazioneCreatoreNecessaria: true
-//   },
-//   { 
-//     id: 2, 
-//     titolo: "Progetto Backend Spring", 
-//     descrizione: "Sistemiamo le pipeline e la sicurezza.", 
-//     dataOra: "2026-04-12T15:00:00", 
-//     luogo: "Laboratorio Informatica",
-//     durata: 3.5,
-//     tag: ["Informatica", "Java"],
-//     maxPartecipanti: 5,
-//     currentParticipants: 4,
-//     isBooked: true,       // Già prenotato
-//     isCreatedByMe: false,
-//     stato: "aperto",
-//     creatore: { nome: "Luigi", cognome: "Verdi" },
-//     partecipazioneCreatoreNecessaria: false
-//   },
-//   { 
-//     id: 3, 
-//     titolo: "Workshop React", 
-//     descrizione: "Creazione componenti modulari.", 
-//     dataOra: "2026-04-15T09:00:00", 
-//     luogo: "Online - Meet",
-//     durata: 1.5,
-//     maxPartecipanti: 20,
-//     currentParticipants: 1,
-//     tag: ["Informatica", "Frontend"],
-//     isBooked: false,
-//     isCreatedByMe: true,  // Creato da ME
-//     stato: "aperto",
-//     creatore: { nome: "Tu", cognome: "Utente" },
-//     partecipazioneCreatoreNecessaria: true
-//   }
-// ];
-
+import EventFormModal from "./EventFormModal"
 
 
 export default function AllEvents() {
@@ -193,15 +141,16 @@ const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
     
     {/* lista eventi */}
      {eventToEdit && (
-      <ModalEditEvent
-        event={eventToEdit}
-        onClose={() => setEventToEdit(null)}
-        onSuccess={() => {
-          setEventToEdit(null);
-          fetchEvents();
-        }}
-      />
-    )}
-  </div>
+          <EventFormModal
+            mode="edit"
+            event={eventToEdit}
+            onClose={() => setEventToEdit(null)}
+            onSuccess={() => {
+              setEventToEdit(null);
+              fetchEvents();
+            }}
+          />
+        )}
+    </div>
   );
 }
