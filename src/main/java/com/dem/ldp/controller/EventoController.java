@@ -61,16 +61,6 @@ public class EventoController {
             return ResponseEntity.status(404).body("Errore: " + e.getMessage());
         }
     }
-    @PostMapping("/{id}/prenota")
-    public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
-        try {
-            eventoService.prenotaEvento(id, session);
-            return ResponseEntity.ok("Prenotazione completata con successo");
-        } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
-        }
-    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> cancellaEvento(@PathVariable long id, HttpSession session) {
@@ -84,6 +74,34 @@ public class EventoController {
             String messaggio = eventoService.cancellaEventoCreato(id, session);
             return ResponseEntity.ok(messaggio);
         } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/prenota")
+    public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
+        try {
+            eventoService.prenotaEvento(id, session);
+            return ResponseEntity.ok("Prenotazione completata con successo");
+        } catch (RuntimeException e) {
+            System.out.println("⚠️ ERRORE PRENOTAZIONE: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}/prenota")
+    public ResponseEntity<?> cancellaPrenotazione(@PathVariable Long id, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        if(userId == null) {
+            return ResponseEntity.status(401).body("Sessione non valida o scaduta");
+        }
+        
+        try {
+            eventoService.cancellaPrenotazione(id, session);
+            return ResponseEntity.ok("Prenotazione cancellata con successo");
+        } catch (RuntimeException e) {
+            System.out.println("⚠️ ERRORE CANCELLAZIONE PRENOTAZIONE: " + e.getMessage());
             return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }

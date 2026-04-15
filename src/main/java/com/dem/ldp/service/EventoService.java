@@ -148,10 +148,10 @@ public class EventoService {
             .orElseThrow(() -> new RuntimeException("Evento non trovato"));
 
     // Controllo: non puoi prenotarti due volte
-    boolean giaPrenotato = evento.getPartecipanti().stream()
+    boolean isPrenotato = evento.getPartecipanti().stream()
             .anyMatch(partecipante -> partecipante.getId().equals(userId));
 
-    if (giaPrenotato) {
+    if (isPrenotato) {
         throw new RuntimeException("Sei già prenotato a questo evento");
     }
 
@@ -168,6 +168,34 @@ public class EventoService {
 
     evento.aggiungiPartecipante(utente);
     eventoRepository.save(evento);
+    }
+
+    @Transactional
+    public void cancellaPrenotazione(Long eventId, HttpSession session) {
+    Long userId = (Long) session.getAttribute("userId");
+    
+    // Utente deve essere autenticato
+    if (userId == null) {
+            throw new RuntimeException("Il sistema richiede l'autenticazione");
+        }
+    
+    Utente utente = utenteRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+    Evento evento = eventoRepository.findById(eventId)
+            .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+    // Controllo: non puoi cancellare la prenotazione se non sei prenotato
+    boolean isPrenotato = evento.getPartecipanti().stream()
+            .anyMatch(partecipante -> partecipante.getId().equals(userId));
+
+    if (!isPrenotato) {
+        throw new RuntimeException("Non sei prenotato a questo evento");
+    }
+
+    evento.rimuoviPartecipante(utente);
+    eventoRepository.save(evento);
+
     }
 
 

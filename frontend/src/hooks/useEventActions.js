@@ -65,7 +65,7 @@ export const useEventActions = (refreshCallback) => {
         throw new Error(text || "Operazione non riuscita");
       }
 
-      console.log("✅ Operazione completata con successo!");
+      console.log("Operazione completata con successo!");
       refreshCallback?.();
     } catch (error) {
       console.error("Errore durante l'operazione:", error);
