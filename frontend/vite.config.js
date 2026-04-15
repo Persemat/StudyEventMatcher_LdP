@@ -15,6 +15,10 @@ export default defineConfig({
       '/Eventi': {
         target: 'http://host.docker.internal:8080',
         changeOrigin: true
+      },
+      '/password-reset': {
+        target: 'http://host.docker.internal:8080',
+        changeOrigin: true
       }
     }
   }

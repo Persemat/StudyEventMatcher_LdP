@@ -4,6 +4,7 @@ import EventCard from "./EventCard"; // Assicurati che il file si chiami così
 import { useEventActions } from "./hooks/useEventActions";
 
 
+
 export default function AllEvents() {
   const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");

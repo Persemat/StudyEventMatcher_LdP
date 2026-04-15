@@ -1,24 +1,31 @@
 import { useState } from 'react'
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function AuthPage(props) {
   const [isLogin, setIsLogin] = useState(true)
+
   const navigate = useNavigate();
+
   const [nome, setNome] = useState('')
   const [cognome, setCognome] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confermaPassword, setConfermaPassword] = useState('')
+
   const [mostraPassword, setMostraPassword] = useState(false)
   const [mostraConfermaPassword, setMostraConfermaPassword] = useState(false)
 
   const [messaggio, setMessaggio] = useState('')
   const [errore, setErrore] = useState('')
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  function resetMessaggi() {
     setMessaggio('')
     setErrore('')
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    resetMessaggi()
 
     if (!isLogin && password !== confermaPassword) {
       setErrore('Le password non coincidono')
@@ -49,29 +56,28 @@ export default function AuthPage(props) {
       if (isLogin) {
         setMessaggio(`Accesso effettuato per: ${data.email}`);
         props.onLoginSuccess(data);
-        
-        // Aspetta 1 secondo e poi vai alla Dashboard
+
         setTimeout(() => {
-          navigate("/dashboard"); // Assicurati che la rotta in App.js si chiami così
+          navigate("/dashboard");
         }, 1000);
 
       } else {
-        // Per la registrazione, di solito è meglio mandarlo al login o loggarlo subito
         setMessaggio(
           `Registrazione completata per: ${data.nome ?? ''} ${data.cognome ?? ''}`
         );
-        
-        // Opzionale: dopo la registrazione lo mandiamo al login dopo 2 secondi
+
         setTimeout(() => {
           navigate("/login");
         }, 2000);
       }
 
+      // reset campi
       setNome('')
       setCognome('')
       setEmail('')
       setPassword('')
       setConfermaPassword('')
+
     } catch (error) {
       console.error(error)
       setErrore(error.message)
@@ -82,8 +88,10 @@ export default function AuthPage(props) {
     <main style={styles.container}>
       <section style={styles.wrapper}>
         <div style={styles.logoCircle}>📖</div>
+
         <h1 style={styles.title}>StudyTogether</h1>
         <br />
+
         <p style={styles.subtitle}>
           {isLogin
             ? 'Benvenuto! Accedi al tuo account'
@@ -96,8 +104,7 @@ export default function AuthPage(props) {
               type="button"
               onClick={() => {
                 setIsLogin(true)
-                setMessaggio('')
-                setErrore('')
+                resetMessaggi()
               }}
               style={{
                 ...styles.tabButton,
@@ -111,8 +118,7 @@ export default function AuthPage(props) {
               type="button"
               onClick={() => {
                 setIsLogin(false)
-                setMessaggio('')
-                setErrore('')
+                resetMessaggi()
               }}
               style={{
                 ...styles.tabButton,
@@ -124,12 +130,12 @@ export default function AuthPage(props) {
           </div>
 
           <form onSubmit={handleSubmit} style={styles.form}>
+
+            {/* Nome e Cognome solo in registrazione */}
             {!isLogin && (
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="nome" style={styles.label}>
-                    Nome
-                  </label>
+                  <label htmlFor="nome" style={styles.label}>Nome</label>
                   <input
                     id="nome"
                     type="text"
@@ -142,9 +148,7 @@ export default function AuthPage(props) {
                 </div>
 
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="cognome" style={styles.label}>
-                    Cognome
-                  </label>
+                  <label htmlFor="cognome" style={styles.label}>Cognome</label>
                   <input
                     id="cognome"
                     type="text"
@@ -159,9 +163,7 @@ export default function AuthPage(props) {
             )}
 
             <div style={styles.field}>
-              <label htmlFor="email" style={styles.label}>
-                Email
-              </label>
+              <label htmlFor="email" style={styles.label}>Email</label>
               <input
                 id="email"
                 type="email"
@@ -174,9 +176,7 @@ export default function AuthPage(props) {
             </div>
 
             <div style={styles.field}>
-              <label htmlFor="password" style={styles.label}>
-                Password
-              </label>
+              <label htmlFor="password" style={styles.label}>Password</label>
 
               <div style={styles.passwordWrapper}>
                 <input
@@ -188,6 +188,7 @@ export default function AuthPage(props) {
                   required
                   style={styles.passwordInput}
                 />
+
                 <button
                   type="button"
                   onClick={() => setMostraPassword(!mostraPassword)}
@@ -196,14 +197,13 @@ export default function AuthPage(props) {
                   👁
                 </button>
               </div>
-
-              
             </div>
 
+            {/* Conferma password solo in registrazione */}
             {!isLogin && (
               <div style={styles.field}>
                 <label htmlFor="confermaPassword" style={styles.label}>
-                  Conferma Password
+                  Conferma password
                 </label>
 
                 <div style={styles.passwordWrapper}>
@@ -216,11 +216,10 @@ export default function AuthPage(props) {
                     required
                     style={styles.passwordInput}
                   />
+
                   <button
                     type="button"
-                    onClick={() =>
-                      setMostraConfermaPassword(!mostraConfermaPassword)
-                    }
+                    onClick={() => setMostraConfermaPassword(!mostraConfermaPassword)}
                     style={styles.eyeButton}
                   >
                     👁
@@ -228,20 +227,20 @@ export default function AuthPage(props) {
                 </div>
               </div>
             )}
-
+            {isLogin && (
+              <Link to="/forgot-password" style={styles.linkButton}>
+                Password dimenticata?
+              </Link>
+            )}
             <button type="submit" style={styles.submitButton}>
-              {isLogin ? 'Accedi' : 'Crea Account'}
+              {isLogin ? 'Accedi' : 'Registrati'}
             </button>
+
+            
           </form>
 
           {messaggio && <p style={styles.success}>{messaggio}</p>}
           {errore && <p style={styles.error}>{errore}</p>}
-
-          {isLogin && (
-            <p style={styles.footerText}>
-              Inserisci le credenziali del tuo account per accedere
-            </p>
-          )}
         </div>
       </section>
     </main>
@@ -406,4 +405,12 @@ const styles = {
     color: '#475569',
     fontSize: '15px',
   },
+  linkButton: {
+  color: '#667eea',
+  textDecoration: 'none',
+  fontWeight: '600',
+  textAlign: 'left',
+  display: 'block',
+  cursor: 'pointer',
+}
 }
