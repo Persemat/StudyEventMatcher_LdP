@@ -142,31 +142,6 @@ export default function MyEvents() {
       </div>
 
       {/* Grid Content */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(activeTab === "created" ? createdEvents : bookedEvents).map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            onBook={() => handleBook(event.id)}
-            onCancelBooking={() =>
-              handleCancelBooking(
-                event.id,
-                event.partecipazioneCreatoreNecessaria,
-                event.isCreatedByMe
-              )
-            }
-            onEdit={canEdit(event) ? () => handleEdit(event) : undefined}
-            canEdit={canEdit(event)}
-          />
-        ))}
-
-      {!loading && error && (
-        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-8 text-center">
-          <p className="text-red-500 font-medium">{error}</p>
-        </div>
-      )}
-
-      {/* Grid Content */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedEvents.map((event) => (
@@ -221,5 +196,5 @@ export default function MyEvents() {
         />
       )}
     </div>
-  /</div>
-)}
+  );
+}
