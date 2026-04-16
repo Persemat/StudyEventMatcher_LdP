@@ -3,9 +3,7 @@ import { Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
 
 import EventCard from "./EventCard"; 
-import EventFormModal from "./EventFormModal"
-
-
+import EventFormModal from "./EventFormModal";
 
 export default function MyEvents() {
   const [events, setEvents] = useState([]);
@@ -14,9 +12,7 @@ export default function MyEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
-  // Filtriamo gli eventi in base al flag
-  //const createdEvents = events.filter((e) => e.isCreatedByMe);
-  //const bookedEvents = events.filter((e) => e.isBooked);
+
   const canEdit = (event) => {
     const inizioEvento = new Date(event.dataOra);
     const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -42,6 +38,11 @@ export default function MyEvents() {
   // Storico: eventi passati creati da me o a cui ho partecipato
   const historyEvents = events.filter(
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
+  );
+
+  // --- LA NOSTRA MAGIA RE-INSERITA: ESTRAZIONE TAG ---
+  const availableTags = Array.from(
+    new Set(events.flatMap((event) => event.tag || []))
   );
 
   const fetchEvents = async () => {
@@ -76,7 +77,6 @@ export default function MyEvents() {
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
   const handleEdit = (event) => {
-
     setEventToEdit(event);
   };
 
@@ -180,6 +180,7 @@ export default function MyEvents() {
             setShowCreateModal(false);
             fetchEvents();
           }}
+          availableTags={availableTags} // <-- PASSATO AL COMPONENTE!
         />
       )}
 
@@ -193,6 +194,7 @@ export default function MyEvents() {
             setEventToEdit(null);
             fetchEvents();
           }}
+          availableTags={availableTags} // <-- PASSATO ANCHE QUI!
         />
       )}
     </div>

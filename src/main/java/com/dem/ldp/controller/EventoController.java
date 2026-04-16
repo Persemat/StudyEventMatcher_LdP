@@ -62,6 +62,7 @@ public class EventoController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
     @PostMapping("/{id}/prenota")
     public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
         try {
@@ -91,7 +92,7 @@ public class EventoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> modificaEvento(@PathVariable Long id, @RequestBody EventoRequest request,
-                                        HttpSession session) {
+            HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
@@ -116,25 +117,14 @@ public class EventoController {
         }
     }
 
-    @PostMapping("/{id}/prenota")
-    public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
-        try {
-            eventoService.prenotaEvento(id, session);
-            return ResponseEntity.ok("Prenotazione completata con successo");
-        } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
-        }
-    }
-
     @DeleteMapping("/{id}/prenota")
     public ResponseEntity<?> cancellaPrenotazione(@PathVariable Long id, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
 
-        if(userId == null) {
+        if (userId == null) {
             return ResponseEntity.status(401).body("Sessione non valida o scaduta");
         }
-        
+
         try {
             eventoService.cancellaPrenotazione(id, session);
             return ResponseEntity.ok("Prenotazione cancellata con successo");
