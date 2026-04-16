@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
-import EventCard from "./EventCard"; // Assicurati che il file si chiami così
+import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal"
 

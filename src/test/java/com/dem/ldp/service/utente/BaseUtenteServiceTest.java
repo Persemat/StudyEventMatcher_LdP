@@ -7,7 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.mockito.Mockito.mock;
-
+import org.junit.jupiter.api.Tag;
+@Tag("unit")
 public abstract class BaseUtenteServiceTest {
 
     protected UtenteRepository utenteRepository;

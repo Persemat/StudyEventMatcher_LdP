@@ -8,6 +8,8 @@ import com.dem.ldp.repository.EventoRepository;
 import com.dem.ldp.repository.UtenteRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,13 +19,17 @@ import java.util.Set;
 
 @Service
 public class EventoService {
+    private static final Logger logger = LoggerFactory.getLogger(EventoService.class);
 
     private final EventoRepository eventoRepository;
     private final UtenteRepository utenteRepository;
+    private final EmailService emailService;
 
-    public EventoService(EventoRepository eventoRepository, UtenteRepository utenteRepository) {
+
+    public EventoService(EventoRepository eventoRepository, UtenteRepository utenteRepository, EmailService emailService) {
         this.eventoRepository = eventoRepository;
         this.utenteRepository = utenteRepository;
+        this.emailService = emailService;
     }
 
     public Evento creaNuovoEvento(EventoRequest request, HttpSession session) {
@@ -32,9 +38,22 @@ public class EventoService {
         if (userId == null) {
             throw new RuntimeException("Sessione non valida o scaduta");
         }
-
         Utente creatore = utenteRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        boolean eventoGiaEsistente = eventoRepository
+                .findByCreatoreIdAndTitoloAndDataOraAndLuogo(
+                        creatore.getId(),
+                        request.titolo(),
+                        request.dataOra(),
+                        request.luogo()
+                )
+                .isPresent();
+
+        if (eventoGiaEsistente) {
+            throw new RuntimeException("Esiste già un evento identico creato da questo utente");
+        }
+        
 
         Evento nuovoEvento = new Evento();
         nuovoEvento.setTitolo(request.titolo());
@@ -45,12 +64,7 @@ public class EventoService {
         nuovoEvento.setDescrizione(request.descrizione());
         nuovoEvento.setMaxPartecipanti(request.maxPartecipanti());
         nuovoEvento.setPartecipazioneCreatoreNecessaria(request.partecipazioneCreatoreNecessaria());
-
-        // Se stato è String:
         nuovoEvento.setStato("aperto");
-
-        // Se stato è enum, usa invece:
-        // nuovoEvento.setStato(StatoEvento.APERTO);
 
         nuovoEvento.setCreatore(creatore);
         nuovoEvento.aggiungiPartecipante(creatore);
@@ -134,6 +148,13 @@ public class EventoService {
         Utente creatore = evento.getCreatore();
 
         if (evento.isPartecipazioneCreatoreNecessaria()) {
+            try {
+                emailService.inviaMailCancellazioneEventoAiPartecipanti(evento);
+            } catch (Exception e) {
+                logger.error("Errore durante l'invio delle mail di cancellazione per l'evento {}",
+                        evento.getTitolo(), e);
+            }
+
             evento.getPartecipanti().clear();
             eventoRepository.delete(evento);
             return "Evento cancellato con successo";
@@ -224,4 +245,5 @@ public class EventoService {
                 userId != null && creatore.getId().equals(userId)
         );
     }
+    
 }
