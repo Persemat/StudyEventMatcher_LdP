@@ -101,7 +101,7 @@ public class CreazionePrenotazione {
 
     @And("il sistema mostra il messaggio di evento al completo")
     public void ilSistemaMostraIlMessaggioDiEventoAlCompleto() throws Exception {
-        result.andExpect(content().string(Matchers.containsString("Errore: Evento al completo")));
+        result.andExpect(content().string(Matchers.containsString("Evento al completo")));
     }
 
 

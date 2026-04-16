@@ -28,7 +28,7 @@ public class CreazioneEventoControllerTest extends BaseEventoControllerTest {
                 """;
 
         mockMvc.perform(post("/Eventi")
-                .sessionAttr("userId", utenteId) // <--- ECCO IL TRUCCO: iniettiamo l'ID in sessione
+                .sessionAttr("userId", utenteId) 
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk()) // Verifica che torni 200

@@ -12,6 +12,10 @@ export default function EventCard({
   const isPieno = partecipantiAttuali >= event.maxPartecipanti;
   const stato = event.stato || "sconosciuto";
   const isChiuso = stato === "chiuso";
+  const inizioEvento = new Date(event.dataOra);
+  const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  const canEdit = event.isCreatedByMe && inizioEvento > tra24Ore;
 
   return (
     <div
@@ -87,13 +91,18 @@ export default function EventCard({
           <div className="flex-1 flex gap-2">
             {/* Tasto Modifica */}
             <button 
-              disabled={isChiuso}
-              onClick={() => onEdit(event.id)} 
+              disabled={!canEdit}
+              onClick={canEdit ? () => onEdit(event.id) : undefined}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
-                isChiuso
-                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
+                !canEdit
+                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
                   : "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
               }`}
+              title={
+                !canEdit
+                  ? "Non puoi modificare un evento entro 24 ore dall'inizio"
+                  : ""
+              }
             >
               <Pencil className="w-4 h-4" />
               MODIFICA

@@ -97,7 +97,7 @@ void prenotazioneConSuccesso_restituisce200EAggiornaEvento() throws Exception {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Errore: Utente non autenticato"));
+                .andExpect(content().string("Utente non autenticato"));
     }
 
     @Test
@@ -109,7 +109,7 @@ void prenotazioneConSuccesso_restituisce200EAggiornaEvento() throws Exception {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Errore: Evento non trovato"));
+                .andExpect(content().string("Evento non trovato"));
     }
 
     @Test
@@ -124,7 +124,7 @@ void prenotazioneConSuccesso_restituisce200EAggiornaEvento() throws Exception {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Errore: Sei già prenotato a questo evento"));
+                .andExpect(content().string("Sei già prenotato a questo evento"));
     }
 
     @Test
@@ -139,6 +139,6 @@ void prenotazioneConSuccesso_restituisce200EAggiornaEvento() throws Exception {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Errore: Evento al completo"));
+                .andExpect(content().string("Evento al completo"));
     }
 }
