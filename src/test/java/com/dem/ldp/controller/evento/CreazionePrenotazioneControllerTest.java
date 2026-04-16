@@ -71,7 +71,7 @@ public class CreazionePrenotazioneControllerTest extends BaseEventoControllerTes
     }
 
     @Test
-void prenotazioneConSuccesso_restituisce200EAggiornaEvento() throws Exception {
+void prenotazioneConSuccesso() throws Exception {
     session.setAttribute("userId", utente.getId());
 
     mockMvc.perform(
@@ -91,7 +91,7 @@ void prenotazioneConSuccesso_restituisce200EAggiornaEvento() throws Exception {
             .andExpect(jsonPath("$[0].currentParticipants").value(2));
 }
     @Test
-    void prenotazioneUtenteNonAutenticato_restituisce400() throws Exception {
+    void prenotazioneUtenteNonAutenticato() throws Exception {
         mockMvc.perform(
                         post("/Eventi/{id}/prenota", evento.getId())
                                 .session(session)
