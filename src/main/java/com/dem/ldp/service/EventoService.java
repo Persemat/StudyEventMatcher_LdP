@@ -8,8 +8,10 @@ import com.dem.ldp.repository.EventoRepository;
 import com.dem.ldp.repository.UtenteRepository;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -17,13 +19,17 @@ import java.util.Set;
 
 @Service
 public class EventoService {
+    private static final Logger logger = LoggerFactory.getLogger(EventoService.class);
 
     private final EventoRepository eventoRepository;
     private final UtenteRepository utenteRepository;
+    private final EmailService emailService;
 
-    public EventoService(EventoRepository eventoRepository, UtenteRepository utenteRepository) {
+
+    public EventoService(EventoRepository eventoRepository, UtenteRepository utenteRepository, EmailService emailService) {
         this.eventoRepository = eventoRepository;
         this.utenteRepository = utenteRepository;
+        this.emailService = emailService;
     }
 
     public Evento creaNuovoEvento(EventoRequest request, HttpSession session) {
@@ -64,6 +70,40 @@ public class EventoService {
         nuovoEvento.aggiungiPartecipante(creatore);
 
         return eventoRepository.save(nuovoEvento);
+    }
+    @Transactional
+    public Evento modificaEvento(Long id, EventoRequest request, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        
+        if (userId == null) {
+            throw new RuntimeException("Sessione non valida o scaduta");
+        }
+
+        Evento evento = eventoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        if (evento.getCreatore() == null || !evento.getCreatore().getId().equals(userId)) {
+            throw new RuntimeException("Solo il creatore può modificare l'evento");
+        }
+        if (!evento.getDataOra().isAfter(LocalDateTime.now().plusHours(24))) {
+            throw new RuntimeException("Non è possibile modificare un evento entro 24 ore dall'inizio");
+        }
+        // Controllo importante: maxPartecipanti non può essere minore dei partecipanti attuali
+        if (request.maxPartecipanti() != null &&
+                request.maxPartecipanti() < evento.getPartecipanti().size()) {
+            throw new RuntimeException("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
+        }
+
+        evento.setTitolo(request.titolo());
+        evento.setDataOra(request.dataOra());
+        evento.setDurata(request.durata());
+        evento.setLuogo(request.luogo());
+        evento.setTag(request.tag());
+        evento.setDescrizione(request.descrizione());
+        evento.setMaxPartecipanti(request.maxPartecipanti());
+        evento.setPartecipazioneCreatoreNecessaria(request.partecipazioneCreatoreNecessaria());
+
+        return eventoRepository.save(evento);
     }
 
     public List<EventoResponse> getAllEvents(HttpSession session) {
@@ -108,6 +148,13 @@ public class EventoService {
         Utente creatore = evento.getCreatore();
 
         if (evento.isPartecipazioneCreatoreNecessaria()) {
+            try {
+                emailService.inviaMailCancellazioneEventoAiPartecipanti(evento);
+            } catch (Exception e) {
+                logger.error("Errore durante l'invio delle mail di cancellazione per l'evento {}",
+                        evento.getTitolo(), e);
+            }
+
             evento.getPartecipanti().clear();
             eventoRepository.delete(evento);
             return "Evento cancellato con successo";
@@ -226,4 +273,5 @@ public class EventoService {
                 userId != null && creatore.getId().equals(userId)
         );
     }
+    
 }

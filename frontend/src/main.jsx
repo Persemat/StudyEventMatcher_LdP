@@ -8,6 +8,7 @@ import AllEvents from './AllEvents'
 import Profile from './Profile'
 import './index.css'
 import MyEvents from './MyEvents'
+import ForgotPasswordPage from './ForgotPasswordPage'
 
 
 // Se l'utente non è loggato, lo rispedisce al login.
@@ -58,7 +59,7 @@ const handleLogout = async () => {
         
         {/* Passiamo la funzione per settare l'utente dopo il login */}
         <Route path="/login" element={<AuthPage onLoginSuccess={setLoggedUser} />} />
-
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         {/* Avvolgiamo il MainLayout nel ProtectedRoute */}
         <Route element={
           <ProtectedRoute user={loggedUser}>

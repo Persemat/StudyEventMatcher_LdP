@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
-import EventCard from "./EventCard";
-import ModalCreateEvent from "./ModalCreateEvent";
+
+import EventCard from "./EventCard"; 
+import EventFormModal from "./EventFormModal"
+
+
 
 export default function MyEvents() {
   const [events, setEvents] = useState([]);
@@ -10,6 +13,15 @@ export default function MyEvents() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [eventToEdit, setEventToEdit] = useState(null);
+  // Filtriamo gli eventi in base al flag
+  //const createdEvents = events.filter((e) => e.isCreatedByMe);
+  //const bookedEvents = events.filter((e) => e.isBooked);
+  const canEdit = (event) => {
+    const inizioEvento = new Date(event.dataOra);
+    const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return event.isCreatedByMe && inizioEvento > tra24Ore;
+  };
 
   const now = new Date();
 
@@ -64,7 +76,8 @@ export default function MyEvents() {
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
   const handleEdit = (event) => {
-    console.log("Modifica evento ID:", event.id);
+
+    setEventToEdit(event);
   };
 
   const displayedEvents =
@@ -128,19 +141,6 @@ export default function MyEvents() {
         </div>
       </div>
 
-      {/* Stato caricamento / errore */}
-      {loading && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-          <p className="text-gray-500">Caricamento eventi...</p>
-        </div>
-      )}
-
-      {!loading && error && (
-        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-8 text-center">
-          <p className="text-red-500 font-medium">{error}</p>
-        </div>
-      )}
-
       {/* Grid Content */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,9 +173,26 @@ export default function MyEvents() {
 
       {/* Modale CreaEvento */}
       {showCreateModal && (
-        <ModalCreateEvent
+        <EventFormModal
+          mode="create"
           onClose={() => setShowCreateModal(false)}
-          onSuccess={() => fetchEvents()}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            fetchEvents();
+          }}
+        />
+      )}
+
+      {/* Modale ModificaEvento */}
+      {eventToEdit && (
+        <EventFormModal
+          mode="edit"
+          event={eventToEdit}
+          onClose={() => setEventToEdit(null)}
+          onSuccess={() => {
+            setEventToEdit(null);
+            fetchEvents();
+          }}
         />
       )}
     </div>
