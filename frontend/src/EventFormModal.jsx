@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Info } from "lucide-react";
 
 export default function EventFormModal({ mode, event, onClose, onSuccess, availableTags = [] }) {
@@ -11,7 +11,12 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   const [data, setData] = useState(initialDate);
   const [ora, setOra] = useState(initialTime);
   const [durata, setDurata] = useState(event?.durata || '');
-  const [luogo, setLuogo] = useState(event?.luogo || '');
+  
+  // NUOVI STATI PER IL LUOGO SCISSO
+  const [citta, setCitta] = useState("");
+  const [indirizzo, setIndirizzo] = useState("");
+  const [formError, setFormError] = useState("");
+  
   const [maxPartecipanti, setMaxPartecipanti] = useState(event?.maxPartecipanti || '');
   const [partecipazioneNecessaria, setPartecipazioneNecessaria] = useState(
     event?.partecipazioneCreatoreNecessaria ?? true
@@ -20,24 +25,36 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   const [tags, setTags] = useState(event?.tag || []);
   const [tagInput, setTagInput] = useState('');
   
-  // STATO PER LA TENDINA
   const [isInputFocused, setIsInputFocused] = useState(false);
-  
   const [messaggio, setMessaggio] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const tagInputRef = useRef(null);
   const MAX_TAGS = 3;
 
-  // FUNZIONE CENTRALIZZATA PER AGGIUNGERE TAG (Da Input o da Tendina)
+  // PARSING DEL LUOGO IN FASE DI MODIFICA
+  useEffect(() => {
+    if (isEdit && event) {
+      if (event.luogo && event.luogo.includes("-")) {
+        // Divide dal primo trattino in poi
+        const [c, ...rest] = event.luogo.split("-");
+        setCitta(c.trim());
+        setIndirizzo(rest.join("-").trim()); 
+      } else {
+        // Se è un vecchio evento senza trattino, lo consideriamo come "Città" (obbligatoria)
+        setCitta(event.luogo || "");
+        setIndirizzo("");
+      }
+    }
+  }, [isEdit, event]);
+
   const addSpecificTag = (tagToAdd) => {
     const trimmedTag = tagToAdd.trim();
     if (trimmedTag && !tags.includes(trimmedTag) && tags.length < MAX_TAGS) {
       setTags([...tags, trimmedTag]);
       setTagInput('');
-      setIsInputFocused(false); // Chiude la tendina
+      setIsInputFocused(false); 
       
-      // Resetta l'errore di validità del form
       if (tagInputRef.current) {
         tagInputRef.current.setCustomValidity("");
       }
@@ -60,7 +77,6 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     setTags(tags.filter(t => t !== tagToRemove));
   };
 
-  // LOGICA DEI SUGGERIMENTI PER LA TENDINA
   const suggestions = availableTags.filter(
     (t) => 
       t.toLowerCase().includes(tagInput.toLowerCase()) && 
@@ -69,6 +85,13 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError(""); // Reset errore
+
+    // VALIDAZIONE CITTÀ (Sicurezza Extra)
+    if (!citta.trim()) {
+      setFormError("Attenzione: Il campo Città è obbligatorio.");
+      return; 
+    }
 
     if (tags.length === 0) {
         tagInputRef.current.setCustomValidity("Compila questo campo.");
@@ -82,12 +105,17 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     setMessaggio("");
 
     const dataOraFormattata = `${data}T${ora}:00`;
+    
+    // UNIONE DELLE STRINGHE PER IL DB
+    const luogoFinale = indirizzo.trim() 
+        ? `${citta.trim()}-${indirizzo.trim()}` 
+        : citta.trim();
 
     const payload = {
       titolo,
       dataOra: dataOraFormattata,
       durata: parseFloat(durata),
-      luogo,
+      luogo: luogoFinale, // Spediamo la stringa unita!
       tag: tags,
       descrizione,
       maxPartecipanti: parseInt(maxPartecipanti),
@@ -132,10 +160,17 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
         <div className="overflow-y-auto p-6">
           {messaggio && (
-            <div className={`p-4 mb-6 rounded-lg font-medium ${
+            <div className={`p-4 mb-4 rounded-lg font-medium ${
               messaggio.includes('Errore') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
             }`}>
               {messaggio}
+            </div>
+          )}
+
+          {/* Errore personalizzato di validazione form */}
+          {formError && (
+            <div className="p-4 mb-4 rounded-lg font-medium bg-red-50 text-red-700 border border-red-200">
+              {formError}
             </div>
           )}
 
@@ -151,15 +186,34 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Luogo *</label>
-              <input
-                type="text"
-                value={luogo}
-                onChange={(e) => setLuogo(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              />
+            {/* SEZIONE LUOGO SDOPPIATA */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Città *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Es. Milano"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={citta}
+                  onChange={(e) => setCitta(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Edificio / Aula <span className="text-gray-400 font-normal">(Opzionale)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Es. U4 - Biblioteca"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={indirizzo}
+                  onChange={(e) => setIndirizzo(e.target.value)}
+                />
+              </div>
             </div>
 
             <div>
@@ -173,7 +227,6 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               />
             </div>
 
-            {/* SEZIONE TAG CON TENDINA INTEGRATA */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-bold text-gray-700">
@@ -202,7 +255,6 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
                     placeholder={tags.length >= MAX_TAGS ? "Limite raggiunto" : "Aggiungi tag..."}
                   />
                   
-                  {/* IL MENÙ A TENDINA */}
                   {isInputFocused && suggestions.length > 0 && tags.length < MAX_TAGS && (
                     <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                       {suggestions.map((suggestion, index) => (
