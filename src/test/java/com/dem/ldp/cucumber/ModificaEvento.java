@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class ModificaEvento{
+public class ModificaEvento {
 
     @Autowired
     private MockMvc mockMvc;
@@ -41,8 +41,8 @@ public class ModificaEvento{
     private ResultActions result;
     private String requestBody;
 
-    @Given("l'utente è autenticato")
-    public void utenteAutenticato() {
+    @Given("l'utente è autenticato per la modifica")
+    public void utenteAutenticatoPerModifica() {
         utenteRepository.deleteAll();
         eventoRepository.deleteAll();
 
@@ -84,17 +84,17 @@ public class ModificaEvento{
     @When("l'utente modifica l'orario di inizio dell'evento")
     public void modificaOrarioEvento() {
         requestBody = """
-            {
-              "titolo": "Progetto Java",
-              "descrizione": "Descrizione iniziale",
-              "dataOra": "%s",
-              "durata": 2.0,
-              "luogo": "Aula 1",
-              "tag": ["Java"],
-              "maxPartecipanti": 10,
-              "partecipazioneCreatoreNecessaria": true
-            }
-            """.formatted(LocalDateTime.now().plusDays(3).withNano(0).toString());
+                {
+                  "titolo": "Progetto Java",
+                  "descrizione": "Descrizione iniziale",
+                  "dataOra": "%s",
+                  "durata": 2.0,
+                  "luogo": "Aula 1",
+                  "tag": ["Java"],
+                  "maxPartecipanti": 10,
+                  "partecipazioneCreatoreNecessaria": true
+                }
+                """.formatted(LocalDateTime.now().plusDays(3).withNano(0).toString());
     }
 
     @And("salva le modifiche")
@@ -103,8 +103,7 @@ public class ModificaEvento{
                 put("/Eventi/" + evento.getId())
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-        );
+                        .content(requestBody));
     }
 
     @Then("il sistema aggiorna l'evento correttamente")
@@ -115,7 +114,7 @@ public class ModificaEvento{
         assertNotEquals(evento.getDataOra(), aggiornato.getDataOra());
     }
 
-    @And("il sistema mostra il messaggio {string}")
+    @And("il sistema mostra il messaggio di conferma {string}")
     public void sistemaMostraMessaggio(String messaggio) throws Exception {
         String body = result.andReturn().getResponse().getContentAsString();
         assertTrue(body.contains(messaggio));
@@ -124,17 +123,17 @@ public class ModificaEvento{
     @When("l'utente lascia il campo titolo vuoto")
     public void lasciaTitoloVuoto() {
         requestBody = """
-            {
-              "titolo": "",
-              "descrizione": "Descrizione iniziale",
-              "dataOra": "%s",
-              "durata": 2.0,
-              "luogo": "Aula 1",
-              "tag": ["Java"],
-              "maxPartecipanti": 10,
-              "partecipazioneCreatoreNecessaria": true
-            }
-            """.formatted(LocalDateTime.now().plusDays(3).withNano(0).toString());
+                {
+                  "titolo": "",
+                  "descrizione": "Descrizione iniziale",
+                  "dataOra": "%s",
+                  "durata": 2.0,
+                  "luogo": "Aula 1",
+                  "tag": ["Java"],
+                  "maxPartecipanti": 10,
+                  "partecipazioneCreatoreNecessaria": true
+                }
+                """.formatted(LocalDateTime.now().plusDays(3).withNano(0).toString());
     }
 
     @Then("il sistema impedisce il salvataggio della modifica")
@@ -176,8 +175,7 @@ public class ModificaEvento{
     @When("l'utente visualizza gli eventi disponibili")
     public void visualizzaEventiDisponibili() throws Exception {
         result = mockMvc.perform(
-                get("/Eventi").session(session)
-        );
+                get("/Eventi").session(session));
     }
 
     @Then("il pulsante modifica evento non è visibile")

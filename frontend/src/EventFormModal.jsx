@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Plus, Info } from "lucide-react";
 
-
-export default function EventFormModal({ mode, event, onClose, onSuccess }) {
+export default function EventFormModal({ mode, event, onClose, onSuccess, availableTags = [] }) {
   const isEdit = mode === "edit";
 
   const initialDate = event?.dataOra ? event.dataOra.slice(0, 10) : "";
@@ -17,39 +16,56 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
   const [partecipazioneNecessaria, setPartecipazioneNecessaria] = useState(
     event?.partecipazioneCreatoreNecessaria ?? true
   );
+  
   const [tags, setTags] = useState(event?.tag || []);
   const [tagInput, setTagInput] = useState('');
+  
+  // STATO PER LA TENDINA
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  
   const [messaggio, setMessaggio] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-    
   const tagInputRef = useRef(null);
   const MAX_TAGS = 3;
 
-  const handleAddTag = (e) => {
-  e.preventDefault();
-  const trimmedTag = tagInput.trim();
-
-  if (trimmedTag && !tags.includes(trimmedTag) && tags.length < MAX_TAGS) {
-    setTags([...tags, trimmedTag]);
-    setTagInput("");
-
-    if (tagInputRef.current) {
-      tagInputRef.current.setCustomValidity("");
+  // FUNZIONE CENTRALIZZATA PER AGGIUNGERE TAG (Da Input o da Tendina)
+  const addSpecificTag = (tagToAdd) => {
+    const trimmedTag = tagToAdd.trim();
+    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < MAX_TAGS) {
+      setTags([...tags, trimmedTag]);
+      setTagInput('');
+      setIsInputFocused(false); // Chiude la tendina
+      
+      // Resetta l'errore di validità del form
+      if (tagInputRef.current) {
+        tagInputRef.current.setCustomValidity("");
+      }
     }
-  }
+  };
+
+  const handleAddTag = (e) => {
+    e.preventDefault();
+    addSpecificTag(tagInput);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleAddTag(e);
+      addSpecificTag(tagInput);
     }
   };
 
   const handleRemoveTag = (tagToRemove) => {
     setTags(tags.filter(t => t !== tagToRemove));
   };
+
+  // LOGICA DEI SUGGERIMENTI PER LA TENDINA
+  const suggestions = availableTags.filter(
+    (t) => 
+      t.toLowerCase().includes(tagInput.toLowerCase()) && 
+      !tags.includes(t)
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -157,53 +173,77 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
               />
             </div>
 
+            {/* SEZIONE TAG CON TENDINA INTEGRATA */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-            <div className="flex justify-between items-center mb-2">
+              <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-bold text-gray-700">
-                Tag dell'evento *
+                  Tag dell'evento *
                 </label>
                 <span className={`text-xs font-bold ${tags.length === MAX_TAGS ? 'text-orange-500' : 'text-gray-500'}`}>
-                {tags.length} / {MAX_TAGS}
+                  {tags.length} / {MAX_TAGS}
                 </span>
-            </div>
+              </div>
 
-            <div className="flex gap-2 mb-3">
-                <input
-                ref={tagInputRef}
-                type="text"
-                value={tagInput}
-                onChange={(e) => {
-                    setTagInput(e.target.value);
-                    e.target.setCustomValidity("");
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={tags.length >= MAX_TAGS}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white disabled:bg-gray-100"
-                placeholder={tags.length >= MAX_TAGS ? "Limite raggiunto" : "Aggiungi tag..."}
-                />
+              <div className="flex gap-2 mb-3">
+                <div className="relative flex-1">
+                  <input
+                    ref={tagInputRef}
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => {
+                      setTagInput(e.target.value);
+                      e.target.setCustomValidity("");
+                    }}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setIsInputFocused(false)}
+                    disabled={tags.length >= MAX_TAGS}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    placeholder={tags.length >= MAX_TAGS ? "Limite raggiunto" : "Aggiungi tag..."}
+                  />
+                  
+                  {/* IL MENÙ A TENDINA */}
+                  {isInputFocused && suggestions.length > 0 && tags.length < MAX_TAGS && (
+                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                      {suggestions.map((suggestion, index) => (
+                        <li
+                          key={index}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            addSpecificTag(suggestion);
+                          }}
+                          className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 transition-colors"
+                        >
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <button
-                type="button"
-                onClick={handleAddTag}
-                disabled={!tagInput.trim() || tags.length >= MAX_TAGS}
-                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
+                  type="button"
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim() || tags.length >= MAX_TAGS}
+                  className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
                 >
-                <Plus size={20} />
+                  <Plus size={20} />
                 </button>
-            </div>
+              </div>
 
-            <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {tags.map((t, index) => (
-                <span
+                  <span
                     key={index}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full"
-                >
+                  >
                     {t}
                     <button type="button" onClick={() => handleRemoveTag(t)}>
-                    <X size={14} />
+                      <X size={14} />
                     </button>
-                </span>
+                  </span>
                 ))}
-            </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -234,7 +274,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Durata (h) *</label>
                 <input
                   type="number"
-                  min = "1"
+                  min="1"
                   step="0.5"
                   value={durata}
                   onChange={(e) => setDurata(e.target.value)}
@@ -246,7 +286,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess }) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Max Persone *</label>
                 <input
                   type="number"
-                  min = "2"
+                  min="2"
                   value={maxPartecipanti}
                   onChange={(e) => setMaxPartecipanti(e.target.value)}
                   required

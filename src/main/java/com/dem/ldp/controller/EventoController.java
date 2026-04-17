@@ -1,5 +1,7 @@
 package com.dem.ldp.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.dem.ldp.dto.EventoRequest;
 import com.dem.ldp.model.Evento;
@@ -28,6 +31,7 @@ public class EventoController {
 
     @GetMapping
     public ResponseEntity<?> getAllEvents(HttpSession session) {
+
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
@@ -62,6 +66,7 @@ public class EventoController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
     @PostMapping("/{id}/prenota")
     public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
         try {
@@ -91,7 +96,7 @@ public class EventoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> modificaEvento(@PathVariable Long id, @RequestBody EventoRequest request,
-                                        HttpSession session) {
+            HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
@@ -116,25 +121,14 @@ public class EventoController {
         }
     }
 
-    @PostMapping("/{id}/prenota")
-    public ResponseEntity<?> prenotaEvento(@PathVariable Long id, HttpSession session) {
-        try {
-            eventoService.prenotaEvento(id, session);
-            return ResponseEntity.ok("Prenotazione completata con successo");
-        } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
-        }
-    }
-
     @DeleteMapping("/{id}/prenota")
     public ResponseEntity<?> cancellaPrenotazione(@PathVariable Long id, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
 
-        if(userId == null) {
+        if (userId == null) {
             return ResponseEntity.status(401).body("Sessione non valida o scaduta");
         }
-        
+
         try {
             eventoService.cancellaPrenotazione(id, session);
             return ResponseEntity.ok("Prenotazione cancellata con successo");
@@ -142,6 +136,29 @@ public class EventoController {
             System.out.println("⚠️ ERRORE CANCELLAZIONE PRENOTAZIONE: " + e.getMessage());
             return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/cerca")
+    public ResponseEntity<?> cercaEventi(HttpSession session,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> tags,
+            @RequestParam(required = false) String luogo,
+            @RequestParam(required = false) String data) { // <-- AGGIUNTI QUI
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione non valida o scaduta");
+        }
+
+        // Passiamo i parametri al Service
+        return ResponseEntity.ok(eventoService.searchForEvents(session, search, tags, luogo, data));
+    }
+
+    @GetMapping("/tags")
+    public ResponseEntity<?> getAllTags() {
+        // Chiama il metodo che hai già preparato nel Service!
+        return ResponseEntity.ok(eventoService.getAllDistinctTags());
     }
 
 }
