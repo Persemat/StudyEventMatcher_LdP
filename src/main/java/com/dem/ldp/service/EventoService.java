@@ -291,4 +291,38 @@ public class EventoService {
                 userId != null && creatore.getId().equals(userId));
     }
 
+    public List<String> getAllDistinctTags() {
+        return eventoRepository.findDistinctTags();
+    }
+
+    public List<EventoResponse> searchForEvents(HttpSession session, String search, String tag) {
+        Long userId = (Long) session.getAttribute("userId");
+
+        String searchParam = (search == null || search.trim().isEmpty()) ? null : search;
+        String tagParam = ("Tutti".equalsIgnoreCase(tag) || tag == null) ? null : tag;
+
+        // Ora passiamo solo due parametri
+        List<Evento> eventi = eventoRepository.findByFiltriDinamici(searchParam, tagParam);
+
+        boolean daSalvare = false;
+
+        for (Evento evento : eventi) {
+            if (evento.getDataOra().isBefore(java.time.LocalDateTime.now())
+                    && evento.getStato().equals("aperto")) {
+                evento.setStato("chiuso");
+                daSalvare = true;
+            }
+        }
+
+        if (daSalvare) {
+            eventoRepository.saveAll(eventi);
+        }
+
+        return eventi.stream()
+                // IL TOCCO DA MAESTRO: Filtriamo via dalla risposta quelli che
+                // sono appena stati chiusi dal ciclo for qui sopra!
+                .filter(e -> "aperto".equals(e.getStato()))
+                .map(evento -> toResponse(evento, userId))
+                .toList();
+    }
 }

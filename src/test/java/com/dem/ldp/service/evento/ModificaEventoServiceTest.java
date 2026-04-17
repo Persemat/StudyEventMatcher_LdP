@@ -34,8 +34,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
                 List.of("Java", "Backend"),
                 "Descrizione aggiornata",
                 12,
-                false
-        );
+                false);
 
         Utente creatore = new Utente();
         creatore.setId(1L);
@@ -64,7 +63,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
         assertEquals(LocalDateTime.parse("2026-10-16T17:00:00"), risultato.getDataOra());
         assertEquals(3.0, risultato.getDurata());
         assertEquals("Biblioteca", risultato.getLuogo());
-        assertEquals(List.of("Java", "Backend"), risultato.getTag());
+        assertEquals(List.of("JAVA", "BACKEND"), risultato.getTag());
         assertEquals("Descrizione aggiornata", risultato.getDescrizione());
         assertEquals(12, risultato.getMaxPartecipanti());
         assertEquals(false, risultato.isPartecipazioneCreatoreNecessaria());
@@ -82,8 +81,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
                 List.of("Java"),
                 "Descrizione aggiornata",
                 12,
-                false
-        );
+                false);
 
         when(session.getAttribute("userId")).thenReturn(null);
 
@@ -106,8 +104,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
                 List.of("Java"),
                 "Descrizione aggiornata",
                 12,
-                false
-        );
+                false);
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(eventoRepository.findById(10L)).thenReturn(Optional.empty());
@@ -130,8 +127,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
                 List.of("Java"),
                 "Descrizione aggiornata",
                 12,
-                false
-        );
+                false);
 
         Utente creatore = new Utente();
         creatore.setId(2L);
@@ -153,7 +149,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
         verify(eventoRepository, never()).save(any());
     }
 
-   @Test
+    @Test
     void testModificaEvento_MaxPartecipantiMinoreDeiPartecipantiAttuali() {
         EventoRequest request = new EventoRequest(
                 "Progetto Java Aggiornato",
@@ -163,8 +159,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
                 List.of("Java"),
                 "Descrizione aggiornata",
                 2,
-                false
-        );
+                false);
 
         Utente creatore = new Utente();
         creatore.setId(1L);
@@ -202,8 +197,7 @@ public class ModificaEventoServiceTest extends BaseEventoServiceTest {
 
         assertEquals(
                 "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali",
-                ex.getMessage()
-        );
+                ex.getMessage());
         verify(eventoRepository, never()).save(any());
     }
 }

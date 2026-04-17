@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.dem.ldp.dto.EventoRequest;
 import com.dem.ldp.model.Evento;
@@ -28,6 +29,7 @@ public class EventoController {
 
     @GetMapping
     public ResponseEntity<?> getAllEvents(HttpSession session) {
+
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
@@ -132,6 +134,26 @@ public class EventoController {
             System.out.println("⚠️ ERRORE CANCELLAZIONE PRENOTAZIONE: " + e.getMessage());
             return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/cerca")
+    public ResponseEntity<?> cercaEventi(HttpSession session,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String tag) { // <-- STATO SPARITO
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione non valida o scaduta");
+        }
+
+        return ResponseEntity.ok(eventoService.searchForEvents(session, search, tag));
+    }
+
+    @GetMapping("/tags")
+    public ResponseEntity<?> getAllTags() {
+        // Chiama il metodo che hai già preparato nel Service!
+        return ResponseEntity.ok(eventoService.getAllDistinctTags());
     }
 
 }

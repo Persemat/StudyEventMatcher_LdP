@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class CancellazionePrenotazione{
+public class CancellazionePrenotazione {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,8 +43,8 @@ public class CancellazionePrenotazione{
     private Long eventoIdCorrente;
     private int partecipantiIniziali;
 
-    @Given("l'utente è autenticato")
-    public void utenteAutenticato() {
+    @Given("l'utente è autenticato per la cancellazione")
+    public void utenteAutenticatoPerCancellazione() {
         utenteRepository.deleteAll();
         Utente u = new Utente();
         u.setNome("Mario");
@@ -52,7 +52,7 @@ public class CancellazionePrenotazione{
         u.setEmail("mario@test.com");
         u.setPassword("Pass123!");
         u = utenteRepository.save(u);
-        
+
         session.setAttribute("userId", u.getId());
     }
 
@@ -69,7 +69,7 @@ public class CancellazionePrenotazione{
         Evento e = creaEventoBase();
         e.aggiungiPartecipante(u); // Prenotazione!
         e = eventoRepository.save(e);
-        
+
         this.eventoIdCorrente = e.getId();
     }
 
@@ -78,14 +78,15 @@ public class CancellazionePrenotazione{
         eventoRepository.deleteAll();
         Evento e = creaEventoBase();
         e = eventoRepository.save(e); // Viene salvato senza aggiungere l'utente
-        
+
         this.eventoIdCorrente = e.getId();
     }
+
     @Transactional
     @And("l'utente ha una prenotazione per un evento con posti limitati")
     public void utenteHaPrenotazionePostiLimitati() {
         utenteHaUnaPrenotazione(); // Sfruttiamo il metodo sopra per creare l'iscrizione
-        
+
         // Segnamoci quanti partecipanti ci sono all'inizio (dovrebbe essere 1)
         Evento e = eventoRepository.findById(eventoIdCorrente).get();
         this.partecipantiIniziali = e.getPartecipanti().size();
@@ -108,9 +109,10 @@ public class CancellazionePrenotazione{
 
     @When("l'utente prova a cancellare la prenotazione")
     public void provaACancellareUnaPrenotazione() throws Exception {
-        // Se l'evento non è stato creato prima (come nello scenario 3), usiamo un ID fittizio "1" per far arrivare la richiesta al controller
+        // Se l'evento non è stato creato prima (come nello scenario 3), usiamo un ID
+        // fittizio "1" per far arrivare la richiesta al controller
         Long idDaCancellare = (eventoIdCorrente != null) ? eventoIdCorrente : 1L;
-        
+
         result = mockMvc.perform(delete("/Eventi/" + idDaCancellare + "/prenota").session(session));
     }
 
@@ -127,10 +129,10 @@ public class CancellazionePrenotazione{
     @Transactional
     @Then("il sistema aumenta il numero di posti disponibili")
     public void ilSistemaAumentaPostiDisponibili() throws Exception {
-     // Grazie al @Transactional qui, possiamo rileggere la lista aggiornata
+        // Grazie al @Transactional qui, possiamo rileggere la lista aggiornata
         Evento eAggiornato = eventoRepository.findById(eventoIdCorrente).get();
         int partecipantiAttuali = eAggiornato.getPartecipanti().size();
-        
+
         org.junit.jupiter.api.Assertions.assertTrue(partecipantiAttuali < partecipantiIniziali);
     }
 
@@ -153,12 +155,12 @@ public class CancellazionePrenotazione{
         e.setStato("aperto");
         e.setPartecipazioneCreatoreNecessaria(false);
         e.setCreatore(creatore);
-        
+
         if (e.getPartecipanti() == null) {
             e.setPartecipanti(new HashSet<>());
         }
-        e.aggiungiPartecipante(creatore); 
-        
+        e.aggiungiPartecipante(creatore);
+
         return e;
     }
 }
