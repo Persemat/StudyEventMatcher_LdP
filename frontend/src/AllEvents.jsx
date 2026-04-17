@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, MapPin } from "lucide-react"; 
+import { Search, Filter, MapPin, Calendar } from "lucide-react"; 
 import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
@@ -8,7 +8,8 @@ export default function AllEvents() {
   const [events, setEvents] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchLuogo, setSearchLuogo] = useState(""); // NUOVO: Stato per il filtro città
+  const [searchLuogo, setSearchLuogo] = useState(""); 
+  const [searchData, setSearchData] = useState(""); 
   const [selectedTags, setSelectedTags] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,9 @@ export default function AllEvents() {
   const [eventToEdit, setEventToEdit] = useState(null);
 
   const dropdownRef = useRef(null);
+
+  // Calcola la data di oggi nel formato YYYY-MM-DD per bloccare il calendario
+  const today = new Date().toISOString().split('T')[0];
 
   const canEdit = (event) => {
     const inizioEvento = new Date(event.dataOra);
@@ -40,7 +44,9 @@ export default function AllEvents() {
       const url = new URL("http://localhost:8080/Eventi/cerca");
       
       if (searchTerm) url.searchParams.append("search", searchTerm);
-      if (searchLuogo) url.searchParams.append("luogo", searchLuogo); // NUOVO: Inviato al backend
+      if (searchLuogo) url.searchParams.append("luogo", searchLuogo); 
+      if (searchData) url.searchParams.append("data", searchData); 
+      
       if (selectedTags.length > 0) {
         selectedTags.forEach((t) => url.searchParams.append("tags", t));
       }
@@ -64,7 +70,7 @@ export default function AllEvents() {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => { fetchEvents(); }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedTags, searchLuogo]); // Aggiunto searchLuogo alle dipendenze
+  }, [searchTerm, selectedTags, searchLuogo, searchData]); 
 
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
@@ -75,9 +81,10 @@ export default function AllEvents() {
         <p className="text-gray-600">Catalogo gruppi di studio</p>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row flex-wrap gap-4">
+        
         {/* Ricerca Titolo */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
@@ -88,8 +95,8 @@ export default function AllEvents() {
           />
         </div>
 
-        {/* NUOVO: Ricerca Città/Luogo */}
-        <div className="relative md:w-64">
+        {/* Ricerca Città/Luogo */}
+        <div className="relative md:w-48">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
@@ -100,17 +107,29 @@ export default function AllEvents() {
           />
         </div>
 
+        {/* Filtro Data (Con blocco date passate) */}
+        <div className="relative md:w-48">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="date"
+            min={today} // <-- MAGIA QUI: Disabilita i giorni nel passato
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            value={searchData}
+            onChange={(e) => setSearchData(e.target.value)}
+          />
+        </div>
+
         {/* Dropdown Tag (Multiplo) */}
-        <div className="relative md:w-64" ref={dropdownRef}>
+        <div className="relative md:w-48" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <span className="text-sm font-medium text-gray-700">
-              {selectedTags.length === 0 ? "Tutti i tag" : `${selectedTags.length} tag`}
+            <span className="text-sm font-medium text-gray-700 truncate mr-2">
+              {selectedTags.length === 0 ? "Tutti i tag" : `${selectedTags.length} tag selezionati`}
             </span>
-            <span className="text-gray-400 text-xs">▼</span>
+            <span className="text-gray-400 text-xs shrink-0">▼</span>
           </button>
           {isDropdownOpen && (
             <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto p-1">
