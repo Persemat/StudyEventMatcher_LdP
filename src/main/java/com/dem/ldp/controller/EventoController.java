@@ -1,5 +1,7 @@
 package com.dem.ldp.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -139,7 +141,9 @@ public class EventoController {
     @GetMapping("/cerca")
     public ResponseEntity<?> cercaEventi(HttpSession session,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String tag) { // <-- STATO SPARITO
+            @RequestParam(required = false) List<String> tags,
+            @RequestParam(required = false) String luogo,
+            @RequestParam(required = false) String data) { // <-- AGGIUNTI QUI
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -147,7 +151,8 @@ public class EventoController {
             return ResponseEntity.status(401).body("Sessione non valida o scaduta");
         }
 
-        return ResponseEntity.ok(eventoService.searchForEvents(session, search, tag));
+        // Passiamo i parametri al Service
+        return ResponseEntity.ok(eventoService.searchForEvents(session, search, tags, luogo, data));
     }
 
     @GetMapping("/tags")

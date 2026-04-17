@@ -295,15 +295,37 @@ public class EventoService {
         return eventoRepository.findDistinctTags();
     }
 
-    public List<EventoResponse> searchForEvents(HttpSession session, String search, String tag) {
+    public List<EventoResponse> searchForEvents(HttpSession session, String search, List<String> tags, String luogo,
+            String data) {
         Long userId = (Long) session.getAttribute("userId");
 
         String searchParam = (search == null || search.trim().isEmpty()) ? null : search;
-        String tagParam = ("Tutti".equalsIgnoreCase(tag) || tag == null) ? null : tag;
 
-        // Ora passiamo solo due parametri
-        List<Evento> eventi = eventoRepository.findByFiltriDinamici(searchParam, tagParam);
+        // NUOVO: Logica di controllo della lista di tag
+        boolean checkTags = tags != null && !tags.isEmpty() && !tags.contains("Tutti");
+        // Se è vuota passiamo List.of() per non far arrabbiare Hibernate
+        List<String> tagsParam = checkTags ? tags : List.of();
 
+        long tagCount = checkTags ? tagsParam.size() : 0;
+
+        String luogoParam = (luogo == null || luogo.trim().isEmpty()) ? null : luogo;
+
+        java.time.LocalDateTime dataStart = null;
+        java.time.LocalDateTime dataEnd = null;
+
+        if (data != null && !data.trim().isEmpty()) {
+            try {
+                java.time.LocalDate parsedDate = java.time.LocalDate.parse(data);
+                dataStart = parsedDate.atStartOfDay();
+                dataEnd = parsedDate.plusDays(1).atStartOfDay();
+            } catch (Exception e) {
+                System.out.println("Formato data ignorato: " + data);
+            }
+        }
+
+        // Aggiorniamo la chiamata al repository aggiungendo checkTags
+        List<Evento> eventi = eventoRepository.findByFiltriDinamici(
+                searchParam, checkTags, tagsParam, tagCount, luogoParam, dataStart, dataEnd);
         boolean daSalvare = false;
 
         for (Evento evento : eventi) {

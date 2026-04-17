@@ -21,10 +21,22 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
         List<String> findDistinctTags();
 
         @Query("SELECT e FROM Evento e WHERE " +
-                        "e.stato = 'aperto' AND " + // <-- REGOLA FISSA: SOLO APERTI
-                        "(:tag IS NULL OR :tag MEMBER OF e.tag) AND " +
-                        "(:search IS NULL OR LOWER(e.titolo) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.descrizione) LIKE LOWER(CONCAT('%', :search, '%')))")
+                        "e.stato = 'aperto' AND " +
+                        // LA MAGIA DELL'AND: Conta i tag corrispondenti e verifica che siano pari al
+                        // numero di tag cercati
+                        "(:checkTags = false OR :tagCount = (SELECT COUNT(t) FROM Evento e2 JOIN e2.tag t WHERE e2.id = e.id AND t IN :tags)) AND "
+                        +
+                        "(:search IS NULL OR LOWER(e.titolo) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.descrizione) LIKE LOWER(CONCAT('%', :search, '%'))) AND "
+                        +
+                        "(:luogo IS NULL OR LOWER(e.luogo) LIKE LOWER(CONCAT('%', :luogo, '%'))) AND " +
+                        "(:dataStart IS NULL OR e.dataOra >= :dataStart) AND " +
+                        "(:dataEnd IS NULL OR e.dataOra < :dataEnd)")
         List<Evento> findByFiltriDinamici(
                         @Param("search") String search,
-                        @Param("tag") String tag);
+                        @Param("checkTags") boolean checkTags,
+                        @Param("tags") List<String> tags,
+                        @Param("tagCount") long tagCount, // <-- NUOVO PARAMETRO
+                        @Param("luogo") String luogo,
+                        @Param("dataStart") java.time.LocalDateTime dataStart,
+                        @Param("dataEnd") java.time.LocalDateTime dataEnd);
 }
