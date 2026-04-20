@@ -14,13 +14,16 @@ export default function EventCard({
   const isChiuso = stato === "chiuso";
   const inizioEvento = new Date(event.dataOra);
   const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const isInterazioneBloccata = isChiuso && !event.isCreatedByMe && !event.isBooked;
 
   const canEdit = event.isCreatedByMe && inizioEvento > tra24Ore;
 
   return (
     <div
-      className={`bg-white rounded-lg shadow transition-shadow p-6 space-y-4 border border-gray-100 ${
-        isChiuso ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
+      className={`bg-white rounded-lg shadow transition-all p-6 space-y-4 border ${
+        isChiuso ? "border-gray-200 bg-gray-50 opacity-75" : "border-gray-100 hover:shadow-lg"
+      } ${
+        isInterazioneBloccata ? "pointer-events-none select-none grayscale" : "pointer-events-auto"
       }`}
     >
       {/* 1. Titolo e Tag (Dalla List<String> tag) */}
@@ -89,71 +92,45 @@ export default function EventCard({
       <div className="flex gap-2 pt-2">
         {event.isCreatedByMe ? (
           <div className="flex-1 flex gap-2">
-            {/* Tasto Modifica */}
             <button 
               disabled={!canEdit}
-              onClick={canEdit ? () => onEdit(event.id) : undefined}
+              onClick={() => onEdit(event.id)}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
                 !canEdit
-                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
                   : "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
               }`}
-              title={
-                !canEdit
-                  ? "Non puoi modificare un evento entro 24 ore dall'inizio"
-                  : ""
-              }
             >
-              <Pencil className="w-4 h-4" />
-              MODIFICA
+              <Pencil className="w-4 h-4" /> MODIFICA
             </button>
 
-            {/* Tasto Annulla/Abbandona per il Creatore */}
             <button 
-              disabled={isChiuso}
               onClick={onCancelBooking} 
-              className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
-                isChiuso
-                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
-                  : "bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
-              }`}
+              className="flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
             >
               <X className="w-4 h-4" />
               {event.partecipazioneCreatoreNecessaria ? "ANNULLA" : "ABBANDONA"}
             </button>
           </div>
         ) : event.isBooked ? (
-          /* Tasto per l'utente prenotato */
+          /* Se sei prenotato, il pointer-events-auto del padre ti permette di cliccare qui */
           <button 
-            disabled={isChiuso}
             onClick={onCancelBooking} 
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-              isChiuso
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-            }`}
+            className="flex-1 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2"
           >
-            <X className="w-4 h-4" />
-            ANNULLA PRENOTAZIONE
+            <X className="w-4 h-4" /> ANNULLA PRENOTAZIONE
           </button>
-        ) : isPieno ? (
-          /* Stato evento completo */
-          <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold text-center cursor-not-allowed">
-            EVENTO COMPLETO
+        ) : isPieno || isChiuso ? (
+          /* Se sei fuori e l'evento è pieno, vedrai questo e pointer-events-none ti bloccherà */
+          <span className="flex-1 bg-gray-200 text-gray-400 py-2 rounded-lg text-sm font-bold text-center cursor-not-allowed">
+            {isPieno ? "EVENTO COMPLETO" : "CHIUSO"}
           </span>
         ) : (
-          /* Tasto prenotazione standard */
           <button 
-            disabled={isChiuso}
             onClick={() => onBook(event.id)} 
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-              isChiuso
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
+            className="flex-1 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2"
           >
-            <Check className="w-4 h-4" />
-            PRENOTA POSTO
+            <Check className="w-4 h-4" /> PRENOTA POSTO
           </button>
         )}
       </div>
