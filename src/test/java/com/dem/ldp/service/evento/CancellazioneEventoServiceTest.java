@@ -71,6 +71,7 @@ public class CancellazioneEventoServiceTest extends BaseEventoServiceTest  {
         evento.setId(11L);
         evento.setTitolo("Evento test");
         evento.setCreatore(creatore);
+        evento.setMaxPartecipanti(5);
         evento.setPartecipazioneCreatoreNecessaria(false);
         evento.setPartecipanti(new HashSet<>());
 
