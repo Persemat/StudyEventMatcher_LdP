@@ -1,85 +1,124 @@
+# stages:
+#   - build
+#   - unit_test
+#   - integration_test
+#   - package
+#   - deploy
 
-# non far partire la pipeline con la commit, 
-# si può eseguire solo dalla sezione pipeline di gitlab manualmente
-workflow:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: always
-    - when: never
-    
-stages:
-  - frontend
-  - backend
-  - test
-  - package
+# ########################
+# # GLOBAL CACHE
+# ########################
 
-cache:
-  # Maven
-  - key: maven
-    paths:
-      - ~/.m2/repository
-  # Node/NPM
-  - key: frontend
-    paths:
-      - frontend/node_modules/
+# cache:
+#   paths:
+#     - .m2/repository
+#     - frontend/node_modules
 
-# 1️⃣ Build frontend
-frontend-build:
-  stage: frontend
-  image: node:20
-  before_script:
-    - cd frontend
-    - npm install
-  script:
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist/
+# ########################
+# # BUILD
+# ########################
 
-# 2️⃣ Prepare backend (copy frontend build)
-backend-prepare:
-  stage: backend
-  image: maven:3.9-eclipse-temurin-17
-  dependencies:
-    - frontend-build
-  script:
-    - mkdir -p src/main/resources/static
-    - cp -r frontend/dist/* src/main/resources/static/
-  artifacts:
-    paths:
-      - src/main/resources/static/
+# build_backend:
+#   stage: build
+#   image: maven:3.9.6-eclipse-temurin-21
+#   script:
+#     - cd backend
+#     - mvn clean compile
+#   artifacts:
+#     paths:
+#       - backend/target
+#     expire_in: 1h
 
-# 3️⃣ Unit tests
-unit-tests:
-  stage: test
-  image: maven:3.9-eclipse-temurin-17
-  dependencies:
-    - backend-prepare
-  script:
-    - mvn clean test -Dspring.profiles.active=test
-  artifacts:
-    when: always
-    paths:
-      - target/surefire-reports/
+# build_frontend:
+#   stage: build
+#   image: node:22-alpine
+#   script:
+#     - cd frontend
+#     - npm ci
+#   artifacts:
+#     paths:
+#       - frontend/node_modules
+#     expire_in: 1h
 
-# 4️⃣ Integration tests
-integration-tests:
-  stage: test
-  image: maven:3.9-eclipse-temurin-17
-  dependencies:
-    - backend-prepare
-  script:
-    - mvn verify -Dspring.profiles.active=test
+# ########################
+# # UNIT TEST
+# ########################
 
-# 5️⃣ Package final application
-package:
-  stage: package
-  image: maven:3.9-eclipse-temurin-17
-  dependencies:
-    - unit-tests
-    - integration-tests
-  script:
-    - mvn clean package -DskipTests
-  artifacts:
-    paths:
-      - target/*.jar
+# unit_test_backend:
+#   stage: unit_test
+#   image: maven:3.9.6-eclipse-temurin-21
+#   script:
+#     - cd backend
+#     - mvn clean test
+
+# ########################
+# # INTEGRATION TEST (MySQL)
+# ########################
+
+# integration_test_backend:
+#   stage: integration_test
+#   image: maven:3.9.6-eclipse-temurin-21
+#   script:
+#   - cd backend
+#   - mvn failsafe:integration-test
+
+#   # services:
+#   #   - name: mysql:8
+#   #     alias: db
+#   # variables:
+#   #   DB_HOST: db
+#   #   DB_NAME: mydb
+#   #   DB_USER: appuser
+#   #   DB_PASSWORD: apppass
+#   #   MYSQL_ROOT_PASSWORD: rootpass123
+#   # script:
+#   #   - cd backend
+#   #   # attesa DB
+#   #   - apt-get update && apt-get install -y mysql-client
+#   #   - until mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" -e "SELECT 1"; do sleep 3; done
+#   #   - mvn verify -Pintegration
+
+# ########################
+# # PACKAGE (artefatti pronti)
+# ########################
+
+# package_backend:
+#   stage: package
+#   image: maven:3.9.6-eclipse-temurin-21
+#   script:
+#     - cd backend
+#     - mvn clean package -DskipTests
+#   artifacts:
+#     paths:
+#       - backend/target/*.jar
+
+# package_frontend:
+#   stage: package
+#   image: node:22-alpine
+#   script:
+#     - cd frontend
+#     - npm ci
+#     - npm run build
+#   artifacts:
+#     paths:
+#       - frontend/dist
+
+# ########################
+# # DEPLOY (artifact-based)
+# ########################
+
+# # deploy:
+# #   stage: deploy
+# #   script:
+# #     - echo "Deploy application (esempio)"
+# #     - echo "Backend JAR pronto in backend/target"
+# #     - echo "Frontend build pronto in frontend/dist"
+# #   only:
+# #     - main
+
+
+
+# # mvn clean test runare unit tests
+# # mvn failsafe:integration-test runnare integration test
+
+# # mvn "-Dit.test=RunCucumberTest" verify per runare cucumber

@@ -1,96 +1,113 @@
+//EventCard
 import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
 
 export default function EventCard({
-  event, // Questo oggetto arriva dal tuo List<Evento> di Spring
+  event,
   onBook,
   onCancelBooking,
   onEdit
 }) {
-  // Calcolo partecipanti (assumendo che il backend ti mandi una lista o un conteggio)
-  // Se il backend non manda 'currentParticipants', per ora mettiamo 0
-  const partecipantiAttuali = event.currentParticipants || 0;
-  const isPieno = partecipantiAttuali >= event.maxPartecipanti;
-  const stato = event.stato || "sconosciuto";
-  const isChiuso = stato === "chiuso";
-  const inizioEvento = new Date(event.dataOra);
-  const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const currentParticipants = event.currentParticipants || 0;
+  const isFull = currentParticipants >= event.maxParticipants;
+  const status = event.status || "unknown";
+  const isClosed = status === "closed";
+  const eventStart = new Date(event.dateTime);
+  const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  const canEdit = event.isCreatedByMe && inizioEvento > tra24Ore;
+  const canEdit = event.isCreatedByMe && eventStart > in24Hours;
 
   return (
     <div
       className={`bg-white rounded-lg shadow transition-shadow p-6 space-y-4 border border-gray-100 ${
-        isChiuso ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
+        isClosed ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
       }`}
     >
-      {/* 1. Titolo e Tag (Dalla List<String> tag) */}
+      {/* Title and Tags */}
       <div>
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-bold text-lg text-gray-900">{event.titolo}</h3>
+          <h3 className="font-bold text-lg text-gray-900">{event.title}</h3>
+
           <div className="flex gap-1 flex-wrap justify-end">
-            {event.tag && event.tag.map((t, index) => (
-              <span key={index} className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-semibold">
-                {t}
-              </span>
-            ))}
+            {event.tags &&
+              event.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-semibold"
+                >
+                  {tag}
+                </span>
+              ))}
           </div>
         </div>
+
         <p className="text-gray-600 text-sm line-clamp-2">
-          {event.descrizione || "Nessuna descrizione fornita."}
+          {event.description || "No description provided."}
         </p>
       </div>
 
-      {/* 2. Dettagli (LocalDateTime dataOra, Double durata, String luogo) */}
+      {/* Event details */}
       <div className="grid grid-cols-2 gap-y-3 gap-x-2">
         <div className="flex items-center gap-2 text-gray-600 text-sm">
           <Calendar className="w-4 h-4 text-blue-500" />
-          <span>{new Date(event.dataOra).toLocaleDateString("it-IT")}</span>
+          <span>{new Date(event.dateTime).toLocaleDateString("en-GB")}</span>
         </div>
 
         <div className="flex items-center gap-2 text-gray-600 text-sm">
           <Clock className="w-4 h-4 text-blue-500" />
-          <span>{new Date(event.dataOra).toLocaleTimeString("it-IT", {hour: '2-digit', minute:'2-digit'})}</span>
+          <span>
+            {new Date(event.dateTime).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
         </div>
 
         <div className="flex items-center gap-2 text-gray-600 text-sm">
           <MapPin className="w-4 h-4 text-red-500" />
-          <span className="line-clamp-1">{event.luogo}</span>
+          <span className="line-clamp-1">{event.location}</span>
         </div>
 
         <div className="flex items-center gap-2 text-gray-600 text-sm">
           <Users className="w-4 h-4 text-green-500" />
-          <span>{partecipantiAttuali}/{event.maxPartecipanti}</span>
+          <span>
+            {currentParticipants}/{event.maxParticipants}
+          </span>
         </div>
       </div>
 
-      {/* 3. Info Extra (Durata e Stato) */}
+      {/* Extra info */}
       <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-3">
-        <span>Durata: <strong>{event.durata}h</strong></span>
+        <span>
+          Duration: <strong>{event.duration}h</strong>
+        </span>
+
         <span
           className={`font-bold ${
-            stato === "aperto"
+            status === "open"
               ? "text-green-600"
-              : stato === "chiuso"
+              : status === "closed"
               ? "text-red-600"
               : "text-gray-400"
           }`}
         >
-          ● {stato.toUpperCase()}
+          ● {status.toUpperCase()}
         </span>
       </div>
 
-      {/* 4. Creatore (Dall'oggetto Utente creatore) */}
+      {/* Creator */}
       <div className="flex items-center gap-1 text-xs text-gray-400">
         <ShieldCheck className="w-3 h-3" />
-        <span>Organizzato da: {event.creatore?.nome} {event.creatore?.cognome}</span>
+        <span>
+          Organized by: {event.creator?.name} {event.creator?.lastName}
+        </span>
       </div>
 
-      {/* 5. Azioni (Usando isCreatedByMe e isBooked arrivati dal BE) */}
+      {/* Actions */}
       <div className="flex gap-2 pt-2">
         {event.isCreatedByMe ? (
           <div className="flex-1 flex gap-2">
-            {/* Tasto Modifica */}
-            <button 
+            {/* Edit button */}
+            <button
               disabled={!canEdit}
               onClick={canEdit ? () => onEdit(event.id) : undefined}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
@@ -100,60 +117,60 @@ export default function EventCard({
               }`}
               title={
                 !canEdit
-                  ? "Non puoi modificare un evento entro 24 ore dall'inizio"
+                  ? "You cannot edit an event within 24 hours of its start"
                   : ""
               }
             >
               <Pencil className="w-4 h-4" />
-              MODIFICA
+              EDIT
             </button>
 
-            {/* Tasto Annulla/Abbandona per il Creatore */}
-            <button 
-              disabled={isChiuso}
-              onClick={onCancelBooking} 
+            {/* Cancel/leave for creator */}
+            <button
+              disabled={isClosed}
+              onClick={onCancelBooking}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
-                isChiuso
+                isClosed
                   ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
                   : "bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
               }`}
             >
               <X className="w-4 h-4" />
-              {event.partecipazioneCreatoreNecessaria ? "ANNULLA" : "ABBANDONA"}
+              {event.creatorParticipationRequired ? "CANCEL" : "LEAVE"}
             </button>
           </div>
         ) : event.isBooked ? (
-          /* Tasto per l'utente prenotato */
-          <button 
-            disabled={isChiuso}
-            onClick={onCancelBooking} 
+          /* booked user */
+          <button
+            disabled={isClosed}
+            onClick={onCancelBooking}
             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-              isChiuso
+              isClosed
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                 : "bg-orange-100 text-orange-700 hover:bg-orange-200"
             }`}
           >
             <X className="w-4 h-4" />
-            ANNULLA PRENOTAZIONE
+            CANCEL BOOKING
           </button>
-        ) : isPieno ? (
-          /* Stato evento completo */
+        ) : isFull ? (
+          /* full event */
           <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold text-center cursor-not-allowed">
-            EVENTO COMPLETO
+            EVENT FULL
           </span>
         ) : (
-          /* Tasto prenotazione standard */
-          <button 
-            disabled={isChiuso}
-            onClick={() => onBook(event.id)} 
+          /* book button */
+          <button
+            disabled={isClosed}
+            onClick={() => onBook(event.id)}
             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-              isChiuso
+              isClosed
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                 : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
             <Check className="w-4 h-4" />
-            PRENOTA POSTO
+            BOOK SEAT
           </button>
         )}
       </div>

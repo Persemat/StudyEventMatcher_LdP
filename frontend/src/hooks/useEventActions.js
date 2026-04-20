@@ -1,13 +1,14 @@
+//useEventActions.js
 import { useState } from 'react';
 
 export const useEventActions = (refreshCallback) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Azione: PRENOTA
+  // Action: BOOK
   const handleBook = async (eventId) => {
     setIsProcessing(true);
     try {
-      const response = await fetch(`/Eventi/${eventId}/prenota`, {
+      const response = await fetch(`/api/events/${eventId}/book`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -15,30 +16,30 @@ export const useEventActions = (refreshCallback) => {
       });
 
       if (!response.ok) {
-        throw new Error("Errore nella prenotazione");
+        throw new Error("Error while booking the event");
       }
 
-      console.log("✅ Prenotazione effettuata con successo!");
+      console.log("✅ Booking completed successfully!");
 
-      // aggiorna lista eventi
+      // refresh events list
       refreshCallback?.();
 
     } catch (error) {
-      console.error("❌ Errore:", error);
-      alert("Errore durante la prenotazione");
+      console.error("❌ Error:", error);
+      alert("Error during booking");
     } finally {
       setIsProcessing(false);
     }
-};
+  };
 
-  // Azione: ABBANDONA/ANNULLA PRENOTAZIONE
+  // Action: CANCEL / LEAVE EVENT
   const handleCancelBooking = async (eventId, isCreatorRequired, isCreatedByMe) => {
-    // 1. MESSAGGIO DI CONFERMA (Logica UI pronta)
+
     const message = isCreatedByMe
       ? (isCreatorRequired
-          ? "Sei il creatore e la tua presenza è obbligatoria. L'INTERO evento verrà eliminato. Confermi?"
-          : "Sei il creatore. Verrai rimosso dall'evento. Se ci sono altri iscritti, il ruolo di creatore verrà riassegnato. Confermi?")
-      : "Vuoi davvero annullare la tua partecipazione?";
+          ? "You are the creator and your presence is required. The ENTIRE event will be deleted. Do you confirm?"
+          : "You are the creator. You will be removed from the event. If there are other participants, the creator role will be reassigned. Do you confirm?")
+      : "Do you really want to cancel your participation?";
 
     if (!window.confirm(message)) return;
 
@@ -48,12 +49,12 @@ export const useEventActions = (refreshCallback) => {
       let response;
 
       if (isCreatedByMe) {
-        response = await fetch(`/Eventi/${eventId}`, {
+        response = await fetch(`/api/events/${eventId}`, {
           method: "DELETE",
           credentials: "include",
         });
       } else {
-        response = await fetch(`/Eventi/${eventId}/prenota`, {
+        response = await fetch(`/api/events/${eventId}/book`, {
           method: "DELETE",
           credentials: "include",
         });
@@ -62,14 +63,15 @@ export const useEventActions = (refreshCallback) => {
       const text = await response.text();
 
       if (!response.ok) {
-        throw new Error(text || "Operazione non riuscita");
+        throw new Error(text || "Operation failed");
       }
 
-      console.log("Operazione completata con successo!");
+      console.log("Operation completed successfully!");
       refreshCallback?.();
+
     } catch (error) {
-      console.error("Errore durante l'operazione:", error);
-      alert(error.message || "Si è verificato un errore");
+      console.error("Error during operation:", error);
+      alert(error.message || "An error occurred");
     } finally {
       setIsProcessing(false);
     }

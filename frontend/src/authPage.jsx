@@ -1,3 +1,4 @@
+//authPage
 import { useState } from 'react'
 import { useNavigate, Link } from "react-router-dom";
 
@@ -6,34 +7,34 @@ export default function AuthPage(props) {
 
   const navigate = useNavigate();
 
-  const [nome, setNome] = useState('')
-  const [cognome, setCognome] = useState('')
+  const [name, setName] = useState('')
+  const [lastname, setLastname] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confermaPassword, setConfermaPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
-  const [mostraPassword, setMostraPassword] = useState(false)
-  const [mostraConfermaPassword, setMostraConfermaPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const [messaggio, setMessaggio] = useState('')
-  const [errore, setErrore] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
-  function resetMessaggi() {
-    setMessaggio('')
-    setErrore('')
+  function resetMessages() {
+    setMessage('')
+    setError('')
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    resetMessaggi()
+    resetMessages()
 
-    if (!isLogin && password !== confermaPassword) {
-      setErrore('Le password non coincidono')
+    if (!isLogin && password !== confirmPassword) {
+      setError('Passwords do not match')
       return
     }
 
     try {
-      const response = await fetch(isLogin ? '/Utenti/login' : '/Utenti', {
+      const response = await fetch(isLogin ? '/api/user/login' : '/api/user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,7 +42,7 @@ export default function AuthPage(props) {
         body: JSON.stringify(
           isLogin
             ? { email, password }
-            : { nome, cognome, email, password }
+            : { name, lastname, email, password }
         ),
         credentials: 'include'
       })
@@ -54,7 +55,7 @@ export default function AuthPage(props) {
       const data = await response.json()
 
       if (isLogin) {
-        setMessaggio(`Accesso effettuato per: ${data.email}`);
+        setMessage(`Logged in as: ${data.email}`);
         props.onLoginSuccess(data);
 
         setTimeout(() => {
@@ -62,8 +63,8 @@ export default function AuthPage(props) {
         }, 1000);
 
       } else {
-        setMessaggio(
-          `Registrazione completata per: ${data.nome ?? ''} ${data.cognome ?? ''}`
+        setMessage(
+          `Registration completed for: ${data.name ?? ''} ${data.lastname ?? ''}`
         );
 
         setTimeout(() => {
@@ -71,16 +72,16 @@ export default function AuthPage(props) {
         }, 2000);
       }
 
-      // reset campi
-      setNome('')
-      setCognome('')
+      // reset fields
+      setName('')
+      setLastname('')
       setEmail('')
       setPassword('')
-      setConfermaPassword('')
+      setConfirmPassword('')
 
     } catch (error) {
       console.error(error)
-      setErrore(error.message)
+      setError(error.message)
     }
   }
 
@@ -94,8 +95,8 @@ export default function AuthPage(props) {
 
         <p style={styles.subtitle}>
           {isLogin
-            ? 'Benvenuto! Accedi al tuo account'
-            : 'Crea il tuo account e inizia a studiare insieme'}
+            ? 'Welcome back! Sign in to your account'
+            : 'Create your account and start studying together'}
         </p>
 
         <div style={styles.card}>
@@ -104,43 +105,42 @@ export default function AuthPage(props) {
               type="button"
               onClick={() => {
                 setIsLogin(true)
-                resetMessaggi()
+                resetMessages()
               }}
               style={{
                 ...styles.tabButton,
                 ...(isLogin ? styles.activeTab : {}),
               }}
             >
-              Accedi
+              Login
             </button>
 
             <button
               type="button"
               onClick={() => {
                 setIsLogin(false)
-                resetMessaggi()
+                resetMessages()
               }}
               style={{
                 ...styles.tabButton,
                 ...(!isLogin ? styles.activeTab : {}),
               }}
             >
-              Registrati
+              Register
             </button>
           </div>
 
           <form onSubmit={handleSubmit} style={styles.form}>
 
-            {/* Nome e Cognome solo in registrazione */}
             {!isLogin && (
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="nome" style={styles.label}>Nome</label>
+                  <label htmlFor="name" style={styles.label}>Name</label>
                   <input
-                    id="nome"
+                    id="name"
                     type="text"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Mario"
                     required
                     style={styles.input}
@@ -148,12 +148,12 @@ export default function AuthPage(props) {
                 </div>
 
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="cognome" style={styles.label}>Cognome</label>
+                  <label htmlFor="lastname" style={styles.label}>Lastname</label>
                   <input
-                    id="cognome"
+                    id="lastname"
                     type="text"
-                    value={cognome}
-                    onChange={(e) => setCognome(e.target.value)}
+                    value={lastname}
+                    onChange={(e) => setLastname(e.target.value)}
                     placeholder="Rossi"
                     required
                     style={styles.input}
@@ -181,7 +181,7 @@ export default function AuthPage(props) {
               <div style={styles.passwordWrapper}>
                 <input
                   id="password"
-                  type={mostraPassword ? 'text' : 'password'}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -191,7 +191,7 @@ export default function AuthPage(props) {
 
                 <button
                   type="button"
-                  onClick={() => setMostraPassword(!mostraPassword)}
+                  onClick={() => setShowPassword(!showPassword)}
                   style={styles.eyeButton}
                 >
                   👁
@@ -199,19 +199,18 @@ export default function AuthPage(props) {
               </div>
             </div>
 
-            {/* Conferma password solo in registrazione */}
             {!isLogin && (
               <div style={styles.field}>
-                <label htmlFor="confermaPassword" style={styles.label}>
-                  Conferma password
+                <label htmlFor="confirmPassword" style={styles.label}>
+                  Confirm password
                 </label>
 
                 <div style={styles.passwordWrapper}>
                   <input
-                    id="confermaPassword"
-                    type={mostraConfermaPassword ? 'text' : 'password'}
-                    value={confermaPassword}
-                    onChange={(e) => setConfermaPassword(e.target.value)}
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     style={styles.passwordInput}
@@ -219,7 +218,7 @@ export default function AuthPage(props) {
 
                   <button
                     type="button"
-                    onClick={() => setMostraConfermaPassword(!mostraConfermaPassword)}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     style={styles.eyeButton}
                   >
                     👁
@@ -227,20 +226,21 @@ export default function AuthPage(props) {
                 </div>
               </div>
             )}
+
             {isLogin && (
               <Link to="/forgot-password" style={styles.linkButton}>
-                Password dimenticata?
+                Forgot password?
               </Link>
             )}
+
             <button type="submit" style={styles.submitButton}>
-              {isLogin ? 'Accedi' : 'Registrati'}
+              {isLogin ? 'Login' : 'Register'}
             </button>
 
-            
           </form>
 
-          {messaggio && <p style={styles.success}>{messaggio}</p>}
-          {errore && <p style={styles.error}>{errore}</p>}
+          {message && <p style={styles.success}>{message}</p>}
+          {error && <p style={styles.error}>{error}</p>}
         </div>
       </section>
     </main>
@@ -412,5 +412,6 @@ const styles = {
   textAlign: 'left',
   display: 'block',
   cursor: 'pointer',
-}
+  }
+
 }

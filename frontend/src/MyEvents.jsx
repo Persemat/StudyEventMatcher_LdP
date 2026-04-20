@@ -1,3 +1,4 @@
+//MuEvents
 import React, { useState, useEffect } from "react";
 import { Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
@@ -14,35 +15,35 @@ export default function MyEvents() {
   const [eventToEdit, setEventToEdit] = useState(null);
 
   const canEdit = (event) => {
-    const inizioEvento = new Date(event.dataOra);
-    const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    return event.isCreatedByMe && inizioEvento > tra24Ore;
+    const eventStart = new Date(event.dateTime);
+    const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return event.isCreatedByMe && eventStart > in24Hours;
   };
 
   const now = new Date();
 
-  // Controllo se evento è futuro o passato
-  const isFutureEvent = (event) => new Date(event.dataOra) >= now;
-  const isPastEvent = (event) => new Date(event.dataOra) < now;
+  // Check if event is future or past
+  const isFutureEvent = (event) => new Date(event.dateTime) >= now;
+  const isPastEvent = (event) => new Date(event.dateTime) < now;
 
-  // Solo eventi futuri creati da me
+  // Only future events created by me
   const createdEvents = events.filter(
     (e) => e.isCreatedByMe && isFutureEvent(e)
   );
 
-  // Solo eventi futuri a cui partecipo ma non creati da me
+  // Only future events I joined but didn't create
   const bookedEvents = events.filter(
     (e) => e.isBooked && !e.isCreatedByMe && isFutureEvent(e)
   );
 
-  // Storico: eventi passati creati da me o a cui ho partecipato
+  // History: past events created by me or joined
   const historyEvents = events.filter(
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
 
-  // --- LA NOSTRA MAGIA RE-INSERITA: ESTRAZIONE TAG ---
+  // Extract tags
   const availableTags = Array.from(
-    new Set(events.flatMap((event) => event.tag || []))
+    new Set(events.flatMap((event) => event.tags || []))
   );
 
   const fetchEvents = async () => {
@@ -50,20 +51,20 @@ export default function MyEvents() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/Eventi", {
+      const response = await fetch("/api/events", {
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error("Errore nel recupero eventi");
+        throw new Error("Error fetching events");
       }
 
       const data = await response.json();
-      console.log("EVENTI DAL BACKEND:", data);
+      console.log("EVENTS FROM BACKEND:", data);
       setEvents(data);
     } catch (error) {
-      console.error("Errore fetch eventi:", error);
-      setError("Errore nel caricamento degli eventi");
+      console.error("Fetch events error:", error);
+      setError("Error loading events");
       setEvents([]);
     } finally {
       setLoading(false);
@@ -92,20 +93,24 @@ export default function MyEvents() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">I Miei Eventi</h1>
-          <p className="text-gray-600 mt-1">Gestisci le tue attività di studio</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Events</h1>
+          <p className="text-gray-600 mt-1">
+            Manage your study activities
+          </p>
         </div>
+
         <button
           onClick={() => setShowCreateModal(true)}
           className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
-          <Plus className="w-5 h-5" /> Crea Evento
+          <Plus className="w-5 h-5" /> Create Event
         </button>
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex">
+
           <button
             onClick={() => setActiveTab("created")}
             className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
@@ -114,7 +119,7 @@ export default function MyEvents() {
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
-            Creati da me ({createdEvents.length})
+            Created by Me ({createdEvents.length})
           </button>
 
           <button
@@ -125,7 +130,7 @@ export default function MyEvents() {
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
-            A cui partecipo ({bookedEvents.length})
+            Joined Events ({bookedEvents.length})
           </button>
 
           <button
@@ -136,14 +141,16 @@ export default function MyEvents() {
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
-            Storico ({historyEvents.length})
+            History ({historyEvents.length})
           </button>
+
         </div>
       </div>
 
       {/* Grid Content */}
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
           {displayedEvents.map((event) => (
             <EventCard
               key={event.id}
@@ -152,7 +159,7 @@ export default function MyEvents() {
               onCancelBooking={() =>
                 handleCancelBooking(
                   event.id,
-                  event.partecipazioneCreatoreNecessaria,
+                  event.creatorParticipationRequired,
                   event.isCreatedByMe
                 )
               }
@@ -164,14 +171,15 @@ export default function MyEvents() {
             <div className="col-span-full bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-200 p-12 text-center">
               <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 font-medium">
-                Nessun evento in questa categoria
+                No events in this category
               </p>
             </div>
           )}
+
         </div>
       )}
 
-      {/* Modale CreaEvento */}
+      {/* Create Event Modal */}
       {showCreateModal && (
         <EventFormModal
           mode="create"
@@ -180,11 +188,11 @@ export default function MyEvents() {
             setShowCreateModal(false);
             fetchEvents();
           }}
-          availableTags={availableTags} // <-- PASSATO AL COMPONENTE!
+          availableTags={availableTags}
         />
       )}
 
-      {/* Modale ModificaEvento */}
+      {/* Edit Event Modal */}
       {eventToEdit && (
         <EventFormModal
           mode="edit"
@@ -194,9 +202,10 @@ export default function MyEvents() {
             setEventToEdit(null);
             fetchEvents();
           }}
-          availableTags={availableTags} // <-- PASSATO ANCHE QUI!
+          availableTags={availableTags}
         />
       )}
+
     </div>
   );
 }

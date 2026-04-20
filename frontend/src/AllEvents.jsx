@@ -1,3 +1,4 @@
+//AllEvents
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, MapPin } from "lucide-react"; 
 import EventCard from "./EventCard";
@@ -8,85 +9,97 @@ export default function AllEvents() {
   const [events, setEvents] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchLuogo, setSearchLuogo] = useState(""); // NUOVO: Stato per il filtro città
+  const [searchLocation, setSearchLocation] = useState(""); // NUOVO: Stato per il filtro città
   const [selectedTags, setSelectedTags] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
-
+  
   const dropdownRef = useRef(null);
 
   const canEdit = (event) => {
-    const inizioEvento = new Date(event.dataOra);
-    const tra24Ore = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    return event.isCreatedByMe && inizioEvento > tra24Ore;
+    const eventStart = new Date(event.dateTime);
+    const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return event.isCreatedByMe && eventStart > in24Hours;
   };
+
 
   const fetchTags = async () => {
     try {
-      const res = await fetch("http://localhost:8080/Eventi/tags", { credentials: "include" });
+      const res = await fetch("/api/events/tags", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setAvailableTags(data.filter(t => t !== "Tutti"));
+        setAvailableTags(data.filter(t => t !== "All"));
       }
     } catch (err) { console.error("Errore fetch tags:", err); }
   };
+
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       setError("");
-      const url = new URL("http://localhost:8080/Eventi/cerca");
       
+      const url = new URL("/api/events/search", window.location.origin);
       if (searchTerm) url.searchParams.append("search", searchTerm);
-      if (searchLuogo) url.searchParams.append("luogo", searchLuogo); // NUOVO: Inviato al backend
+      if (searchLocation) url.searchParams.append("location", searchLocation); // NUOVO: Inviato al backend
       if (selectedTags.length > 0) {
         selectedTags.forEach((t) => url.searchParams.append("tags", t));
       }
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: "GET",
         credentials: "include",
       });
 
-      if (!response.ok) throw new Error("Errore nel recupero degli eventi");
+      if (!response.ok) {
+        throw new Error("Error fetching events");
+      }
+
       const data = await response.json();
+
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError("Impossibile caricare gli eventi");
+      console.error("Error fetching events:", err);
+      setError("Unable to load events");
       setEvents([]);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
-
+  
   useEffect(() => { fetchTags(); }, []);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => { fetchEvents(); }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedTags, searchLuogo]); // Aggiunto searchLuogo alle dipendenze
+  }, [searchTerm, selectedTags, searchLocation]); // Aggiunto searchLuogo alle dipendenze
 
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+  
 
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Esplora Eventi</h1>
-        <p className="text-gray-600">Catalogo gruppi di studio</p>
+        <h1 className="text-3xl font-bold text-gray-900">Explore Events</h1>
+        <p className="text-gray-600">Study groups catalog</p>
       </div>
 
+      {/* Filters */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
-        {/* Ricerca Titolo */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Cerca per titolo o descrizione..."
+            placeholder="Search by title or description..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+
+
 
         {/* NUOVO: Ricerca Città/Luogo */}
         <div className="relative md:w-64">
@@ -95,10 +108,11 @@ export default function AllEvents() {
             type="text"
             placeholder="Filtra per città..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchLuogo}
+            value={searchLocation}
             onChange={(e) => setSearchLuogo(e.target.value)}
           />
         </div>
+
 
         {/* Dropdown Tag (Multiplo) */}
         <div className="relative md:w-64" ref={dropdownRef}>
@@ -128,7 +142,10 @@ export default function AllEvents() {
             </div>
           )}
         </div>
+
       </div>
+
+
 
       {!loading && events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,7 +154,7 @@ export default function AllEvents() {
               key={event.id} 
               event={event} 
               onBook={() => handleBook(event.id)}
-              onCancelBooking={() => handleCancelBooking(event.id, event.partecipazioneCreatoreNecessaria, event.isCreatedByMe)}
+              onCancelBooking={() => handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)}
               onEdit={canEdit(event) ? () => setEventToEdit(event) : undefined}
               canEdit={canEdit(event)}
             />

@@ -1,3 +1,4 @@
+//ForgotPasswordPage
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -5,34 +6,32 @@ export default function ForgotPasswordPage() {
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
-  const [codiceReset, setCodiceReset] = useState('')
-  const [nuovaPassword, setNuovaPassword] = useState('')
-  const [confermaNuovaPassword, setConfermaNuovaPassword] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
 
-  const [codiceInviato, setCodiceInviato] = useState(false)
-  const [invioInCorso, setInvioInCorso] = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
+  const [isSending, setIsSending] = useState(false)
 
-  const [mostraNuovaPassword, setMostraNuovaPassword] = useState(false)
-  const [mostraConfermaNuovaPassword, setMostraConfermaNuovaPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
 
-  const [messaggio, setMessaggio] = useState('')
-  const [errore, setErrore] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
-  // Countdown per richiedere un nuovo codice
-  const [secondiRimanenti, setSecondiRimanenti] = useState(0)
+  // Countdown for requesting a new code
+  const [remainingSeconds, setRemainingSeconds] = useState(0)
 
-  function resetMessaggi() {
-    setMessaggio('')
-    setErrore('')
+  function resetMessages() {
+    setMessage('')
+    setError('')
   }
 
   useEffect(() => {
-    if (secondiRimanenti <= 0) {
-      return
-    }
+    if (remainingSeconds <= 0) return
 
     const timer = setInterval(() => {
-      setSecondiRimanenti((prev) => {
+      setRemainingSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
           return 0
@@ -42,29 +41,26 @@ export default function ForgotPasswordPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [secondiRimanenti])
+  }, [remainingSeconds])
 
-  function formattaTempo(secondi) {
-    const minuti = String(Math.floor(secondi / 60)).padStart(2, '0')
-    const sec = String(secondi % 60).padStart(2, '0')
-    return `${minuti}:${sec}`
+  function formatTime(seconds) {
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, '0')
+    const secs = String(seconds % 60).padStart(2, '0')
+    return `${minutes}:${secs}`
   }
 
-  async function handleInviaCodice(event) {
+  async function handleSendCode(event) {
     event.preventDefault()
-    resetMessaggi()
+    resetMessages()
 
-    if (invioInCorso) {
-      return
-    }
+    if (isSending) return
 
-    setInvioInCorso(true)
+    setIsSending(true)
 
     try {
-      const response = await fetch('/password-reset/forgot', {
+      const response = await fetch('/api/password-reset/forgot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Inviamo solo la mail per far generare il codice al backend
         body: JSON.stringify({ email })
       })
 
@@ -74,37 +70,35 @@ export default function ForgotPasswordPage() {
       }
 
       const data = await response.json()
-      setCodiceInviato(true)
-      setMessaggio(data.message)
+      setCodeSent(true)
+      setMessage(data.message)
 
-      // Ad ogni nuovo invio riparte il countdown
-      setSecondiRimanenti(30)
-    } catch (error) {
-      console.error(error)
-      setErrore(error.message)
+      setRemainingSeconds(30)
+    } catch (err) {
+      console.error(err)
+      setError(err.message)
     } finally {
-      setInvioInCorso(false)
+      setIsSending(false)
     }
   }
 
   async function handleResetPassword(event) {
     event.preventDefault()
-    resetMessaggi()
+    resetMessages()
 
-    if (nuovaPassword !== confermaNuovaPassword) {
-      setErrore('Le nuove password non coincidono')
+    if (newPassword !== confirmNewPassword) {
+      setError('Passwords do not match')
       return
     }
 
     try {
-      const response = await fetch('/password-reset/confirm', {
+      const response = await fetch('/api/password-reset/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Qui inviamo i dati necessari per completare il cambio password
         body: JSON.stringify({
           email,
-          codice: codiceReset,
-          nuovaPassword,
+          code: resetCode,
+          newPassword,
         })
       })
 
@@ -114,20 +108,19 @@ export default function ForgotPasswordPage() {
       }
 
       const data = await response.json()
-      setMessaggio(data.message)
+      setMessage(data.message)
 
       setEmail('')
-      setCodiceReset('')
-      setNuovaPassword('')
-      setConfermaNuovaPassword('')
+      setResetCode('')
+      setNewPassword('')
+      setConfirmNewPassword('')
 
-      // Dopo il reset torniamo alla login
       setTimeout(() => {
         navigate('/login')
       }, 1500)
-    } catch (error) {
-      console.error(error)
-      setErrore(error.message)
+    } catch (err) {
+      console.error(err)
+      setError(err.message)
     }
   }
 
@@ -135,13 +128,13 @@ export default function ForgotPasswordPage() {
     <main style={styles.container}>
       <section style={styles.wrapper}>
         <div style={styles.logoCircle}>🔐</div>
-        <h1 style={styles.title}>Recupero password</h1>
+        <h1 style={styles.title}>Password Recovery</h1>
         <p style={styles.subtitle}>
-          Inserisci la tua email per ricevere un codice di recupero
+          Enter your email to receive a recovery code
         </p>
 
         <div style={styles.card}>
-          <form onSubmit={handleInviaCodice} style={styles.form}>
+          <form onSubmit={handleSendCode} style={styles.form}>
             <div style={styles.field}>
               <label htmlFor="email" style={styles.label}>Email</label>
               <input
@@ -151,76 +144,75 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="mario.rossi@example.com"
                 required
-                disabled={codiceInviato}
+                disabled={codeSent}
                 style={{
                   ...styles.input,
-                  ...(codiceInviato ? styles.inputDisabled : {})
+                  ...(codeSent ? styles.inputDisabled : {})
                 }}
               />
             </div>
 
-            {!codiceInviato && (
+            {!codeSent && (
               <button
                 type="submit"
                 style={{
                   ...styles.submitButton,
-                  ...(invioInCorso ? styles.submitButtonDisabled : {})
+                  ...(isSending ? styles.submitButtonDisabled : {})
                 }}
-                disabled={invioInCorso}
+                disabled={isSending}
               >
-                {invioInCorso ? 'Invio in corso...' : 'Invia codice di recupero'}
+                {isSending ? 'Sending...' : 'Send recovery code'}
               </button>
             )}
           </form>
 
-          {codiceInviato && (
+          {codeSent && (
             <form onSubmit={handleResetPassword} style={{ ...styles.form, marginTop: '20px' }}>
               <div style={styles.field}>
-                <label htmlFor="codiceReset" style={styles.label}>Codice ricevuto via email</label>
+                <label htmlFor="resetCode" style={styles.label}>Code received via email</label>
                 <input
-                  id="codiceReset"
+                  id="resetCode"
                   type="text"
-                  value={codiceReset}
-                  onChange={(e) => setCodiceReset(e.target.value)}
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
                   placeholder="123456"
                   required
                   style={styles.input}
                 />
               </div>
 
-              {/* Countdown per nuovo invio */}
               <div style={styles.countdownBox}>
-                {secondiRimanenti > 0 ? (
-                <p style={styles.countdownText}>
-                  Potrai richiedere un nuovo codice tra {formattaTempo(secondiRimanenti)}
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleInviaCodice}
-                  style={styles.linkAction}
-                  disabled={invioInCorso}
-                >
-                  {invioInCorso ? 'Invio in corso...' : 'Richiedi un nuovo codice'}
-                </button>
-              )}
+                {remainingSeconds > 0 ? (
+                  <p style={styles.countdownText}>
+                    You can request a new code in {formatTime(remainingSeconds)}
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendCode}
+                    style={styles.linkAction}
+                    disabled={isSending}
+                  >
+                    {isSending ? 'Sending...' : 'Request a new code'}
+                  </button>
+                )}
               </div>
 
               <div style={styles.field}>
-                <label htmlFor="nuovaPassword" style={styles.label}>Nuova password</label>
+                <label htmlFor="newPassword" style={styles.label}>New password</label>
                 <div style={styles.passwordWrapper}>
                   <input
-                    id="nuovaPassword"
-                    type={mostraNuovaPassword ? 'text' : 'password'}
-                    value={nuovaPassword}
-                    onChange={(e) => setNuovaPassword(e.target.value)}
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     style={styles.passwordInput}
                   />
                   <button
                     type="button"
-                    onClick={() => setMostraNuovaPassword(!mostraNuovaPassword)}
+                    onClick={() => setShowNewPassword(!showNewPassword)}
                     style={styles.eyeButton}
                   >
                     👁
@@ -229,20 +221,20 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div style={styles.field}>
-                <label htmlFor="confermaNuovaPassword" style={styles.label}>Conferma nuova password</label>
+                <label htmlFor="confirmNewPassword" style={styles.label}>Confirm new password</label>
                 <div style={styles.passwordWrapper}>
                   <input
-                    id="confermaNuovaPassword"
-                    type={mostraConfermaNuovaPassword ? 'text' : 'password'}
-                    value={confermaNuovaPassword}
-                    onChange={(e) => setConfermaNuovaPassword(e.target.value)}
+                    id="confirmNewPassword"
+                    type={showConfirmNewPassword ? 'text' : 'password'}
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     style={styles.passwordInput}
                   />
                   <button
                     type="button"
-                    onClick={() => setMostraConfermaNuovaPassword(!mostraConfermaNuovaPassword)}
+                    onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
                     style={styles.eyeButton}
                   >
                     👁
@@ -251,23 +243,22 @@ export default function ForgotPasswordPage() {
               </div>
 
               <button type="submit" style={styles.submitButton}>
-                Aggiorna password
+                Update password
               </button>
             </form>
           )}
 
-          {messaggio && <p style={styles.success}>{messaggio}</p>}
-          {errore && <p style={styles.error}>{errore}</p>}
+          {message && <p style={styles.success}>{message}</p>}
+          {error && <p style={styles.error}>{error}</p>}
 
           <Link to="/login" style={styles.linkButton}>
-            Torna al login
+            Back to login
           </Link>
         </div>
       </section>
     </main>
   )
 }
-
 const styles = {
   container: {
     minHeight: '100vh',
@@ -416,3 +407,5 @@ const styles = {
   textAlign: 'left',
 },
 }
+
+

@@ -6,20 +6,17 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
+    port: 5173,
+    watch: {
+      usePolling: true
+    },
     proxy: {
-      '/Utenti': {
-        target: 'http://host.docker.internal:8080',
-        changeOrigin: true
-      },
-      // ECCO IL PEZZO MANCANTE:
-      '/Eventi': {
-        target: 'http://host.docker.internal:8080',
-        changeOrigin: true
-      },
-      '/password-reset': {
-        target: 'http://host.docker.internal:8080',
-        changeOrigin: true
+      "/api": {
+        target: "http://backend:8080",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, "")
       }
     }
   }
 })
+
