@@ -32,6 +32,9 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   const tagInputRef = useRef(null);
   const MAX_TAGS = 3;
 
+  const today = new Date().toISOString().split('T')[0];
+
+
   // PARSING DEL LUOGO IN FASE DI MODIFICA
   useEffect(() => {
     if (isEdit && event) {
@@ -303,6 +306,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
                 <input
                   type="date"
+                  min = {today}
                   value={data}
                   onChange={(e) => setData(e.target.value)}
                   required
