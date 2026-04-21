@@ -21,9 +21,6 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
         List<String> findDistinctTags();
 
         @Query("SELECT e FROM Evento e WHERE " +
-                        "e.stato = 'aperto' AND " +
-                        // LA MAGIA DELL'AND: Conta i tag corrispondenti e verifica che siano pari al
-                        // numero di tag cercati
                         "(:checkTags = false OR :tagCount = (SELECT COUNT(t) FROM Evento e2 JOIN e2.tag t WHERE e2.id = e.id AND t IN :tags)) AND "
                         +
                         "(:search IS NULL OR LOWER(e.titolo) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.descrizione) LIKE LOWER(CONCAT('%', :search, '%'))) AND "

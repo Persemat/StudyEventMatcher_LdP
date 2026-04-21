@@ -133,13 +133,7 @@ public class EventoService {
 
         boolean daSalvare = false;
 
-        for (Evento evento : eventi) {
-            if (evento.getDataOra().isBefore(java.time.LocalDateTime.now())
-                    && evento.getStato().equals("aperto")) {
-                evento.setStato("chiuso");
-                daSalvare = true;
-            }
-        }
+        daSalvare = checkIfClosed(daSalvare, eventi);
 
         if (daSalvare) {
             eventoRepository.saveAll(eventi);
@@ -181,13 +175,15 @@ public class EventoService {
         }
 
         evento.rimuoviPartecipante(creatore);
-
+        
         Set<Utente> partecipantiResidui = evento.getPartecipanti();
 
         if (partecipantiResidui.isEmpty()) {
             eventoRepository.delete(evento);
             return "Evento cancellato con successo";
         }
+        if (partecipantiResidui.size() < evento.getMaxPartecipanti())
+            evento.setStato("aperto");
 
         Utente nuovoCreatore = new ArrayList<>(partecipantiResidui).stream()
                 .sorted(Comparator.comparing(Utente::getId))
@@ -261,6 +257,7 @@ public class EventoService {
         }
 
         evento.rimuoviPartecipante(utente);
+        
         eventoRepository.save(evento);
 
     }
@@ -327,24 +324,49 @@ public class EventoService {
         List<Evento> eventi = eventoRepository.findByFiltriDinamici(
                 searchParam, checkTags, tagsParam, tagCount, luogoParam, dataStart, dataEnd);
         boolean daSalvare = false;
-
-        for (Evento evento : eventi) {
-            if (evento.getDataOra().isBefore(java.time.LocalDateTime.now())
-                    && evento.getStato().equals("aperto")) {
-                evento.setStato("chiuso");
-                daSalvare = true;
-            }
-        }
+        daSalvare = checkIfClosed(daSalvare, eventi);
 
         if (daSalvare) {
             eventoRepository.saveAll(eventi);
         }
-
+        LocalDateTime now = LocalDateTime.now();
         return eventi.stream()
-                // IL TOCCO DA MAESTRO: Filtriamo via dalla risposta quelli che
-                // sono appena stati chiusi dal ciclo for qui sopra!
-                .filter(e -> "aperto".equals(e.getStato()))
+                .filter(e -> e.getDataOra().isAfter(now))
+                // .filter(e -> "aperto".equals(e.getStato()))
                 .map(evento -> toResponse(evento, userId))
                 .toList();
     }
+    public boolean checkIfClosed(boolean daSalvare, List<Evento> eventi) {
+    LocalDateTime now = LocalDateTime.now();
+    
+    for (Evento evento : eventi) {
+        String statoAttuale = evento.getStato();
+        int numPartecipanti = evento.getPartecipanti().size();
+        Integer maxPartecipanti = evento.getMaxPartecipanti();
+        
+        String nuovoStato = statoAttuale;
+
+        // 1. Regola Temporale: Se la data è passata, è SEMPRE chiuso
+        if (evento.getDataOra().isBefore(now)) {
+            nuovoStato = "chiuso";
+        } 
+        // 2. Regola Partecipanti: Se non è passata la data, controlliamo i posti
+        else {
+            if (maxPartecipanti != null && numPartecipanti >= maxPartecipanti) {
+                nuovoStato = "chiuso";
+            } else {
+                nuovoStato = "aperto";
+            }
+        }
+
+        // Se lo stato è cambiato, aggiorniamo e segnamo daSalvare
+        if (!nuovoStato.equals(statoAttuale)) {
+            evento.setStato(nuovoStato);
+            daSalvare = true;
+        }
+    }
+    return daSalvare;
 }
+}
+
+    
