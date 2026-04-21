@@ -51,7 +51,7 @@ public class EventController {
                 request.location() == null || request.location().isBlank() ||
                 request.tags() == null || request.tags().isEmpty()) {
 
-            return ResponseEntity.badRequest().body("Missing required fields");
+            return ResponseEntity.badRequest().body("Campi mancanti");
         }
 
         try {

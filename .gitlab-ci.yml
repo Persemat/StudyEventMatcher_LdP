@@ -1,124 +1,124 @@
-# stages:
-#   - build
-#   - unit_test
-#   - integration_test
-#   - package
-#   - deploy
+stages:
+  - build
+  - unit_test
+  - integration_test
+  - package
+  - deploy
 
-# ########################
-# # GLOBAL CACHE
-# ########################
+########################
+# GLOBAL CACHE
+########################
 
-# cache:
-#   paths:
-#     - .m2/repository
-#     - frontend/node_modules
+cache:
+  paths:
+    - .m2/repository
+    - frontend/node_modules
 
-# ########################
-# # BUILD
-# ########################
+########################
+# BUILD
+########################
 
-# build_backend:
-#   stage: build
-#   image: maven:3.9.6-eclipse-temurin-21
+build_backend:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn clean compile
+  artifacts:
+    paths:
+      - backend/target
+    expire_in: 1h
+
+build_frontend:
+  stage: build
+  image: node:22-alpine
+  script:
+    - cd frontend
+    - npm ci
+  artifacts:
+    paths:
+      - frontend/node_modules
+    expire_in: 1h
+
+########################
+# UNIT TEST
+########################
+
+unit_test_backend:
+  stage: unit_test
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn clean test
+
+########################
+# INTEGRATION TEST (MySQL)
+########################
+
+integration_test_backend:
+  stage: integration_test
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+  - cd backend
+  - mvn failsafe:integration-test
+
+  # services:
+  #   - name: mysql:8
+  #     alias: db
+  # variables:
+  #   DB_HOST: db
+  #   DB_NAME: mydb
+  #   DB_USER: appuser
+  #   DB_PASSWORD: apppass
+  #   MYSQL_ROOT_PASSWORD: rootpass123
+  # script:
+  #   - cd backend
+  #   # attesa DB
+  #   - apt-get update && apt-get install -y mysql-client
+  #   - until mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" -e "SELECT 1"; do sleep 3; done
+  #   - mvn verify -Pintegration
+
+########################
+# PACKAGE (artefatti pronti)
+########################
+
+package_backend:
+  stage: package
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - backend/target/*.jar
+
+package_frontend:
+  stage: package
+  image: node:22-alpine
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist
+
+########################
+# DEPLOY (artifact-based)
+########################
+
+# deploy:
+#   stage: deploy
 #   script:
-#     - cd backend
-#     - mvn clean compile
-#   artifacts:
-#     paths:
-#       - backend/target
-#     expire_in: 1h
-
-# build_frontend:
-#   stage: build
-#   image: node:22-alpine
-#   script:
-#     - cd frontend
-#     - npm ci
-#   artifacts:
-#     paths:
-#       - frontend/node_modules
-#     expire_in: 1h
-
-# ########################
-# # UNIT TEST
-# ########################
-
-# unit_test_backend:
-#   stage: unit_test
-#   image: maven:3.9.6-eclipse-temurin-21
-#   script:
-#     - cd backend
-#     - mvn clean test
-
-# ########################
-# # INTEGRATION TEST (MySQL)
-# ########################
-
-# integration_test_backend:
-#   stage: integration_test
-#   image: maven:3.9.6-eclipse-temurin-21
-#   script:
-#   - cd backend
-#   - mvn failsafe:integration-test
-
-#   # services:
-#   #   - name: mysql:8
-#   #     alias: db
-#   # variables:
-#   #   DB_HOST: db
-#   #   DB_NAME: mydb
-#   #   DB_USER: appuser
-#   #   DB_PASSWORD: apppass
-#   #   MYSQL_ROOT_PASSWORD: rootpass123
-#   # script:
-#   #   - cd backend
-#   #   # attesa DB
-#   #   - apt-get update && apt-get install -y mysql-client
-#   #   - until mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" -e "SELECT 1"; do sleep 3; done
-#   #   - mvn verify -Pintegration
-
-# ########################
-# # PACKAGE (artefatti pronti)
-# ########################
-
-# package_backend:
-#   stage: package
-#   image: maven:3.9.6-eclipse-temurin-21
-#   script:
-#     - cd backend
-#     - mvn clean package -DskipTests
-#   artifacts:
-#     paths:
-#       - backend/target/*.jar
-
-# package_frontend:
-#   stage: package
-#   image: node:22-alpine
-#   script:
-#     - cd frontend
-#     - npm ci
-#     - npm run build
-#   artifacts:
-#     paths:
-#       - frontend/dist
-
-# ########################
-# # DEPLOY (artifact-based)
-# ########################
-
-# # deploy:
-# #   stage: deploy
-# #   script:
-# #     - echo "Deploy application (esempio)"
-# #     - echo "Backend JAR pronto in backend/target"
-# #     - echo "Frontend build pronto in frontend/dist"
-# #   only:
-# #     - main
+#     - echo "Deploy application (esempio)"
+#     - echo "Backend JAR pronto in backend/target"
+#     - echo "Frontend build pronto in frontend/dist"
+#   only:
+#     - main
 
 
 
-# # mvn clean test runare unit tests
-# # mvn failsafe:integration-test runnare integration test
+# mvn clean test runare unit tests
+# mvn failsafe:integration-test runnare integration test
 
-# # mvn "-Dit.test=RunCucumberTest" verify per runare cucumber
+# mvn "-Dit.test=RunCucumberTest" verify per runare cucumber
