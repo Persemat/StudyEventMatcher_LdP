@@ -46,7 +46,7 @@ export default function MainLayout() {
                 }`}
               >
                 <Calendar className="w-5 h-5" />
-                <span>All Events</span>
+                <span>Tutti gli eventi</span>
               </Link>
 
               <Link
@@ -58,7 +58,7 @@ export default function MainLayout() {
                 }`}
               >
                 <BookOpen className="w-5 h-5" />
-                <span>My Events</span>
+                <span>I miei Eventi</span>
               </Link>
 
               <Link
@@ -70,7 +70,7 @@ export default function MainLayout() {
                 }`}
               >
                 <User className="w-5 h-5" />
-                <span>Profile</span>
+                <span>Profilo</span>
               </Link>
 
             </nav>

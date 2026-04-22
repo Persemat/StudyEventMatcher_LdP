@@ -9,7 +9,7 @@ export default function AllEvents() {
   const [events, setEvents] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchLocation, setSearchLocation] = useState(""); // NUOVO: Stato per il filtro città
+  const [searchLocation, setSearchLocation] = useState(""); 
   const [selectedTags, setSelectedTags] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export default function AllEvents() {
         const data = await res.json();
         setAvailableTags(data.filter(t => t !== "All"));
       }
-    } catch (err) { console.error("Errore fetch tags:", err); }
+    } catch (err) { console.error("Error fetch tags:", err); }
   };
 
 
@@ -43,7 +43,7 @@ export default function AllEvents() {
       
       const url = new URL("/api/events/search", window.location.origin);
       if (searchTerm) url.searchParams.append("search", searchTerm);
-      if (searchLocation) url.searchParams.append("location", searchLocation); // NUOVO: Inviato al backend
+      if (searchLocation) url.searchParams.append("location", searchLocation);
       if (selectedTags.length > 0) {
         selectedTags.forEach((t) => url.searchParams.append("tags", t));
       }
@@ -74,7 +74,7 @@ export default function AllEvents() {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => { fetchEvents(); }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedTags, searchLocation]); // Aggiunto searchLuogo alle dipendenze
+  }, [searchTerm, selectedTags, searchLocation]);
 
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
   
@@ -82,8 +82,8 @@ export default function AllEvents() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Explore Events</h1>
-        <p className="text-gray-600">Study groups catalog</p>
+        <h1 className="text-3xl font-bold text-gray-900">Esplora Eventi</h1>
+        <p className="text-gray-600">Catalogo Gruppi di Studio</p>
       </div>
 
       {/* Filters */}
@@ -92,7 +92,7 @@ export default function AllEvents() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search by title or description..."
+            placeholder="Cerca per titolo o descrizione..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -101,7 +101,7 @@ export default function AllEvents() {
 
 
 
-        {/* NUOVO: Ricerca Città/Luogo */}
+        {/* NEW: search: Città/Luogo */}
         <div className="relative md:w-64">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -114,7 +114,7 @@ export default function AllEvents() {
         </div>
 
 
-        {/* Dropdown Tag (Multiplo) */}
+        {/* Dropdown Tag (Multiple) */}
         <div className="relative md:w-64" ref={dropdownRef}>
           <button
             type="button"

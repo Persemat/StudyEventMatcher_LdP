@@ -93,17 +93,18 @@ export default function MyEvents() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Events</h1>
+          <h1 className="text-3xl font-bold text-gray-900">I Miei Eventi</h1>
           <p className="text-gray-600 mt-1">
-            Manage your study activities
+            Organizza i tuoi studi
           </p>
         </div>
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex 
+          items-center gap-2"
         >
-          <Plus className="w-5 h-5" /> Create Event
+          <Plus className="w-5 h-5" /> Crea Evento
         </button>
       </div>
 
@@ -119,7 +120,7 @@ export default function MyEvents() {
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
-            Created by Me ({createdEvents.length})
+            Creati da me ({createdEvents.length})
           </button>
 
           <button
@@ -130,7 +131,7 @@ export default function MyEvents() {
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
-            Joined Events ({bookedEvents.length})
+            Eventi a cui partecipo ({bookedEvents.length})
           </button>
 
           <button
@@ -141,7 +142,7 @@ export default function MyEvents() {
                 : "text-gray-500 hover:bg-gray-50"
             }`}
           >
-            History ({historyEvents.length})
+            Storico ({historyEvents.length})
           </button>
 
         </div>
@@ -171,7 +172,7 @@ export default function MyEvents() {
             <div className="col-span-full bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-200 p-12 text-center">
               <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 font-medium">
-                No events in this category
+                Nessun evento in questa categoria
               </p>
             </div>
           )}

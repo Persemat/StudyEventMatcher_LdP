@@ -128,9 +128,9 @@ export default function ForgotPasswordPage() {
     <main style={styles.container}>
       <section style={styles.wrapper}>
         <div style={styles.logoCircle}>🔐</div>
-        <h1 style={styles.title}>Password Recovery</h1>
+        <h1 style={styles.title}>Recupera Password</h1>
         <p style={styles.subtitle}>
-          Enter your email to receive a recovery code
+          Inserisci la tua email per ricevere un codice di recupero password
         </p>
 
         <div style={styles.card}>
@@ -161,7 +161,7 @@ export default function ForgotPasswordPage() {
                 }}
                 disabled={isSending}
               >
-                {isSending ? 'Sending...' : 'Send recovery code'}
+                {isSending ? 'Invio...' : 'Invia codice di recupero'}
               </button>
             )}
           </form>
@@ -169,7 +169,7 @@ export default function ForgotPasswordPage() {
           {codeSent && (
             <form onSubmit={handleResetPassword} style={{ ...styles.form, marginTop: '20px' }}>
               <div style={styles.field}>
-                <label htmlFor="resetCode" style={styles.label}>Code received via email</label>
+                <label htmlFor="resetCode" style={styles.label}>Codice ricevuto via email</label>
                 <input
                   id="resetCode"
                   type="text"
@@ -184,7 +184,7 @@ export default function ForgotPasswordPage() {
               <div style={styles.countdownBox}>
                 {remainingSeconds > 0 ? (
                   <p style={styles.countdownText}>
-                    You can request a new code in {formatTime(remainingSeconds)}
+                    Puoi richiedere un nuovo codice in {formatTime(remainingSeconds)}
                   </p>
                 ) : (
                   <button
@@ -193,13 +193,13 @@ export default function ForgotPasswordPage() {
                     style={styles.linkAction}
                     disabled={isSending}
                   >
-                    {isSending ? 'Sending...' : 'Request a new code'}
+                    {isSending ? 'Invio...' : 'Richiedi un nuovo codice'}
                   </button>
                 )}
               </div>
 
               <div style={styles.field}>
-                <label htmlFor="newPassword" style={styles.label}>New password</label>
+                <label htmlFor="newPassword" style={styles.label}>Nuova password</label>
                 <div style={styles.passwordWrapper}>
                   <input
                     id="newPassword"
@@ -221,7 +221,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div style={styles.field}>
-                <label htmlFor="confirmNewPassword" style={styles.label}>Confirm new password</label>
+                <label htmlFor="confirmNewPassword" style={styles.label}>Conferma la nuova password</label>
                 <div style={styles.passwordWrapper}>
                   <input
                     id="confirmNewPassword"
@@ -243,7 +243,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <button type="submit" style={styles.submitButton}>
-                Update password
+                Aggiorna password
               </button>
             </form>
           )}
@@ -252,7 +252,7 @@ export default function ForgotPasswordPage() {
           {error && <p style={styles.error}>{error}</p>}
 
           <Link to="/login" style={styles.linkButton}>
-            Back to login
+            Torna al login
           </Link>
         </div>
       </section>

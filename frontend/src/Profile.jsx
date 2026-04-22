@@ -18,9 +18,9 @@ export default function Profile({ user, onLogout }) {
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Il Mio Profilo</h1>
           <p className="text-gray-600 mt-1">
-            View and manage your personal information
+            Visualizza e modifica le tue informazioni personali
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export default function Profile({ user, onLogout }) {
 
               <div>
                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                  Full Name
+                  Nome e Cognome
                 </p>
                 <p className="text-lg font-medium text-gray-900 mt-1">
                   {user.name} {user.lastname}
@@ -84,7 +84,7 @@ export default function Profile({ user, onLogout }) {
 
               <div>
                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                  Email Address
+                  Email
                 </p>
                 <p className="text-lg font-medium text-gray-900 mt-1">
                   {user.email}

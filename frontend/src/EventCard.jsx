@@ -41,7 +41,7 @@ export default function EventCard({
         </div>
 
         <p className="text-gray-600 text-sm line-clamp-2">
-          {event.description || "No description provided."}
+          {event.description || "Nessuna descrizione"}
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export default function EventCard({
       {/* Extra info */}
       <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-3">
         <span>
-          Duration: <strong>{event.duration}h</strong>
+          Durata: <strong>{event.duration}h</strong>
         </span>
 
         <span
@@ -90,7 +90,11 @@ export default function EventCard({
               : "text-gray-400"
           }`}
         >
-          ● {status.toUpperCase()}
+          ● {status === "open" 
+              ? "APERTO" 
+              : status === "closed" 
+              ? "CHIUSO" 
+              : "SCONOSCIUTO"}
         </span>
       </div>
 
@@ -98,7 +102,7 @@ export default function EventCard({
       <div className="flex items-center gap-1 text-xs text-gray-400">
         <ShieldCheck className="w-3 h-3" />
         <span>
-          Organized by: {event.creator?.name} {event.creator?.lastName}
+          Organizzata da: {event.creator?.name} {event.creator?.lastName}
         </span>
       </div>
 
@@ -122,7 +126,7 @@ export default function EventCard({
               }
             >
               <Pencil className="w-4 h-4" />
-              EDIT
+              MODIFICA
             </button>
 
             {/* Cancel/leave for creator */}
@@ -136,7 +140,7 @@ export default function EventCard({
               }`}
             >
               <X className="w-4 h-4" />
-              {event.creatorParticipationRequired ? "CANCEL" : "LEAVE"}
+              {event.creatorParticipationRequired ? "CANCELLA" : "ABBANDONA"}
             </button>
           </div>
         ) : event.isBooked ? (
@@ -151,12 +155,12 @@ export default function EventCard({
             }`}
           >
             <X className="w-4 h-4" />
-            CANCEL BOOKING
+            CANCELLA PRENOTAZIONE
           </button>
         ) : isFull ? (
           /* full event */
           <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold text-center cursor-not-allowed">
-            EVENT FULL
+            EVENTO AL COMPLETO
           </span>
         ) : (
           /* book button */
@@ -170,7 +174,7 @@ export default function EventCard({
             }`}
           >
             <Check className="w-4 h-4" />
-            BOOK SEAT
+            PRENOTA
           </button>
         )}
       </div>

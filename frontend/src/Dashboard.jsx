@@ -37,7 +37,7 @@ export default function Dashboard({ user }) {
   if (loading) {
     return (
       <div className="p-8 text-center text-gray-500 italic">
-        The backend is generating your personalized recommendations...
+        Il backend sta generando le tue raccomandazioni personali...
       </div>
     );
   }
@@ -48,7 +48,7 @@ export default function Dashboard({ user }) {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">
-          Welcome {user?.name}! Discover recommended study events for you
+          Benvenuto {user?.name}! Scopri gli eventi suggeriti per te!
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export default function Dashboard({ user }) {
         <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm">Recommended for you</p>
+              <p className="text-gray-600 text-sm">Suggeriti per te</p>
               <p className="text-3xl font-bold text-gray-900">{events.length}</p>
             </div>
             <div className="bg-blue-100 rounded-full p-3">
@@ -69,7 +69,7 @@ export default function Dashboard({ user }) {
 
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Recommended Events
+          Eventi suggeriti
         </h2>
 
         {events.length > 0 ? (
@@ -93,10 +93,10 @@ export default function Dashboard({ user }) {
           <div className="bg-white rounded-lg shadow p-12 text-center border-2 border-dashed border-gray-200">
             <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-500">
-              No recommended events available yet
+              Non ci sono ancora eventi suggeriti per te!
             </h3>
             <p className="text-gray-400 mt-2">
-              Soon you will see events tailored to your preferences here!
+              Presto vedrai eventi suggeriti per te qui!
             </p>
           </div>
         )}

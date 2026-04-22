@@ -150,7 +150,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">
-            {isEdit ? "Edit Event" : "Create New Event"}
+            {isEdit ? "Edit Event" : "Crea Nuovo Evento"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-6 h-6" />
@@ -176,7 +176,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
           <form onSubmit={handleSubmit} className="space-y-4">
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Titolo *</label>
               <input
                 type="text"
                 value={title}
@@ -191,12 +191,12 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City *
+                  Città *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Milan"
+                  placeholder="es: Milano"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
@@ -205,11 +205,11 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Building / Room <span className="text-gray-400">(Optional)</span>
+                  Edificio / Aula <span className="text-gray-400">(Opzionale)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. U4 Building - Library"
+                  placeholder="es: EdificioU4 - Biblioteca"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -218,7 +218,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione *</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -233,7 +233,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-bold text-gray-700">
-                  Event Tags *
+                  Tag Eventi *
                 </label>
 
                 <span className={`text-xs font-bold ${tags.length === MAX_TAGS ? 'text-orange-500' : 'text-gray-500'}`}>
@@ -302,7 +302,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
             <div className="grid grid-cols-2 gap-4">
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
                 <input
                   type="date"
                   value={date}
@@ -313,7 +313,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Time *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ora *</label>
                 <input
                   type="time"
                   value={time}
@@ -328,7 +328,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
             <div className="grid grid-cols-2 gap-4">
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (h) *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Durata (h) *</label>
                 <input
                   type="number"
                   min="1"
@@ -340,7 +340,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Participants *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Participanti *</label>
                 <input
                   type="number"
                   min="2"
@@ -362,11 +362,11 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               />
               <div className="flex-1">
                 <label htmlFor="creatorRequired" className="text-sm font-bold text-gray-800 cursor-pointer flex items-center gap-2">
-                  My presence is required
+                  La mia presenza è obbligatoria
                   <Info size={14} className="text-blue-400" />
                 </label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  If enabled, the event will be canceled if you decide to withdraw.
+                  Se abilitato, l’evento verrà annullato se decidi di ritirarti.
                 </p>
               </div>
             </div>
@@ -380,7 +380,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
                 type="button" 
                 onClick={onClose} 
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-bold text-gray-700 hover:bg-gray-50">
-                Cancel
+                Cancella
               </button>
 
               <button

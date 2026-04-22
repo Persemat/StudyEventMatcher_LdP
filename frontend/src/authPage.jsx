@@ -95,8 +95,8 @@ export default function AuthPage(props) {
 
         <p style={styles.subtitle}>
           {isLogin
-            ? 'Welcome back! Sign in to your account'
-            : 'Create your account and start studying together'}
+            ? 'Bentornato! Entra nel tuo account'
+            : 'Crea un tuo account e inizia a studiare con gli altri studenti'}
         </p>
 
         <div style={styles.card}>
@@ -135,7 +135,7 @@ export default function AuthPage(props) {
             {!isLogin && (
               <div style={styles.row}>
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="name" style={styles.label}>Name</label>
+                  <label htmlFor="name" style={styles.label}>Nome</label>
                   <input
                     id="name"
                     type="text"
@@ -148,7 +148,7 @@ export default function AuthPage(props) {
                 </div>
 
                 <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="lastname" style={styles.label}>Lastname</label>
+                  <label htmlFor="lastname" style={styles.label}>Cognome</label>
                   <input
                     id="lastname"
                     type="text"
@@ -202,7 +202,7 @@ export default function AuthPage(props) {
             {!isLogin && (
               <div style={styles.field}>
                 <label htmlFor="confirmPassword" style={styles.label}>
-                  Confirm password
+                  Conferma password
                 </label>
 
                 <div style={styles.passwordWrapper}>
@@ -229,7 +229,7 @@ export default function AuthPage(props) {
 
             {isLogin && (
               <Link to="/forgot-password" style={styles.linkButton}>
-                Forgot password?
+                Password dimenticata?
               </Link>
             )}
 
