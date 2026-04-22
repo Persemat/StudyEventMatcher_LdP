@@ -1,9 +1,10 @@
+#validate → compile → test → package → verify → install → deploy
 stages:
-  - build
+  - compile
   - unit_test
   - integration_test
   - package
-  - deploy
+#  - deploy
 
 ########################
 # GLOBAL CACHE
@@ -15,30 +16,30 @@ cache:
     - frontend/.npm
 
 ########################
-# BUILD
+# COMPILE
 ########################
 
-build_backend:
-  stage: build
+compile_backend:
+  stage: compile
   image: maven:3.9.6-eclipse-temurin-21
   script:
     - cd backend
-    - mvn compile
+    - mvn compile # compila il backend usando maven
   artifacts:
     paths:
-      - backend/target
+      - backend/target  # salva la compilazione in target
     expire_in: 1h
 
-build_frontend:
-  stage: build
-  image: node:22-alpine
-  script:
-    - cd frontend
-    - npm ci --cache .npm --prefer-offline
-  artifacts:
-    paths:
-      - frontend/node_modules
-    expire_in: 1h
+# build_frontend:
+#   stage: build
+#   image: node:22-alpine
+#   script:
+#     - cd frontend
+#     - npm ci --cache .npm --prefer-offline
+#   artifacts:
+#     paths:
+#       - frontend/node_modules
+#     expire_in: 1h
 
 ########################
 # UNIT TEST
@@ -47,20 +48,25 @@ build_frontend:
 unit_test_backend:
   stage: unit_test
   image: maven:3.9.6-eclipse-temurin-21
+  dependencies:
+    - compile_backend
   script:
     - cd backend
-    - mvn test
+    - mvn test # esegue gli unit test
 
 ########################
-# INTEGRATION TEST (MySQL)
+# INTEGRATION TEST
 ########################
 
 integration_test_backend:
   stage: integration_test
   image: maven:3.9.6-eclipse-temurin-21
+  dependencies:
+    - compile_backend
   script:
   - cd backend
-  - mvn failsafe:integration-test
+  - mvn failsafe:integration-test # esegue integration e cucumber test
+  - mvn failsafe:verify # effettua la verifica dei test
 
   # services:
   #   - name: mysql:8
@@ -85,9 +91,11 @@ integration_test_backend:
 package_backend:
   stage: package
   image: maven:3.9.6-eclipse-temurin-21
+  dependencies:
+    - compile_backend
   script:
     - cd backend
-    - mvn package -DskipTests
+    - mvn package -DskipTests -DskipITs # crea il package del backend saltando i test --> crea il file .jar
   artifacts:
     paths:
       - backend/target/*.jar
@@ -95,11 +103,10 @@ package_backend:
 package_frontend:
   stage: package
   image: node:22-alpine
-  dependencies:
-    - build_frontend
   script:
     - cd frontend
-    - npm run build
+    - npm ci --cache .npm --prefer-offline # crea il package del frontend
+    - npm run build # effettua la build del frontend
   artifacts:
     paths:
       - frontend/dist
@@ -118,8 +125,10 @@ package_frontend:
 #     - main
 
 
+# DOPO CHE LA PIPELINE VIENE ESEGUITA:
 
-# mvn clean test runare unit tests
-# mvn failsafe:integration-test runnare integration test
+# AVVIARE IL BACKEND
+# java -jar backend/target/backend-0.0.1-SNAPSHOT.jar
 
-# mvn "-Dit.test=RunCucumberTest" verify per runare cucumber
+# AVVIARE IL FRONTEND IN LOCALE
+# npx serve -s frontend/dist

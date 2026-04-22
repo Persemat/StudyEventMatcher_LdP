@@ -159,50 +159,47 @@
 
 
 	<build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-maven-plugin</artifactId>
-                </plugin>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
 
-                <!-- surefile è dove vengono eseguiti gli unit tests -->
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
-                    <configuration>
-                        <includes>
-                            <include>**/*Test.java</include>
-                        </includes>
-                        <excludes>
-                            <exclude>**/*IT.java</exclude>
-                            <exclude>**/*CucumberTest.java</exclude>
-                        </excludes>
-                    </configuration>
-                </plugin>
+            <!-- surefile è dove vengono eseguiti gli unit tests -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.5</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/*CucumberTest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
 
-                <!-- filesafe serve per runnare gli integration tests -->
-                <plugin>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.5.5</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>integration-test</goal>
-                                <goal>verify</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    
-                    <configuration>
-                        <includes>
-                            <include>**/*IT.java</include> 
-                            <include>**/*CucumberTest.java</include>
-                        </includes>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
+            <!-- filesafe serve per runnare gli integration tests -->
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include> 
+                        <include>**/*CucumberTest.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
 	</build>
-
 </project>
