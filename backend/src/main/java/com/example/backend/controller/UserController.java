@@ -15,16 +15,36 @@ import com.example.backend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * REST controller responsible for user-related operations.
+ *
+ * It provides endpoints for:
+ * - user registration
+ * - user authentication (login)
+ * - retrieving the logged user
+ * - logout
+ */
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Constructs the UserController.
+     *
+     * @param userService service used to manage user operations
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
+    /**
+     * Registers a new user.
+     *
+     * @param request the user registration data
+     * @return the created user or an error message if validation fails
+     */
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody UserRequest request) {
         try {
@@ -35,6 +55,15 @@ public class UserController {
         }
     }
 
+    /**
+     * Authenticates a user and creates a session.
+     *
+     * If authentication is successful, the user ID is stored in the session.
+     *
+     * @param request the login credentials
+     * @param session the current HTTP session
+     * @return the authenticated user or an error message if credentials are invalid
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpSession session) {
         try {
@@ -46,6 +75,12 @@ public class UserController {
         }
     }
 
+    /**
+     * Retrieves the currently logged user based on session data.
+     *
+     * @param session the current HTTP session
+     * @return the logged user or an error response if the session is invalid
+     */
     @GetMapping("/me")
     public ResponseEntity<?> getLoggedUser(HttpSession session) {
         try {
@@ -59,6 +94,12 @@ public class UserController {
         }
     }
 
+    /**
+     * Logs out the current user by invalidating the session.
+     *
+     * @param request the HTTP request containing the session
+     * @return a message indicating the logout status
+     */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
@@ -68,13 +109,10 @@ public class UserController {
                 session.invalidate();
                 return ResponseEntity.ok("Logout successful");
             } catch (IllegalStateException e) {
-                // Session was already invalidated
                 return ResponseEntity.ok("Session already invalidated");
             }
         }
 
         return ResponseEntity.ok("No active session, user already logged out");
     }
-
-
 }

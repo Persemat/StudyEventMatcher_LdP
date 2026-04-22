@@ -19,17 +19,39 @@ import com.example.backend.service.EventService;
 
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * REST controller responsible for event-related operations.
+ *
+ * It exposes endpoints for:
+ * - retrieving events
+ * - creating events
+ * - editing events
+ * - deleting events
+ * - booking and cancelling bookings
+ * - searching events
+ * - retrieving available tags
+ */
 @RestController
 @RequestMapping("/events")
 public class EventController {
 
     private final EventService eventService;
 
+    /**
+     * Constructs the EventController.
+     *
+     * @param eventService service used to manage event operations
+     */
     public EventController(EventService eventService) {
         this.eventService = eventService;
     }
 
-    // ================= GET ALL EVENTS =================
+    /**
+     * Retrieves all events visible to the authenticated user.
+     *
+     * @param session the current HTTP session
+     * @return a list of all events, or 401 if the session is invalid
+     */
     @GetMapping
     public ResponseEntity<?> getAllEvents(HttpSession session) {
 
@@ -42,7 +64,15 @@ public class EventController {
         return ResponseEntity.ok(eventService.getAllEvents(session));
     }
 
-    // ================= CREATE EVENT =================
+    /**
+     * Creates a new event.
+     *
+     * Validates the required request fields before delegating to the service layer.
+     *
+     * @param request the event creation request
+     * @param session the current HTTP session
+     * @return a success message if the event is created, or an error response otherwise
+     */
     @PostMapping
     public ResponseEntity<?> createEvent(@RequestBody EventRequest request, HttpSession session) {
 
@@ -51,7 +81,7 @@ public class EventController {
                 request.location() == null || request.location().isBlank() ||
                 request.tags() == null || request.tags().isEmpty()) {
 
-            return ResponseEntity.badRequest().body("Campi mancanti");
+            return ResponseEntity.badRequest().body("Missing required fields");
         }
 
         try {
@@ -66,7 +96,13 @@ public class EventController {
         }
     }
 
-    // ================= BOOK EVENT =================
+    /**
+     * Books the authenticated user into the specified event.
+     *
+     * @param id the ID of the event to book
+     * @param session the current HTTP session
+     * @return a success message if the booking is completed, or an error response otherwise
+     */
     @PostMapping("/{id}/book")
     public ResponseEntity<?> bookEvent(@PathVariable Long id, HttpSession session) {
 
@@ -80,7 +116,15 @@ public class EventController {
         }
     }
 
-    // ================= DELETE EVENT =================
+    /**
+     * Deletes an event.
+     *
+     * Only the authenticated creator is allowed to delete the event.
+     *
+     * @param id the ID of the event to delete
+     * @param session the current HTTP session
+     * @return a success message if the event is deleted, or an error response otherwise
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable long id, HttpSession session) {
 
@@ -99,7 +143,16 @@ public class EventController {
         }
     }
 
-     // ================= EDIT EVENT =================
+    /**
+     * Updates an existing event.
+     *
+     * Validates the required request fields before delegating to the service layer.
+     *
+     * @param id the ID of the event to update
+     * @param request the updated event data
+     * @param session the current HTTP session
+     * @return a success message if the event is updated, or an error response otherwise
+     */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Long id,
                                          @RequestBody EventRequest request,
@@ -131,7 +184,13 @@ public class EventController {
         }
     }
 
-    // ================= CANCEL BOOKING =================
+    /**
+     * Cancels the booking of the authenticated user for the specified event.
+     *
+     * @param id the ID of the event for which the booking must be cancelled
+     * @param session the current HTTP session
+     * @return a success message if the booking is cancelled, or an error response otherwise
+     */
     @DeleteMapping("/{id}/book")
     public ResponseEntity<?> cancelBooking(@PathVariable Long id, HttpSession session) {
 
@@ -151,7 +210,18 @@ public class EventController {
         }
     }
 
-    // ================= SEARCH EVENTS =================
+    /**
+     * Searches for events using optional filters.
+     *
+     * Supported filters include free-text search, tags, location, and date.
+     *
+     * @param session the current HTTP session
+     * @param search optional free-text search term
+     * @param tags optional list of tags
+     * @param location optional location filter
+     * @param date optional date filter
+     * @return a list of matching events, or 401 if the session is invalid
+     */
     @GetMapping("/search")
     public ResponseEntity<?> searchEvents(HttpSession session,
                                          @RequestParam(required = false) String search,
@@ -170,11 +240,13 @@ public class EventController {
         );
     }
 
-    // ================= GET ALL TAGS =================
+    /**
+     * Retrieves all distinct event tags available in the system.
+     *
+     * @return a list of available tags
+     */
     @GetMapping("/tags")
     public ResponseEntity<?> getAllTags() {
         return ResponseEntity.ok(eventService.getAllDistinctTags());
     }
-
-
 }

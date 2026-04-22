@@ -16,6 +16,14 @@ import com.example.backend.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
+/**
+ * Service responsible for handling password reset operations.
+ *
+ * It manages:
+ * - generation and validation of reset codes
+ * - sending reset emails
+ * - updating user passwords securely
+ */
 @Service
 public class PasswordResetService {
 
@@ -24,6 +32,14 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
+    /**
+     * Constructs the PasswordResetService.
+     *
+     * @param userRepository repository used to access user data
+     * @param passwordResetTokenRepository repository used to manage reset tokens
+     * @param passwordEncoder encoder used to securely hash passwords
+     * @param emailService service used to send reset emails
+     */
     public PasswordResetService(
             UserRepository userRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
@@ -36,7 +52,17 @@ public class PasswordResetService {
         this.emailService = emailService;
     }
 
-    // ================= FORGOT PASSWORD =================
+    /**
+     * Handles the "forgot password" process.
+     *
+     * Generates a reset code, stores it with expiration, and sends it via email.
+     * Includes protection against spam requests by enforcing a cooldown period.
+     *
+     * @param request contains the user's email address
+     * @return confirmation message
+     * @throws IllegalArgumentException if the email is invalid, not found,
+     *                                  or if a request is made too soon
+     */
     @Transactional
     public String forgotPassword(ForgotPasswordRequest request) {
 
@@ -88,7 +114,17 @@ public class PasswordResetService {
         return "Password reset code sent via email";
     }
 
-    // ================= RESET PASSWORD =================
+    /**
+     * Resets the user's password using a valid reset code.
+     *
+     * Validates the code, checks expiration, and updates the password
+     * after applying security rules.
+     *
+     * @param request contains email, reset code, and new password
+     * @return confirmation message
+     * @throws IllegalArgumentException if input data is invalid, the code is incorrect or expired,
+     *                                  or the user cannot be found
+     */
     @Transactional
     public String resetPassword(ResetPasswordRequest request) {
 
@@ -136,7 +172,11 @@ public class PasswordResetService {
         return "Password updated successfully";
     }
 
-    // ================= UTILITY =================
+    /**
+     * Generates a random 6-digit numeric reset code.
+     *
+     * @return the generated reset code as a string
+     */
     private String generateResetCode() {
         int number = 100000 + new Random().nextInt(900000);
         return String.valueOf(number);

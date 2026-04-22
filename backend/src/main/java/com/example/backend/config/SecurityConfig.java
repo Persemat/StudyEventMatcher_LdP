@@ -20,9 +20,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Abilitiamo i CORS con la nostra politica personalizzata
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 2. CSRF deve rimanere disabilitato per le API REST (per ora)
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Per ora lasciamo permitAll per non bloccarti i test,
@@ -34,7 +32,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 3. Definiamo CHI può parlare con il server (React)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

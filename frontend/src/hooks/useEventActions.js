@@ -16,17 +16,17 @@ export const useEventActions = (refreshCallback) => {
       });
 
       if (!response.ok) {
-        throw new Error("Error while booking the event");
+        throw new Error("Errore nel prenotare l'evento");
       }
 
-      console.log("✅ Booking completed successfully!");
+      console.log("✅ Prenotazione avvenuta con successo!");
 
       // refresh events list
       refreshCallback?.();
 
     } catch (error) {
-      console.error("❌ Error:", error);
-      alert("Error during booking");
+      console.error("❌ Errore:", error);
+      alert("Errore durante la prenotazione");
     } finally {
       setIsProcessing(false);
     }
@@ -37,9 +37,9 @@ export const useEventActions = (refreshCallback) => {
 
     const message = isCreatedByMe
       ? (isCreatorRequired
-          ? "You are the creator and your presence is required. The ENTIRE event will be deleted. Do you confirm?"
-          : "You are the creator. You will be removed from the event. If there are other participants, the creator role will be reassigned. Do you confirm?")
-      : "Do you really want to cancel your participation?";
+          ? "Sei il creatore e la tua presenza è obbligatoria. L’INTERO evento verrà eliminato. Confermi?"
+          : "Sei il creatore. Verrai rimosso dall’evento. Se ci sono altri partecipanti, il ruolo di creatore verrà riassegnato. Confermi?")
+      : "Vuoi davvero annullare la tua partecipazione?";
 
     if (!window.confirm(message)) return;
 
@@ -63,15 +63,15 @@ export const useEventActions = (refreshCallback) => {
       const text = await response.text();
 
       if (!response.ok) {
-        throw new Error(text || "Operation failed");
+        throw new Error(text || "Operazione fallita");
       }
 
-      console.log("Operation completed successfully!");
+      console.log("Operazione completata con successo!");
       refreshCallback?.();
 
     } catch (error) {
-      console.error("Error during operation:", error);
-      alert(error.message || "An error occurred");
+      console.error("Errore durante l'operazione:", error);
+      alert(error.message || "Si è verificato un errore");
     } finally {
       setIsProcessing(false);
     }

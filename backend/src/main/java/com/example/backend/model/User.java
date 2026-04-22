@@ -88,7 +88,6 @@ public class User {
         this.bookedEvents = bookedEvents;
     }
 
-    // ⭐ HELPER METHODS (IMPORTANT)
     public void addEvent(Event event) {
         bookedEvents.add(event);
         event.getParticipants().add(this);

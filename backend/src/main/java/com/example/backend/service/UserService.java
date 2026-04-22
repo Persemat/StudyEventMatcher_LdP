@@ -8,19 +8,40 @@ import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-
+/**
+ * Service responsible for user management.
+ *
+ * It handles:
+ * - user registration
+ * - authentication (login)
+ * - retrieval of the currently logged user
+ */
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-
+    /**
+     * Constructs the UserService.
+     *
+     * @param userRepository repository used to access user data
+     * @param passwordEncoder encoder used to securely hash passwords
+     */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Registers a new user.
+     *
+     * Validates input data, ensures email uniqueness, and stores the password securely.
+     *
+     * @param request contains user registration data
+     * @return the created user as a response DTO
+     * @throws IllegalArgumentException if any field is invalid or the email is already registered
+     */
     public UserResponse register(UserRequest request) {
 
         String name = request.name();
@@ -56,7 +77,6 @@ public class UserService {
             throw new IllegalArgumentException("Password must contain at least one number");
         }
 
-
         User user = new User();
         user.setName(name);
         user.setLastname(lastName);
@@ -66,8 +86,13 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
-
-
+    /**
+     * Authenticates a user using email and password.
+     *
+     * @param request contains login credentials
+     * @return the authenticated user as a response DTO
+     * @throws IllegalArgumentException if credentials are invalid
+     */
     public UserResponse login(LoginRequest request) {
         String email = request.email();
         String password = request.password();
@@ -90,7 +115,14 @@ public class UserService {
         return toResponse(user);
     }
 
-
+    /**
+     * Retrieves the currently logged user based on session ID.
+     *
+     * @param userId ID of the logged user
+     * @return the user as a response DTO
+     * @throws IllegalStateException if the session is invalid
+     * @throws IllegalArgumentException if the user does not exist
+     */
     public UserResponse getLoggedUser(Long userId) {
         if (userId == null) {
             throw new IllegalStateException("Invalid or expired session");
@@ -102,8 +134,12 @@ public class UserService {
         return toResponse(user);
     }
 
-
-
+    /**
+     * Maps a User entity to a UserResponse DTO.
+     *
+     * @param user the user entity
+     * @return the corresponding response DTO
+     */
     private UserResponse toResponse(User user) {
         return new UserResponse(
             user.getId(),

@@ -22,6 +22,12 @@ import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 
+/**
+ * Service responsible for managing events.
+ *
+ * It handles event creation, editing, deletion, booking, booking cancellation,
+ * tag retrieval, and event search operations.
+ */
 @Service
 public class EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
@@ -30,14 +36,31 @@ public class EventService {
     private final UserRepository userRepository;
     private final EmailService emailService;
 
+    /**
+     * Constructs the EventService.
+     *
+     * @param eventRepository repository used to manage event persistence
+     * @param userRepository repository used to retrieve user data
+     * @param emailService service used to send notification emails
+     */
     public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
-        
     }
 
-    // ================= CREATE EVENT =================
+    /**
+     * Creates a new event for the authenticated user.
+     *
+     * The creator is automatically added as a participant.
+     * Tags are normalized by trimming whitespace and converting them to uppercase.
+     *
+     * @param request the event creation request data
+     * @param session the current HTTP session containing the authenticated user ID
+     * @return the saved event
+     * @throws RuntimeException if the session is invalid, the user does not exist,
+     *                          or an identical event already exists for the same creator
+     */
     public Event createEvent(EventRequest request, HttpSession session) {
 
         Long userId = (Long) session.getAttribute("userId");
@@ -88,7 +111,21 @@ public class EventService {
         return eventRepository.save(newEvent);
     }
 
-    // ================= EDIT EVENT =================
+    /**
+     * Updates an existing event.
+     *
+     * Only the event creator can edit the event. In addition, the event cannot be
+     * modified within 24 hours of its scheduled start time, and the maximum number
+     * of participants cannot be set below the current participant count.
+     *
+     * @param id the ID of the event to edit
+     * @param request the updated event data
+     * @param session the current HTTP session containing the authenticated user ID
+     * @return the updated and saved event
+     * @throws RuntimeException if the session is invalid, the event does not exist,
+     *                          the user is not the creator, the event is too close
+     *                          to its start time, or the participant limit is invalid
+     */
     @Transactional
     public Event editEvent(Long id, EventRequest request, HttpSession session) {
 
@@ -126,16 +163,22 @@ public class EventService {
                     .collect(Collectors.toList());
 
             event.setTags(normalizedTags);
-        } 
+        }
         event.setDescription(request.description());
         event.setMaxParticipants(request.maxParticipants());
         event.setCreatorParticipationRequired(request.creatorParticipationRequired());
-      
 
         return eventRepository.save(event);
     }
 
-    // ================= GET ALL EVENTS =================
+    /**
+     * Retrieves all events and maps them to response objects for the current user.
+     *
+     * Events whose date and time are in the past are automatically marked as closed.
+     *
+     * @param session the current HTTP session containing the authenticated user ID, if available
+     * @return a list of event response objects
+     */
     public List<EventResponse> getAllEvents(HttpSession session) {
 
         Long userId = (Long) session.getAttribute("userId");
@@ -161,7 +204,20 @@ public class EventService {
                 .toList();
     }
 
-    // ================= DELETE EVENT =================
+    /**
+     * Deletes an event or reassigns its creator depending on the event settings.
+     *
+     * If creator participation is required, the event is deleted and cancellation
+     * emails are sent to participants. Otherwise, the creator is removed from the
+     * participant list; if participants remain, the creator role is reassigned to
+     * the participant with the smallest ID.
+     *
+     * @param eventId the ID of the event to delete
+     * @param session the current HTTP session containing the authenticated user ID
+     * @return a status message describing the result of the operation
+     * @throws RuntimeException if the session is invalid, the event does not exist,
+     *                          or the authenticated user is not the creator
+     */
     @Transactional
     public String deleteEvent(long eventId, HttpSession session) {
 
@@ -177,16 +233,14 @@ public class EventService {
         if (event.getCreator() == null ||
                 !event.getCreator().getId().equals(userId)) {
             throw new RuntimeException("Only the creator can delete the event");
-            
         }
 
         User creator = event.getCreator();
 
-       if (event.isCreatorParticipationRequired()) {
+        if (event.isCreatorParticipationRequired()) {
             try {
                 emailService.sendEventCancellationEmailToParticipants(event);
             } catch (Exception e) {
-                //System.err.println("Error sending cancellation emails for event " + event.getTitle());
                 logger.error("Error sending cancellation emails for event {}",
                         event.getTitle(), e);
             }
@@ -216,7 +270,18 @@ public class EventService {
         return "Creator removed and role reassigned successfully";
     }
 
-    // ================= BOOK EVENT =================
+    /**
+     * Books the authenticated user into an event.
+     *
+     * The booking is rejected if the user is already booked, if the event is full,
+     * or if the event is not open for bookings.
+     *
+     * @param eventId the ID of the event to book
+     * @param session the current HTTP session containing the authenticated user ID
+     * @throws RuntimeException if the user is not authenticated, the user or event
+     *                          cannot be found, the user is already booked, the
+     *                          event is full, or bookings are closed
+     */
     @Transactional
     public void bookEvent(Long eventId, HttpSession session) {
 
@@ -253,7 +318,14 @@ public class EventService {
         eventRepository.save(event);
     }
 
-    // ================= CANCEL BOOKING =================
+    /**
+     * Cancels the booking of the authenticated user for a specific event.
+     *
+     * @param eventId the ID of the event for which the booking must be cancelled
+     * @param session the current HTTP session containing the authenticated user ID
+     * @throws RuntimeException if the user is not authenticated, the user or event
+     *                          cannot be found, or the user is not booked for the event
+     */
     @Transactional
     public void cancelBooking(Long eventId, HttpSession session) {
 
@@ -280,12 +352,29 @@ public class EventService {
         eventRepository.save(event);
     }
 
-    // ================= GET ALL TAGS =================
+    /**
+     * Retrieves all distinct event tags available in the system.
+     *
+     * @return a list of distinct tags
+     */
     public List<String> getAllDistinctTags() {
         return eventRepository.findDistinctTags();
     }
 
-    // ================= SEARCH EVENTS =================
+    /**
+     * Searches for events by applying optional filters such as search text,
+     * tags, location, and date.
+     *
+     * Events found in the past are automatically marked as closed.
+     * Only open events are returned in the final response.
+     *
+     * @param session the current HTTP session containing the authenticated user ID, if available
+     * @param search free-text search term
+     * @param tags list of tags to filter by
+     * @param location location filter
+     * @param date date filter in ISO format
+     * @return a list of matching open events mapped to response objects
+     */
     public List<EventResponse> searchForEvents(HttpSession session,
                                               String search,
                                               List<String> tags,
@@ -344,7 +433,17 @@ public class EventService {
                 .toList();
     }
 
-    // ================= MAPPER =================
+    /**
+     * Maps an {@link Event} entity to an {@link EventResponse}.
+     *
+     * The response includes creator information, current participant count,
+     * booking status for the current user, and whether the current user is
+     * the creator of the event.
+     *
+     * @param event the event entity to map
+     * @param userId the ID of the current user, if available
+     * @return the mapped event response
+     */
     private EventResponse toResponse(Event event, Long userId) {
 
         User creator = event.getCreator();

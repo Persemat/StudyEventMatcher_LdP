@@ -10,6 +10,15 @@ import org.springframework.stereotype.Service;
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
 
+/**
+ * Service responsible for sending application emails.
+ *
+ * It handles:
+ * - password reset emails
+ * - event cancellation notifications
+ *
+ * Uses {@link JavaMailSender} to send messages.
+ */
 @Service
 public class EmailService {
 
@@ -18,11 +27,21 @@ public class EmailService {
     @Value("${app.mail.from}")
     private String fromEmail;
 
+    /**
+     * Constructs the EmailService.
+     *
+     * @param mailSender Spring component used to send emails
+     */
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    // ================= PASSWORD RESET EMAIL =================
+    /**
+     * Sends a password reset email containing a verification code.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param code the verification code for password reset
+     */
     public void sendPasswordResetCode(String recipientEmail, String code) {
 
         SimpleMailMessage message = new SimpleMailMessage();
@@ -38,7 +57,12 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    // ================= EVENT DELETION EMAIL (TO SINGLE USER) =================
+    /**
+     * Sends an event cancellation email to a single user.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param event the cancelled event
+     */
     public void sendEventCancellationEmail(String recipientEmail, Event event) {
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -58,14 +82,19 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    // ================= EVENT DELETION EMAIL (TO ALL PARTICIPANTS) =================
+    /**
+     * Sends event cancellation emails to all participants,
+     * excluding the event creator.
+     *
+     * @param event the cancelled event
+     */
     public void sendEventCancellationEmailToParticipants(Event event) {
 
         User creator = event.getCreator();
 
         for (User participant : event.getParticipants()) {
 
-            // skip creator
+            // Skip creator
             if (creator != null &&
                     participant.getId() != null &&
                     participant.getId().equals(creator.getId())) {
