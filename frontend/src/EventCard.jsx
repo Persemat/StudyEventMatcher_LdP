@@ -13,13 +13,16 @@ export default function EventCard({
   const isClosed = status === "closed";
   const eventStart = new Date(event.dateTime);
   const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const isInterationBlocked = isChiuso && !event.isCreatedByMe && !event.isBooked;
 
   const canEdit = event.isCreatedByMe && eventStart > in24Hours;
 
   return (
     <div
-      className={`bg-white rounded-lg shadow transition-shadow p-6 space-y-4 border border-gray-100 ${
-        isClosed ? "opacity-60 pointer-events-none" : "hover:shadow-lg"
+      className={`bg-white rounded-lg shadow transition-all p-6 space-y-4 border ${
+        isClosed ? "border-gray-200 bg-gray-50 opacity-75" : "border-gray-100 hover:shadow-lg"
+      } ${
+        isInterationBlocked ? "pointer-events-none select-none grayscale" : "pointer-events-auto"
       }`}
     >
       {/* Title and Tags */}

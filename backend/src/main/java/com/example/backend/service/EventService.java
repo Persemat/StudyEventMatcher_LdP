@@ -476,4 +476,37 @@ public class EventService {
                 userId != null && creator.getId().equals(userId)
         );
     }
+
+    public boolean checkIfClosed(boolean toSave, List<Event> events) {
+    LocalDateTime now = LocalDateTime.now();
+    
+    for (Event event : events) {
+        String actualStatus = event.getStatus();
+        int numPartecipants = event.getParticipants().size();
+        Integer maxPartecipants = event.getMaxParticipants();
+        
+        String newStatus = actualStatus;
+
+        // 1. Regola Temporale: Se la data è passata, è SEMPRE chiuso
+        if (event.getDateTime().isBefore(now)) {
+            newStatus = "closed";
+        } 
+        // 2. Regola Partecipanti: Se non è passata la data, controlliamo i posti
+        else {
+            if (maxPartecipants != null && numPartecipants >= maxPartecipants) {
+                newStatus = "closed";
+            } else {
+                newStatus = "open";
+            }
+        }
+
+        // Se lo stato è cambiato, aggiorniamo e segnamo daSalvare
+        if (!newStatus.equals(actualStatus)) {
+            event.setStatus(newStatus);
+            toSave = true;
+        }
+    }
+    return toSave;
+}
+
 }

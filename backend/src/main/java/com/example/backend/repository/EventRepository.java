@@ -26,7 +26,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     // ================= DYNAMIC FILTER SEARCH =================
     @Query("SELECT e FROM Event e WHERE " +
-            "e.status = 'open' AND " +
             "(:checkTags = false OR :tagCount = (SELECT COUNT(t) FROM Event e2 JOIN e2.tags t WHERE e2.id = e.id AND t IN :tags)) AND " +
             "(:search IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "(:location IS NULL OR LOWER(e.location) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
