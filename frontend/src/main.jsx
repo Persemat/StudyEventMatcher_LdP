@@ -45,7 +45,7 @@ const App = () => {
         method: "POST"
       });
     } catch (err) {
-      console.error("Logout error", err);
+      console.error("Errore logout", err);
     } finally {
       setLoggedUser(null);
     }

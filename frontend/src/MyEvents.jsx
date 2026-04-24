@@ -56,15 +56,15 @@ export default function MyEvents() {
       });
 
       if (!response.ok) {
-        throw new Error("Error fetching events");
+        throw new Error("Errore fetch eventi");
       }
 
       const data = await response.json();
-      console.log("EVENTS FROM BACKEND:", data);
+      console.log("EVENTI DAL BACKEND:", data);
       setEvents(data);
     } catch (error) {
-      console.error("Fetch events error:", error);
-      setError("Error loading events");
+      console.error("Errore fetch eventi", error);
+      setError("Errore caricamento eventi");
       setEvents([]);
     } finally {
       setLoading(false);

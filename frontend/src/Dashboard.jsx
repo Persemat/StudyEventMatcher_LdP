@@ -28,7 +28,7 @@ export default function Dashboard({ user }) {
 
   // Edit event
   const handleEdit = (event) => {
-    console.log("Opening edit modal for event:", event.id);
+    console.log("Aprendo modale di modifica eventi:", event.id);
     // TODO: implement edit modal
     // pass event + onClose + onSuccess
   };

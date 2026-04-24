@@ -29,7 +29,7 @@ export default function AuthPage(props) {
     resetMessages()
 
     if (!isLogin && password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('Le password non corrispondono')
       return
     }
 
@@ -55,7 +55,7 @@ export default function AuthPage(props) {
       const data = await response.json()
 
       if (isLogin) {
-        setMessage(`Logged in as: ${data.email}`);
+        setMessage(`Loggato come: ${data.email}`);
         props.onLoginSuccess(data);
 
         setTimeout(() => {
@@ -64,7 +64,7 @@ export default function AuthPage(props) {
 
       } else {
         setMessage(
-          `Registration completed for: ${data.name ?? ''} ${data.lastname ?? ''}`
+          `Registratione completata per: ${data.name ?? ''} ${data.lastname ?? ''}`
         );
 
         setTimeout(() => {

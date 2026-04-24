@@ -88,12 +88,12 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     setFormError("");
 
     if (!city.trim()) {
-      setFormError("Warning: City is required.");
+      setFormError("La città è richiesta.");
       return;
     }
 
     if (tags.length === 0) {
-      tagInputRef.current.setCustomValidity("Please fill out this field.");
+      tagInputRef.current.setCustomValidity("Completa questo campo.");
       tagInputRef.current.reportValidity();
       return;
     } else {
@@ -150,7 +150,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">
-            {isEdit ? "Edit Event" : "Crea Nuovo Evento"}
+            {isEdit ? "Modifica Evento" : "Crea Nuovo Evento"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-6 h-6" />

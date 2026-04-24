@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
     resetMessages()
 
     if (newPassword !== confirmNewPassword) {
-      setError('Passwords do not match')
+      setError('Le password non corrispondono')
       return
     }
 

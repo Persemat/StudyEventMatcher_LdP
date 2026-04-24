@@ -32,7 +32,7 @@ export default function AllEvents() {
         const data = await res.json();
         setAvailableTags(data.filter(t => t !== "All"));
       }
-    } catch (err) { console.error("Error fetch tags:", err); }
+    } catch (err) { console.error("Errore fetch tags:", err); }
   };
 
 
@@ -54,15 +54,15 @@ export default function AllEvents() {
       });
 
       if (!response.ok) {
-        throw new Error("Error fetching events");
+        throw new Error("Errore fetch eventi");
       }
 
       const data = await response.json();
 
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error fetching events:", err);
-      setError("Unable to load events");
+      console.error("Errore fetch eventi:", err);
+      setError("Impossibile caricare gli eventi");
       setEvents([]);
     } finally {
       setLoading(false);

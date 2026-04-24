@@ -127,7 +127,7 @@ export default function EventCard({
               }`}
               title={
                 !canEdit
-                  ? "You cannot edit an event within 24 hours of its start"
+                  ? "Non puoi modificare gli eventi entro 24h dall'inizio"
                   : ""
               }
             >
