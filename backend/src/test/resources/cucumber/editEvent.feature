@@ -7,7 +7,7 @@ Feature: Modifica evento
     When l'utente modifica l'orario di inizio dell'evento
     And salva le modifiche
     Then il sistema aggiorna l'evento correttamente
-    And il sistema mostra il messaggio di conferma "Event 'Progetto Java' successfully updated"
+    And il sistema mostra il messaggio di conferma "Evento 'Progetto Java' aggiornato con successo"
 
   Scenario: Tentativo salvataggio con campi vuoti
     Given l'utente è autenticato per la modifica
@@ -15,7 +15,7 @@ Feature: Modifica evento
     When l'utente lascia il campo titolo vuoto
     And salva le modifiche
     Then il sistema impedisce il salvataggio della modifica
-    And il sistema mostra il messaggio di errore "Missing required fields"
+    And il sistema mostra il messaggio di errore "Campi obbligatori mancanti"
 
   Scenario: Utente non autorizzato
     Given l'utente è autenticato per la modifica

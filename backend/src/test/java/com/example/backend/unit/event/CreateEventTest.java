@@ -66,7 +66,7 @@ public class CreateEventTest extends BaseEventTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> eventService.createEvent(request, session));
 
-        assertEquals("Invalid or expired session", ex.getMessage());
+        assertEquals("Sessione invalida o scaduta", ex.getMessage());
 
         verify(eventRepository, never()).save(any());
     }
@@ -91,7 +91,7 @@ public class CreateEventTest extends BaseEventTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> eventService.createEvent(request, session));
 
-        assertTrue(ex.getMessage().contains("User not found"));
+        assertTrue(ex.getMessage().contains("Utente non trovato"));
 
         verify(eventRepository, never()).save(any());
     }

@@ -109,7 +109,7 @@ public class Login {
 
     @And("non permette l'accesso all'area riservata")
     public void nonPermetteAccessoAreaRiservata() throws Exception {
-        result.andExpect(content().string(Matchers.containsString("Invalid credentials")));
+        result.andExpect(content().string(Matchers.containsString("Credenziali invalide")));
     }
 
     @Then("il sistema non procede alla verifica")
@@ -119,6 +119,6 @@ public class Login {
 
     @And("nega l'autorizzazione all'utente")
     public void negaAutorizzazioneUtente() throws Exception {
-        result.andExpect(content().string(Matchers.containsString("Email is required")));
+        result.andExpect(content().string(Matchers.containsString("Email obbligatoria")));
     }
 }

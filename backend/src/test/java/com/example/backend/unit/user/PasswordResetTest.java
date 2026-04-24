@@ -26,7 +26,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
                 () -> passwordResetService.forgotPassword(request)
         );
 
-        assertEquals("Email is required", ex.getMessage());
+        assertEquals("Email richiesta", ex.getMessage());
     }
 
     @Test
@@ -41,7 +41,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
                 () -> passwordResetService.forgotPassword(request)
         );
 
-        assertEquals("No user found with this email", ex.getMessage());
+        assertEquals("Non è stato trovato nessun utente associato all'email", ex.getMessage());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
 
         String result = passwordResetService.forgotPassword(request);
 
-        assertEquals("Password reset code sent via email", result);
+        assertEquals("Codice di reset della password inviato per email", result);
 
         verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
         verify(emailService).sendPasswordResetCode(eq("mario@example.com"), any(String.class));
@@ -87,7 +87,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
                 () -> passwordResetService.forgotPassword(request)
         );
 
-        assertEquals("Wait at least 30 seconds before requesting a new code", ex.getMessage());
+        assertEquals("Aspetta almeno 30 secondi prima di richiedere un nuovo codice", ex.getMessage());
     }
 
     @Test
@@ -106,7 +106,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
                 () -> passwordResetService.resetPassword(request)
         );
 
-        assertEquals("Invalid code", ex.getMessage());
+        assertEquals("Codice invalido", ex.getMessage());
     }
 
     @Test
@@ -131,6 +131,6 @@ public class PasswordResetTest extends BasePasswordResetTest {
                 () -> passwordResetService.resetPassword(request)
         );
 
-        assertEquals("Code expired", ex.getMessage());
+        assertEquals("Codice scaduto", ex.getMessage());
     }
 }

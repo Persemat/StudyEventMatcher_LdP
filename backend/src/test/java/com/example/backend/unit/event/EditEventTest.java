@@ -91,7 +91,7 @@ public class EditEventTest extends BaseEventTest {
             eventService.editEvent(10L, request, session);
         });
 
-        assertEquals("Invalid or expired session", ex.getMessage());
+        assertEquals("Sessione invalida o scaduta", ex.getMessage());
         verify(eventRepository, never()).findById(any());
         verify(eventRepository, never()).save(any());
     }
@@ -116,7 +116,7 @@ public class EditEventTest extends BaseEventTest {
             eventService.editEvent(10L, request, session);
         });
 
-        assertTrue(ex.getMessage().contains("Event not found"));
+        assertTrue(ex.getMessage().contains("Evento non trovato"));
         verify(eventRepository, never()).save(any());
     }
 
@@ -149,7 +149,7 @@ public class EditEventTest extends BaseEventTest {
             eventService.editEvent(10L, request, session);
         });
 
-        assertTrue(ex.getMessage().contains("Only the creator can edit the event"));
+        assertTrue(ex.getMessage().contains("Solo il creatore può modificare l'evento"));
         verify(eventRepository, never()).save(any());
     }
 
@@ -201,7 +201,7 @@ public class EditEventTest extends BaseEventTest {
         });
 
         assertEquals(
-                "Maximum number of participants cannot be lower than current participants",
+                "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali",
                 ex.getMessage()
         );
 

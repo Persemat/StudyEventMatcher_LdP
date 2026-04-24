@@ -16,4 +16,4 @@ Feature: Creazione di un nuovo evento
     Given l'utente si trova nella pagina di creazione evento
     When l'utente tenta di creare un evento senza compilare i campi obbligatori
     Then il sistema impedisce la creazione dell'evento
-    And il sistema mostra l'errore "Missing required fields"
+    And il sistema mostra l'errore "Campi obbligatori mancanti"

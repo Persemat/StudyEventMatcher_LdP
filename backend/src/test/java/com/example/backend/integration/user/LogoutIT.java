@@ -59,6 +59,6 @@ public class LogoutIT extends BaseUserIT {
                         .session(session))
                 .andExpect(status().is4xxClientError());
 
-        assertTrue(session.isInvalid(), "The session must be marked as invalid after logout.");
+        assertTrue(session.isInvalid(), "La sessione deve essere segnata come invalida dopo il logout.");
     }
 }

@@ -44,7 +44,7 @@ public class DeleteEventTest extends BaseEventTest {
 
         String result = eventService.deleteEvent(10L, session);
 
-        assertEquals("Event deleted successfully", result);
+        assertEquals("Evento cancellato con successo", result);
         verify(eventRepository).delete(event);
         assertTrue(event.getParticipants().isEmpty());
     }
@@ -81,7 +81,7 @@ public class DeleteEventTest extends BaseEventTest {
 
         String result = eventService.deleteEvent(11L, session);
 
-        assertEquals("Creator removed and role reassigned successfully", result);
+        assertEquals("Creatore rimosso e ruolo riassegnato con successo", result);
         assertEquals(user2, event.getCreator());
         assertFalse(event.getParticipants().contains(creator));
         assertTrue(event.getParticipants().contains(user2));
@@ -112,7 +112,7 @@ public class DeleteEventTest extends BaseEventTest {
 
         String result = eventService.deleteEvent(12L, session);
 
-        assertEquals("Event deleted successfully", result);
+        assertEquals("Evento cancellato con successo", result);
         verify(eventRepository).delete(event);
     }
 
@@ -135,7 +135,7 @@ public class DeleteEventTest extends BaseEventTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> eventService.deleteEvent(13L, session));
 
-        assertEquals("Only the creator can delete the event", ex.getMessage());
+        assertEquals("Solo il creatore può cancellare l'evento", ex.getMessage());
 
         verify(eventRepository, never()).delete(any());
         verify(eventRepository, never()).save(any());
@@ -150,7 +150,7 @@ public class DeleteEventTest extends BaseEventTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> eventService.deleteEvent(99L, session));
 
-        assertEquals("Event not found", ex.getMessage());
+        assertEquals("Evento non trovato", ex.getMessage());
 
         verify(eventRepository, never()).delete(any());
     }
@@ -163,7 +163,7 @@ public class DeleteEventTest extends BaseEventTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> eventService.deleteEvent(10L, session));
 
-        assertEquals("Session invalid or expired", ex.getMessage());
+        assertEquals("Sessione invalida o scaduta", ex.getMessage());
 
         verify(eventRepository, never()).findById(anyLong());
     }

@@ -69,11 +69,11 @@ public class PasswordResetService {
         String email = request.email();
 
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
+            throw new IllegalArgumentException("Email richiesta");
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("No user found with this email"));
+                .orElseThrow(() -> new IllegalArgumentException("Non è stato trovato nessun utente associato all'email"));
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -91,7 +91,7 @@ public class PasswordResetService {
                     .getSeconds();
 
             if (secondsPassed < 30) {
-                throw new IllegalArgumentException("Wait at least 30 seconds before requesting a new code");
+                throw new IllegalArgumentException("Aspetta almeno 30 secondi prima di richiedere un nuovo codice");
             }
         }
 
@@ -111,7 +111,7 @@ public class PasswordResetService {
 
         emailService.sendPasswordResetCode(user.getEmail(), code);
 
-        return "Password reset code sent via email";
+        return "Codice di reset della password inviato per email";
     }
 
     /**
@@ -137,39 +137,39 @@ public class PasswordResetService {
         }
 
         if (code == null || code.isBlank()) {
-            throw new IllegalArgumentException("Code is required");
+            throw new IllegalArgumentException("Il codice è richiesto");
         }
 
         if (newPassword == null || newPassword.length() < 8) {
-            throw new IllegalArgumentException("Password too short");
+            throw new IllegalArgumentException("Password troppo corta");
         }
 
         if (!newPassword.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("Password must contain an uppercase letter");
+            throw new IllegalArgumentException("La password deve contenere almeno una maiuscola");
         }
 
         if (!newPassword.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("Password must contain a number");
+            throw new IllegalArgumentException("La password deve contenere almeno un numero");
         }
 
         PasswordResetToken token = passwordResetTokenRepository
                 .findByEmailAndCodeAndUsedFalse(email, code)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid code"));
+                .orElseThrow(() -> new IllegalArgumentException("Codice invalido"));
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
             passwordResetTokenRepository.delete(token);
-            throw new IllegalArgumentException("Code expired");
+            throw new IllegalArgumentException("Codice scaduto");
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         passwordResetTokenRepository.delete(token);
 
-        return "Password updated successfully";
+        return "Password aggiornata con successo";
     }
 
     /**

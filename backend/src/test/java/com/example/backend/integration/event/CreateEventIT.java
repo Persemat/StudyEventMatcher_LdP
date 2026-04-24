@@ -32,7 +32,7 @@ public class CreateEventIT extends BaseEventIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("created successfully")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("creato con successo")));
 
         assertEquals(1, eventRepository.count());
     }

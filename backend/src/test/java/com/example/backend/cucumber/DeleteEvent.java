@@ -155,7 +155,7 @@ public class DeleteEvent {
     @Then("dovrebbe ricevere un messaggio di conferma di avvenuta cancellazione")
     public void dovrebbeRicevereMessaggioConferma() throws Exception {
         result.andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("successfully")));
+                .andExpect(content().string(Matchers.containsString("successo")));
     }
 
     @And("il record dell'evento viene rimosso dal database")

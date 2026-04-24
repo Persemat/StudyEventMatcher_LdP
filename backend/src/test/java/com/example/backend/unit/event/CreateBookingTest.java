@@ -56,7 +56,7 @@ public class CreateBookingTest extends BaseEventTest {
             eventService.bookEvent(10L, session);
         });
 
-        assertEquals("User not authenticated", ex.getMessage());
+        assertEquals("Utente non autenticato", ex.getMessage());
         verify(eventRepository, never()).findById(any());
         verify(eventRepository, never()).save(any());
     }
@@ -70,7 +70,7 @@ public class CreateBookingTest extends BaseEventTest {
             eventService.bookEvent(10L, session);
         });
 
-        assertEquals("User not found", ex.getMessage());
+        assertEquals("Utente non trovato", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
@@ -87,7 +87,7 @@ public class CreateBookingTest extends BaseEventTest {
             eventService.bookEvent(10L, session);
         });
 
-        assertEquals("Event not found", ex.getMessage());
+        assertEquals("Evento non trovato", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
@@ -113,7 +113,7 @@ public class CreateBookingTest extends BaseEventTest {
             eventService.bookEvent(10L, session);
         });
 
-        assertEquals("You are already booked for this event", ex.getMessage());
+        assertEquals("Sei già prenotato per questo evento", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
@@ -143,7 +143,7 @@ public class CreateBookingTest extends BaseEventTest {
             eventService.bookEvent(10L, session);
         });
 
-        assertEquals("Event is full", ex.getMessage());
+        assertEquals("L'evento è pieno", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
@@ -173,7 +173,7 @@ public class CreateBookingTest extends BaseEventTest {
             eventService.bookEvent(10L, session);
         });
 
-        assertEquals("Bookings are not available for this event", ex.getMessage());
+        assertEquals("Le prenotazioni non sono disponibili per questo evento", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 }

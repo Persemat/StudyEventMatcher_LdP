@@ -5,14 +5,14 @@ Feature: Cancellazione prenotazione
         And l'utente ha una prenotazione per un evento
         When l'utente prova a cancellare la prenotazione
         Then il sistema rimuove la prenotazione
-        And il sistema mostra il messaggio di cancellazione "Booking cancelled successfully"
+        And il sistema mostra il messaggio di cancellazione "Prenotazione cancellata con successo"
 
     Scenario: L'utente tenta di cancellare una prenotazione inesistente
         Given l'utente è autenticato per la cancellazione
         And l'utente non è prenotato a quell'evento
         When l'utente prova a cancellare la prenotazione
         Then il sistema impedisce l'operazione
-        And il sistema mostra il messaggio di cancellazione "Error: You are not booked for this event"
+        And il sistema mostra il messaggio di cancellazione "Errore: Non ti sei prenotato per questo evento"
 
     Scenario: Utente non autenticato tenta la cancellazione
         Given l'utente non è autenticato per la cancellazione

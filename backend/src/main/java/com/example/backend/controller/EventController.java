@@ -58,7 +58,7 @@ public class EventController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Invalid or expired session");
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
         }
 
         return ResponseEntity.ok(eventService.getAllEvents(session));
@@ -81,18 +81,18 @@ public class EventController {
                 request.location() == null || request.location().isBlank() ||
                 request.tags() == null || request.tags().isEmpty()) {
 
-            return ResponseEntity.badRequest().body("Missing required fields");
+            return ResponseEntity.badRequest().body("Campi obbligatori mancanti");
         }
 
         try {
             Event createdEvent = eventService.createEvent(request, session);
-            return ResponseEntity.ok("Event '" + createdEvent.getTitle() + "' created successfully!");
+            return ResponseEntity.ok("Evento '" + createdEvent.getTitle() + "' creato con successo!");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ SERVICE ERROR: " + e.getMessage());
+            System.out.println("⚠️ ERRORE SERVICE: " + e.getMessage());
             e.printStackTrace();
 
-            return ResponseEntity.status(400).body("Error: " + e.getMessage());
+            return ResponseEntity.status(400).body("Errore: " + e.getMessage());
         }
     }
 
@@ -108,11 +108,11 @@ public class EventController {
 
         try {
             eventService.bookEvent(id, session);
-            return ResponseEntity.ok("Booking completed successfully");
+            return ResponseEntity.ok("Prenotazione completata con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ BOOKING ERROR: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            System.out.println("⚠️ ERRORE DI PRENOTAZIONE: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }
 
@@ -131,7 +131,7 @@ public class EventController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Invalid or expired session");
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
         }
 
         try {
@@ -161,7 +161,7 @@ public class EventController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Invalid or expired session");
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
         }
 
         if (request.title() == null || request.title().isBlank() ||
@@ -169,18 +169,18 @@ public class EventController {
                 request.location() == null || request.location().isBlank() ||
                 request.tags() == null || request.tags().isEmpty()) {
 
-            return ResponseEntity.badRequest().body("Missing required fields");
+            return ResponseEntity.badRequest().body("Campi obbligatori mancanti");
         }
 
         try {
             Event updatedEvent = eventService.editEvent(id, request, session);
-            return ResponseEntity.ok("Event '" + updatedEvent.getTitle() + "' successfully updated");
+            return ResponseEntity.ok("Evento '" + updatedEvent.getTitle() + "' aggiornato con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ UPDATE EVENT ERROR: " + e.getMessage());
+            System.out.println("⚠️ ERRORE AGGIORNAMENTO EVENTO: " + e.getMessage());
             e.printStackTrace();
 
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }
 
@@ -197,16 +197,16 @@ public class EventController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Invalid or expired session");
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
         }
 
         try {
             eventService.cancelBooking(id, session);
-            return ResponseEntity.ok("Booking cancelled successfully");
+            return ResponseEntity.ok("Prenotazione cancellata con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ CANCEL BOOKING ERROR: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            System.out.println("⚠️ ERRORE CANCELLAZIONE PRENOTAZIONE: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }
 
@@ -232,7 +232,7 @@ public class EventController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Invalid or expired session");
+            return ResponseEntity.status(401).body("Sesisone invalida o scaduta");
         }
 
         return ResponseEntity.ok(

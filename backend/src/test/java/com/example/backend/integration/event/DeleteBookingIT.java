@@ -88,7 +88,7 @@ public class DeleteBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("Booking cancelled successfully"));
+                .andExpect(content().string("Prenotazione cancellata con successo"));
 
         // Verification: simulate React page reload and check data
         mockMvc.perform(
@@ -110,7 +110,7 @@ public class DeleteBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Invalid or expired session"));
+                .andExpect(content().string("Sessione invalida o scaduta"));
     }
 
     @Test
@@ -122,7 +122,7 @@ public class DeleteBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Error: Event not found"));
+                .andExpect(content().string("Errore: Evento non trovato"));
     }
 
     @Test
@@ -136,6 +136,6 @@ public class DeleteBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Error: You are not booked for this event"));
+                .andExpect(content().string("Errore: Non ti sei prenotato per questo evento"));
     }
 }

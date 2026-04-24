@@ -50,31 +50,31 @@ public class UserService {
         String password = request.password();
 
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Name is required");
+            throw new IllegalArgumentException("Nome obbligatorio");
         }
 
         if (lastName == null || lastName.isBlank()) {
-            throw new IllegalArgumentException("Last name is required");
+            throw new IllegalArgumentException("Cognome obbligatorio");
         }
 
         if (email == null || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-            throw new IllegalArgumentException("Invalid email");
+            throw new IllegalArgumentException("Email non valida");
         }
 
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new IllegalArgumentException("Email già registrata");
         }
 
         if (password == null || password.length() < 8) {
-            throw new IllegalArgumentException("Password too short");
+            throw new IllegalArgumentException("Password troppo corta");
         }
 
         if (!password.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
+            throw new IllegalArgumentException("La password deve contenere almeno una maiuscola");
         }
 
         if (!password.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("Password must contain at least one number");
+            throw new IllegalArgumentException("La password deve contenere almeno un numero");
         }
 
         User user = new User();
@@ -98,18 +98,18 @@ public class UserService {
         String password = request.password();
 
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
+            throw new IllegalArgumentException("Email obbligatoria");
         }
 
         if (password == null || password.isBlank()) {
-            throw new IllegalArgumentException("Password is required");
+            throw new IllegalArgumentException("Password Obbligatoria");
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+                .orElseThrow(() -> new IllegalArgumentException("Credenziali invalide"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new IllegalArgumentException("Credenziali invalide");
         }
 
         return toResponse(user);
@@ -125,11 +125,11 @@ public class UserService {
      */
     public UserResponse getLoggedUser(Long userId) {
         if (userId == null) {
-            throw new IllegalStateException("Invalid or expired session");
+            throw new IllegalStateException("Sessione invalida o scaduta");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
 
         return toResponse(user);
     }

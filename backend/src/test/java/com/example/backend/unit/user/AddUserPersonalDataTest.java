@@ -21,7 +21,7 @@ public class AddUserPersonalDataTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Name is required", ex.getMessage());
+        assertEquals("Nome obbligatorio", ex.getMessage());
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }
@@ -35,7 +35,7 @@ public class AddUserPersonalDataTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Last name is required", ex.getMessage());
+        assertEquals("Cognome obbligatorio", ex.getMessage());
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
     }

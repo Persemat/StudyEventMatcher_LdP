@@ -66,11 +66,11 @@ public class EventService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("Invalid or expired session");
+            throw new RuntimeException("Sessione invalida o scaduta");
         }
 
         User creator = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
         boolean eventExists = eventRepository
                 .findByCreatorIdAndTitleAndDateTimeAndLocation(
@@ -82,7 +82,7 @@ public class EventService {
                 .isPresent();
 
         if (eventExists) {
-            throw new RuntimeException("An identical event already exists for this user");
+            throw new RuntimeException("Un evento identico esiste gia per questo utente");
         }
 
         Event newEvent = new Event();
@@ -132,24 +132,24 @@ public class EventService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("Invalid or expired session");
+            throw new RuntimeException("Sessione invalida o scaduta");
         }
 
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
 
         if (event.getCreator() == null ||
                 !event.getCreator().getId().equals(userId)) {
-            throw new RuntimeException("Only the creator can edit the event");
+            throw new RuntimeException("Solo il creatore può modificare l'evento");
         }
 
         if (!event.getDateTime().isAfter(LocalDateTime.now().plusHours(24))) {
-            throw new RuntimeException("Event cannot be modified within 24 hours of start");
+            throw new RuntimeException("L'evento non può essere modificato entro 24 ore dall'inizio");
         }
 
         if (request.maxParticipants() != null &&
                 request.maxParticipants() < event.getParticipants().size()) {
-            throw new RuntimeException("Maximum number of participants cannot be lower than current participants");
+            throw new RuntimeException("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
         }
 
         event.setTitle(request.title());
@@ -217,15 +217,15 @@ public class EventService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("Session invalid or expired");
+            throw new RuntimeException("Sessione invalida o scaduta");
         }
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
 
         if (event.getCreator() == null ||
                 !event.getCreator().getId().equals(userId)) {
-            throw new RuntimeException("Only the creator can delete the event");
+            throw new RuntimeException("Solo il creatore può cancellare l'evento");
         }
 
         User creator = event.getCreator();
@@ -234,13 +234,13 @@ public class EventService {
             try {
                 emailService.sendEventCancellationEmailToParticipants(event);
             } catch (Exception e) {
-                logger.error("Error sending cancellation emails for event {}",
+                logger.error("Errore mandando la mail di cancellazione per questo evento {}",
                         event.getTitle(), e);
             }
 
             event.getParticipants().clear();
             eventRepository.delete(event);
-            return "Event deleted successfully";
+            return "Evento cancellato con successo";
         }
 
         event.removeParticipant(creator);
@@ -249,18 +249,18 @@ public class EventService {
 
         if (remaining.isEmpty()) {
             eventRepository.delete(event);
-            return "Event deleted successfully";
+            return "Evento cancellato con successo";
         }
 
         User newCreator = new ArrayList<>(remaining).stream()
                 .sorted(Comparator.comparing(User::getId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Unable to reassign creator"));
+                .orElseThrow(() -> new RuntimeException("Impossibile riassegnare il creatore"));
 
         event.setCreator(newCreator);
         eventRepository.save(event);
 
-        return "Creator removed and role reassigned successfully";
+        return "Creatore rimosso e ruolo riassegnato con successo";
     }
 
     /**
@@ -281,30 +281,30 @@ public class EventService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("User not authenticated");
+            throw new RuntimeException("Utente non autenticato");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
 
         boolean alreadyBooked = event.getParticipants().stream()
                 .anyMatch(p -> p.getId().equals(userId));
 
         if (alreadyBooked) {
-            throw new RuntimeException("You are already booked for this event");
+            throw new RuntimeException("Sei già prenotato per questo evento");
         }
 
         if (event.getMaxParticipants() != null &&
                 event.getParticipants().size() >= event.getMaxParticipants()) {
-            throw new RuntimeException("Event is full");
+            throw new RuntimeException("L'evento è pieno");
         }
 
         if (event.getStatus() != null &&
                 !"open".equalsIgnoreCase(event.getStatus())) {
-            throw new RuntimeException("Bookings are not available for this event");
+            throw new RuntimeException("Le prenotazioni non sono disponibili per questo evento");
         }
 
         event.addParticipant(user);
@@ -325,20 +325,20 @@ public class EventService {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            throw new RuntimeException("User not authenticated");
+            throw new RuntimeException("Utente non autenticato");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
 
         boolean isBooked = event.getParticipants().stream()
                 .anyMatch(p -> p.getId().equals(userId));
 
         if (!isBooked) {
-            throw new RuntimeException("You are not booked for this event");
+            throw new RuntimeException("Non ti sei prenotato per questo evento");
         }
 
         event.removeParticipant(user);

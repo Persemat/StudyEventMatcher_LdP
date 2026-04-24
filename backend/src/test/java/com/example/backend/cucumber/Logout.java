@@ -131,7 +131,7 @@ public class Logout {
     public void sistemaRispondeCon200() throws Exception {
         response.andExpect(status().isOk());
         response.andExpect(
-                content().string(org.hamcrest.Matchers.containsString("No active session, user already logged out")));
+                content().string(org.hamcrest.Matchers.containsString("Nessuna sessione attiva, Utente già disconnesso")));
     }
 
     @And("il sistema mantiene lo stato di utente anonimo")

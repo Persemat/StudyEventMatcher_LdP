@@ -52,13 +52,13 @@ class NotificationDeleteEventTest {
 
         assertEquals("noreply@test.com", message.getFrom());
         assertEquals("mario@example.com", message.getTo()[0]);
-        assertEquals("Event cancelled - StudyTogether", message.getSubject());
+        assertEquals("Evento cancellato - StudyTogether", message.getSubject());
 
         String text = message.getText();
         assertTrue(text.contains("Calculus 1"));
         assertTrue(text.contains("20/04/2026"));
         assertTrue(text.contains("15:30"));
-        assertTrue(text.contains("has been cancelled"));
+        assertTrue(text.contains("è stato cancellato"));
     }
 
     @Test

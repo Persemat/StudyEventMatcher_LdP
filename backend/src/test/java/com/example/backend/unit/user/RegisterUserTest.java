@@ -28,7 +28,7 @@ public class RegisterUserTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Invalid email", ex.getMessage());
+        assertEquals("Email non valida", ex.getMessage());
         verify(userRepository, never()).findByEmail(any());
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
@@ -46,7 +46,7 @@ public class RegisterUserTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Email already registered", ex.getMessage());
+        assertEquals("Email già registrata", ex.getMessage());
         verify(userRepository).findByEmail("mario@example.com");
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
@@ -64,7 +64,7 @@ public class RegisterUserTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Password too short", ex.getMessage());
+        assertEquals("Password troppo corta", ex.getMessage());
         verify(userRepository).findByEmail("mario@example.com");
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
@@ -82,7 +82,7 @@ public class RegisterUserTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Password must contain at least one uppercase letter", ex.getMessage());
+        assertEquals("La password deve contenere almeno una maiuscola", ex.getMessage());
         verify(userRepository).findByEmail("mario@example.com");
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());
@@ -100,7 +100,7 @@ public class RegisterUserTest extends BaseUserTest {
                 () -> userService.register(request)
         );
 
-        assertEquals("Password must contain at least one number", ex.getMessage());
+        assertEquals("La password deve contenere almeno un numero", ex.getMessage());
         verify(userRepository).findByEmail("mario@example.com");
         verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).encode(any());

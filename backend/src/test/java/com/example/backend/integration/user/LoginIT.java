@@ -69,6 +69,6 @@ public class LoginIT extends BaseUserIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(login))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Invalid credentials")));
+                .andExpect(content().string(containsString("Credenziali invalide")));
     }
 }

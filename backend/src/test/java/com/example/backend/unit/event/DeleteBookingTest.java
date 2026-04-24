@@ -59,7 +59,7 @@ public class DeleteBookingTest extends BaseEventTest {
             eventService.cancelBooking(10L, session);
         });
 
-        assertEquals("User not authenticated", ex.getMessage());
+        assertEquals("Utente non autenticato", ex.getMessage());
 
         // Ensure DB is never accessed
         verify(eventRepository, never()).findById(any());
@@ -77,7 +77,7 @@ public class DeleteBookingTest extends BaseEventTest {
             eventService.cancelBooking(10L, session);
         });
 
-        assertEquals("User not found", ex.getMessage());
+        assertEquals("Utente non trovato", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
@@ -96,7 +96,7 @@ public class DeleteBookingTest extends BaseEventTest {
             eventService.cancelBooking(10L, session);
         });
 
-        assertEquals("Event not found", ex.getMessage());
+        assertEquals("Evento non trovato", ex.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
@@ -121,7 +121,7 @@ public class DeleteBookingTest extends BaseEventTest {
         });
 
         // Message required by Cucumber user story
-        assertEquals("You are not booked for this event", ex.getMessage());
+        assertEquals("Non ti sei prenotato per questo evento", ex.getMessage());
 
         // Event must not be saved due to error
         verify(eventRepository, never()).save(any());

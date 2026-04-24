@@ -49,9 +49,9 @@ public class EmailService {
         message.setTo(recipientEmail);
         message.setSubject("Password Reset - StudyTogether");
         message.setText(
-                "You requested a password reset.\n\n" +
-                "Your verification code is: " + code + "\n\n" +
-                "This code will expire in 10 minutes."
+                "Hai richiesto il reset della password.\n\n" +
+                "Il tuo codice di verifica è: " + code + "\n\n" +
+                "Questo codice scadrà tra 10 minuti."
         );
 
         mailSender.send(message);
@@ -71,12 +71,12 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(recipientEmail);
-        message.setSubject("Event cancelled - StudyTogether");
+        message.setSubject("Evento cancellato - StudyTogether");
         message.setText(
-                "We inform you that the event '" + event.getTitle() + "' scheduled on " +
-                event.getDateTime().format(dateFormatter) + " at " +
+                "Ti informiamo che l'evento '" + event.getTitle() + " programmato il  " +
+                event.getDateTime().format(dateFormatter) + " alle " +
                 event.getDateTime().format(timeFormatter) +
-                " has been cancelled."
+                " è stato cancellato."
         );
 
         mailSender.send(message);

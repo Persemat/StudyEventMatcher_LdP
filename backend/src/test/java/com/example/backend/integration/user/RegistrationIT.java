@@ -53,6 +53,6 @@ public class RegistrationIT extends BaseUserIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Email already registered")));
+                .andExpect(content().string(containsString("Email già registrata")));
     }
 }

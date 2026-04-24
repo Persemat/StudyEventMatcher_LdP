@@ -70,7 +70,7 @@ public class PasswordRecovery {
     @Then("il sistema invia il codice di recupero")
     public void ilSistemaInviaIlCodiceDiRecupero() throws Exception {
         result.andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Password reset code sent via email")));
+                .andExpect(content().string(Matchers.containsString("Codice di reset della password inviato per email")));
     }
 
     @Then("il sistema rifiuta la richiesta di recupero password")
@@ -156,7 +156,7 @@ public class PasswordRecovery {
     @Then("il sistema aggiorna la password")
     public void ilSistemaAggiornaLaPassword() throws Exception {
         result.andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Password updated successfully")));
+                .andExpect(content().string(Matchers.containsString("Password aggiornata con successo")));
     }
 
     @Then("il sistema rifiuta la richiesta di reset password")

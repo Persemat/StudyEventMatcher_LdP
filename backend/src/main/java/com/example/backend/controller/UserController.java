@@ -107,12 +107,12 @@ public class UserController {
         if (session != null) {
             try {
                 session.invalidate();
-                return ResponseEntity.ok("Logout successful");
+                return ResponseEntity.ok("Disconnessione effettuata con successo");
             } catch (IllegalStateException e) {
-                return ResponseEntity.ok("Session already invalidated");
+                return ResponseEntity.ok("Sessione già invalidata");
             }
         }
 
-        return ResponseEntity.ok("No active session, user already logged out");
+        return ResponseEntity.ok("Nessuna sessione attiva, Utente già disconnesso");
     }
 }

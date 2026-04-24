@@ -58,7 +58,7 @@ public class EditEventIT extends BaseEventIT {
                         .content(json))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("successfully updated")));
+                        org.hamcrest.Matchers.containsString("aggiornato con successo")));
 
         Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
 
@@ -108,7 +108,7 @@ public class EditEventIT extends BaseEventIT {
                         .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Missing required fields")));
+                        org.hamcrest.Matchers.containsString("Campi obbligatori mancanti")));
     }
 
     @Test
@@ -146,7 +146,7 @@ public class EditEventIT extends BaseEventIT {
                         .content(json))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Invalid or expired session")));
+                        org.hamcrest.Matchers.containsString("Sessione invalida o scaduta")));
     }
 
     @Test
@@ -192,7 +192,7 @@ public class EditEventIT extends BaseEventIT {
                         .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Only the creator can edit the event")));
+                        org.hamcrest.Matchers.containsString("Solo il creatore può modificare l'evento")));
     }
 
     @Test
@@ -239,6 +239,6 @@ public class EditEventIT extends BaseEventIT {
                         .content(json))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Maximum number of participants cannot be lower than current participants")));
+                        org.hamcrest.Matchers.containsString("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali")));
     }
 }

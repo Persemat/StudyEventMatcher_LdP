@@ -36,7 +36,7 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Password reset code sent via email")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Codice di reset della password inviato per email")));
 
         assertTrue(passwordResetTokenRepository.findAll().stream()
                 .anyMatch(token -> token.getEmail().equals("mario@example.com")));
@@ -54,7 +54,7 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("No user found with this email")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Non è stato trovato nessun utente associato all'email")));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Wait at least 30 seconds before requesting a new code")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Aspetta almeno 30 secondi prima di richiedere un nuovo codice")));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Password updated successfully")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Password aggiornata con successo")));
 
         User updated = userRepository.findByEmail("mario@example.com").orElseThrow();
         assertTrue(passwordEncoder.matches("NuovaPass1", updated.getPassword()));
@@ -131,7 +131,7 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Invalid code")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Codice invalido")));
     }
 
     @Test
@@ -159,6 +159,6 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Code expired")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Codice scaduto")));
     }
 }

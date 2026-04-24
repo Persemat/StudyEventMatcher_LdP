@@ -103,7 +103,7 @@ public class CreateBooking {
 
     @And("il sistema mostra il messaggio di evento al completo")
     public void ilSistemaMostraIlMessaggioDiEventoAlCompleto() throws Exception {
-        result.andExpect(content().string(Matchers.containsString("Error: Event is full")));
+        result.andExpect(content().string(Matchers.containsString("Errore: L'evento è pieno")));
     }
 
 
@@ -202,7 +202,7 @@ public class CreateBooking {
 
     @And("il sistema mostra il messaggio di successo della prenotazione")
     public void ilSistemaMostraIlMessaggioDiSuccessoDellaPrenotazione() throws Exception {
-        result.andExpect(content().string(Matchers.containsString("Booking completed successfully")));
+        result.andExpect(content().string(Matchers.containsString("Prenotazione completata con successo")));
     }
 
     @Then("il sistema non mostra il pulsante {string}")

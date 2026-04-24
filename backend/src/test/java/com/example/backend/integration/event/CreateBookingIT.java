@@ -83,7 +83,7 @@ public class CreateBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("Booking completed successfully"));
+                .andExpect(content().string("Prenotazione completata con successo"));
 
         mockMvc.perform(
                         get("/events")
@@ -102,7 +102,7 @@ public class CreateBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Error: User not authenticated"));
+                .andExpect(content().string("Errore: Utente non autenticato"));
     }
 
     @Test
@@ -114,7 +114,7 @@ public class CreateBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Error: Event not found"));
+                .andExpect(content().string("Errore: Evento non trovato"));
     }
 
     @Test
@@ -129,7 +129,7 @@ public class CreateBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Error: You are already booked for this event"));
+                .andExpect(content().string("Errore: Sei già prenotato per questo evento"));
     }
 
     @Test
@@ -144,6 +144,6 @@ public class CreateBookingIT extends BaseEventIT {
                                 .session(session)
                 )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Error: Event is full"));
+                .andExpect(content().string("Errore: L'evento è pieno"));
     }
 }

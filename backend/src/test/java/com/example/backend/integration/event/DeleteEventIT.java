@@ -53,7 +53,7 @@ class DeleteEventIT extends BaseEventIT {
         mockMvc.perform(delete("/events/" + eventId)
                         .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Event deleted successfully")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Evento cancellato con successo")));
 
         assertFalse(eventRepository.findById(eventId).isPresent());
     }
@@ -130,7 +130,7 @@ class DeleteEventIT extends BaseEventIT {
         mockMvc.perform(delete("/events/" + eventId)
                         .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Event deleted successfully")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Evento cancellato con successo")));
 
         assertFalse(eventRepository.findById(eventId).isPresent());
     }
@@ -163,7 +163,7 @@ class DeleteEventIT extends BaseEventIT {
         mockMvc.perform(delete("/events/" + eventId)
                         .sessionAttr("userId", userId))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Only the creator can delete the event")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Solo il creatore può cancellare l'evento")));
 
         assertTrue(eventRepository.findById(eventId).isPresent());
     }

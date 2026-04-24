@@ -112,7 +112,7 @@ export default function AuthPage(props) {
                 ...(isLogin ? styles.activeTab : {}),
               }}
             >
-              Login
+              Accedi
             </button>
 
             <button
@@ -126,7 +126,7 @@ export default function AuthPage(props) {
                 ...(!isLogin ? styles.activeTab : {}),
               }}
             >
-              Register
+              Registrati
             </button>
           </div>
 
@@ -234,7 +234,7 @@ export default function AuthPage(props) {
             )}
 
             <button type="submit" style={styles.submitButton}>
-              {isLogin ? 'Login' : 'Register'}
+              {isLogin ? 'Accedi' : 'Registrati'}
             </button>
 
           </form>

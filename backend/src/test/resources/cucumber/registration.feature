@@ -19,18 +19,18 @@ Feature: Registrazione utente
     And l'email è già associata a un account esistente
     When l'utente prova a registrarsi
     Then il sistema impedisce la registrazione
-    And il sistema mostra "Email already registered"
+    And il sistema mostra "Email già registrata"
 
   Scenario: Registrazione con formato email non valido
     Given l'utente non è registrato
     And inserisce un'email con formato non valido
     When l'utente prova a registrarsi
     Then il sistema impedisce la registrazione
-    And il sistema mostra "Invalid email"
+    And il sistema mostra "Email non valida"
 
   Scenario: Registrazione con formato password non valido
     Given l'utente non è registrato
     And inserisce una password con formato non valido
     When l'utente prova a registrarsi
     Then il sistema impedisce la registrazione
-    And il sistema mostra "Password too short"
+    And il sistema mostra "Password troppo corta"
