@@ -185,15 +185,8 @@ public class EventService {
 
         List<Event> events = eventRepository.findAll();
 
-        boolean updated = false;
 
-        for (Event event : events) {
-            if (event.getDateTime().isBefore(LocalDateTime.now())
-                    && "open".equalsIgnoreCase(event.getStatus())) {
-                event.setStatus("closed");
-                updated = true;
-            }
-        }
+        boolean updated =checkIfClosed(false, events);
 
         if (updated) {
             eventRepository.saveAll(events);
@@ -413,22 +406,15 @@ public class EventService {
                 endDate
         );
 
-        boolean updated = false;
 
-        for (Event event : events) {
-            if (event.getDateTime().isBefore(LocalDateTime.now())
-                    && "open".equalsIgnoreCase(event.getStatus())) {
-                event.setStatus("closed");
-                updated = true;
-            }
-        }
+        boolean updated =checkIfClosed(false, events);
 
         if (updated) {
             eventRepository.saveAll(events);
         }
-
+        LocalDateTime now = LocalDateTime.now();
         return events.stream()
-                .filter(e -> "open".equalsIgnoreCase(e.getStatus()))
+                .filter(e -> e.getDateTime().isAfter(now))
                 .map(event -> toResponse(event, userId))
                 .toList();
     }
@@ -478,35 +464,30 @@ public class EventService {
     }
 
     public boolean checkIfClosed(boolean toSave, List<Event> events) {
-    LocalDateTime now = LocalDateTime.now();
-    
-    for (Event event : events) {
-        String actualStatus = event.getStatus();
-        int numPartecipants = event.getParticipants().size();
-        Integer maxPartecipants = event.getMaxParticipants();
-        
-        String newStatus = actualStatus;
+        LocalDateTime now = LocalDateTime.now();
 
-        // 1. Regola Temporale: Se la data è passata, è SEMPRE chiuso
-        if (event.getDateTime().isBefore(now)) {
-            newStatus = "closed";
-        } 
-        // 2. Regola Partecipanti: Se non è passata la data, controlliamo i posti
-        else {
-            if (maxPartecipants != null && numPartecipants >= maxPartecipants) {
+        for (Event event : events) {
+            String actualStatus = event.getStatus();
+            int numParticipants = event.getParticipants().size();
+            Integer maxParticipants = event.getMaxParticipants();
+
+            String newStatus;
+
+            if (event.getDateTime().isBefore(now)) {
+                newStatus = "closed";
+            } else if (maxParticipants != null && numParticipants >= maxParticipants) {
                 newStatus = "closed";
             } else {
                 newStatus = "open";
             }
+
+            if (!newStatus.equalsIgnoreCase(actualStatus)) {
+                event.setStatus(newStatus);
+                toSave = true;
+            }
         }
 
-        // Se lo stato è cambiato, aggiorniamo e segnamo daSalvare
-        if (!newStatus.equals(actualStatus)) {
-            event.setStatus(newStatus);
-            toSave = true;
-        }
+        return toSave;
     }
-    return toSave;
-}
 
 }

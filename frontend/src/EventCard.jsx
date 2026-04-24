@@ -8,12 +8,15 @@ export default function EventCard({
   onEdit
 }) {
   const currentParticipants = event.currentParticipants || 0;
-  const isFull = currentParticipants >= event.maxParticipants;
+  const isFull = event.maxParticipants != null && currentParticipants >= event.maxParticipants;
   const status = event.status || "unknown";
-  const isClosed = status === "closed";
+  const isClosed = status === "closed" || isFull;
   const eventStart = new Date(event.dateTime);
   const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const isInterationBlocked = isChiuso && !event.isCreatedByMe && !event.isBooked;
+
+  // Blocca solo chi NON è creatore e NON è prenotato.
+  // Così se l'evento è pieno/chiuso, chi è già prenotato può comunque cancellare.
+  const isInterationBlocked = isClosed && !event.isCreatedByMe && !event.isBooked;
 
   const canEdit = event.isCreatedByMe && eventStart > in24Hours;
 
@@ -86,17 +89,17 @@ export default function EventCard({
 
         <span
           className={`font-bold ${
-            status === "open"
-              ? "text-green-600"
-              : status === "closed"
+            isClosed
               ? "text-red-600"
+              : status === "open"
+              ? "text-green-600"
               : "text-gray-400"
           }`}
         >
-          ● {status === "open" 
-              ? "APERTO" 
-              : status === "closed" 
-              ? "CHIUSO" 
+          ● {isClosed
+              ? "CHIUSO"
+              : status === "open"
+              ? "APERTO"
               : "SCONOSCIUTO"}
         </span>
       </div>
@@ -134,13 +137,8 @@ export default function EventCard({
 
             {/* Cancel/leave for creator */}
             <button
-              disabled={isClosed}
               onClick={onCancelBooking}
-              className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
-                isClosed
-                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
-                  : "bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
-              }`}
+              className="flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
             >
               <X className="w-4 h-4" />
               {event.creatorParticipationRequired ? "CANCELLA" : "ABBANDONA"}
@@ -149,32 +147,22 @@ export default function EventCard({
         ) : event.isBooked ? (
           /* booked user */
           <button
-            disabled={isClosed}
             onClick={onCancelBooking}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-              isClosed
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-            }`}
+            className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 bg-orange-100 text-orange-700 hover:bg-orange-200"
           >
             <X className="w-4 h-4" />
             CANCELLA PRENOTAZIONE
           </button>
-        ) : isFull ? (
-          /* full event */
+        ) : isClosed ? (
+          /* full/closed event */
           <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold text-center cursor-not-allowed">
-            EVENTO AL COMPLETO
+            {isFull ? "EVENTO AL COMPLETO" : "CHIUSO"}
           </span>
         ) : (
           /* book button */
           <button
-            disabled={isClosed}
             onClick={() => onBook(event.id)}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
-              isClosed
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
+            className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
           >
             <Check className="w-4 h-4" />
             PRENOTA
