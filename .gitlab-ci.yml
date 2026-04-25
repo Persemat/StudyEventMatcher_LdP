@@ -123,8 +123,8 @@ deploy:
       paths:
         - deploy/
       expire_in: 1 week
-  only:
-    -main
+  # only:
+  #   -main
 
 
 # DOPO CHE LA PIPELINE VIENE ESEGUITA:
