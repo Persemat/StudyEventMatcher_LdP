@@ -83,12 +83,10 @@ integration_test_backend:
 
 package_backend:
   stage: package
+  image: maven:3.9.6-eclipse-temurin-21
   needs:
     - unit_test_backend
     - integration_test_backend
-  image: maven:3.9.6-eclipse-temurin-21
-  dependencies:
-    - compile_backend
   script:
     - cd backend
     - mvn package -DskipTests -DskipITs # crea il package del backend saltando i test --> crea il file .jar
