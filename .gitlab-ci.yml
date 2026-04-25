@@ -1,10 +1,10 @@
-#validate → compile → test → package → verify → install → deploy
 stages:
+  - validate
   - compile
   - unit_test
   - integration_test
   - package
-#  - deploy
+  - deploy
 
 ########################
 # GLOBAL CACHE
@@ -14,6 +14,26 @@ cache:
   paths:
     - .m2/repository
     - frontend/.npm
+
+########################
+# VALIDATE
+########################
+
+validate_backend:
+  stage: validate
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn validate # valida il progetto (pom.xml, struttura)
+    - mvn checkstyle:check || true
+
+validate_frontend:
+  stage: validate
+  image: node:22-alpine
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint || true
 
 ########################
 # COMPILE
@@ -29,17 +49,6 @@ compile_backend:
     paths:
       - backend/target  # salva la compilazione in target
     expire_in: 1h
-
-# build_frontend:
-#   stage: build
-#   image: node:22-alpine
-#   script:
-#     - cd frontend
-#     - npm ci --cache .npm --prefer-offline
-#   artifacts:
-#     paths:
-#       - frontend/node_modules
-#     expire_in: 1h
 
 ########################
 # UNIT TEST
@@ -64,32 +73,19 @@ integration_test_backend:
   dependencies:
     - compile_backend
   script:
-  - cd backend
-  - mvn failsafe:integration-test # esegue integration e cucumber test
-  - mvn failsafe:verify # effettua la verifica dei test
-
-  # services:
-  #   - name: mysql:8
-  #     alias: db
-  # variables:
-  #   DB_HOST: db
-  #   DB_NAME: mydb
-  #   DB_USER: appuser
-  #   DB_PASSWORD: apppass
-  #   MYSQL_ROOT_PASSWORD: rootpass123
-  # script:
-  #   - cd backend
-  #   # attesa DB
-  #   - apt-get update && apt-get install -y mysql-client
-  #   - until mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" -e "SELECT 1"; do sleep 3; done
-  #   - mvn verify -Pintegration
+    - cd backend
+    - mvn failsafe:integration-test # esegue integration e cucumber test
+    - mvn failsafe:verify # effettua la verifica dei test
 
 ########################
-# PACKAGE (artefatti pronti)
+# PACKAGE 
 ########################
 
 package_backend:
   stage: package
+  needs:
+    - unit_test_backend
+    - integration_test_backend
   image: maven:3.9.6-eclipse-temurin-21
   dependencies:
     - compile_backend
@@ -105,7 +101,7 @@ package_frontend:
   image: node:22-alpine
   script:
     - cd frontend
-    - npm ci --cache .npm --prefer-offline # crea il package del frontend
+    - npm ci --cache .npm --prefer-offline
     - npm run build # effettua la build del frontend
   artifacts:
     paths:
@@ -115,20 +111,29 @@ package_frontend:
 # DEPLOY (artifact-based)
 ########################
 
-# deploy:
-#   stage: deploy
-#   script:
-#     - echo "Deploy application (esempio)"
-#     - echo "Backend JAR pronto in backend/target"
-#     - echo "Frontend build pronto in frontend/dist"
-#   only:
-#     - main
+deploy:
+  stage: deploy
+  image: alpine:latest
+  dependencies:
+    - package_backend
+    - package_frontend
+  script:
+    - mkdir -p deploy
+    - cp backend/target/*.jar deploy/app.jar
+    - cp -r frontend/dist deploy/
+  artifacts:
+      paths:
+        - deploy/
+      expire_in: 1 week
+  only:
+    -main
 
 
 # DOPO CHE LA PIPELINE VIENE ESEGUITA:
+# cd deploy
 
 # AVVIARE IL BACKEND
-# java -jar backend/target/backend-0.0.1-SNAPSHOT.jar
+# java -jar app.jar
 
 # AVVIARE IL FRONTEND IN LOCALE
-# npx serve -s frontend/dist
+# npx serve -s dist
