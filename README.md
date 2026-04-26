@@ -1,6 +1,6 @@
 # 📚 DEM
 
-Applicazione web per la creazione e gestione di gruppi di studio intelligenti. Il sistema analizza le preferenze degli utenti e genera automaticamente gruppi ottimali basati su un algoritmo di affinità.
+Applicazione web per la creazione e gestione di gruppi di studio.
 
 ---
 
@@ -17,8 +17,7 @@ Il progetto segue un'architettura client-server disaccoppiata.
 - **Backend**: sviluppato con Spring Boot  
   Gestisce:
   - logica di business
-  - algoritmo di affinità
-  - accesso al database MySQL  
+  - accesso al database MySQL
 
 - **Frontend**: sviluppato con React  
   Comunica tramite API REST asincrone.
@@ -27,7 +26,7 @@ Il progetto segue un'architettura client-server disaccoppiata.
   Include:
   - autenticazione utenti
   - hashing password
-  - gestione token (JWT o sessioni)
+  - gestione token (sessioni)
   - autorizzazione endpoint
 
 ---
@@ -47,7 +46,7 @@ L’applicazione è suddivisa in tre livelli principali:
 ## ⚙️ Tecnologie Utilizzate
 
 ### Backend
-- Java
+- Java 
 - Spring Boot
 - Spring Security
 - Maven 
