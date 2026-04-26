@@ -40,8 +40,8 @@ public class EventService {
      * Constructs the EventService.
      *
      * @param eventRepository repository used to manage event persistence
-     * @param userRepository repository used to retrieve user data
-     * @param emailService service used to send notification emails
+     * @param userRepository  repository used to retrieve user data
+     * @param emailService    service used to send notification emails
      */
     public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService) {
         this.eventRepository = eventRepository;
@@ -59,7 +59,8 @@ public class EventService {
      * @param session the current HTTP session containing the authenticated user ID
      * @return the saved event
      * @throws RuntimeException if the session is invalid, the user does not exist,
-     *                          or an identical event already exists for the same creator
+     *                          or an identical event already exists for the same
+     *                          creator
      */
     public Event createEvent(EventRequest request, HttpSession session) {
 
@@ -77,8 +78,7 @@ public class EventService {
                         creator.getId(),
                         request.title(),
                         request.dateTime(),
-                        request.location()
-                )
+                        request.location())
                 .isPresent();
 
         if (eventExists) {
@@ -118,13 +118,14 @@ public class EventService {
      * modified within 24 hours of its scheduled start time, and the maximum number
      * of participants cannot be set below the current participant count.
      *
-     * @param id the ID of the event to edit
+     * @param id      the ID of the event to edit
      * @param request the updated event data
      * @param session the current HTTP session containing the authenticated user ID
      * @return the updated and saved event
      * @throws RuntimeException if the session is invalid, the event does not exist,
      *                          the user is not the creator, the event is too close
-     *                          to its start time, or the participant limit is invalid
+     *                          to its start time, or the participant limit is
+     *                          invalid
      */
     @Transactional
     public Event editEvent(Long id, EventRequest request, HttpSession session) {
@@ -149,7 +150,8 @@ public class EventService {
 
         if (request.maxParticipants() != null &&
                 request.maxParticipants() < event.getParticipants().size()) {
-            throw new RuntimeException("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
+            throw new RuntimeException(
+                    "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
         }
 
         event.setTitle(request.title());
@@ -174,9 +176,11 @@ public class EventService {
     /**
      * Retrieves all events and maps them to response objects for the current user.
      *
-     * Events whose date and time are in the past are automatically marked as closed.
+     * Events whose date and time are in the past are automatically marked as
+     * closed.
      *
-     * @param session the current HTTP session containing the authenticated user ID, if available
+     * @param session the current HTTP session containing the authenticated user ID,
+     *                if available
      * @return a list of event response objects
      */
     public List<EventResponse> getAllEvents(HttpSession session) {
@@ -185,8 +189,7 @@ public class EventService {
 
         List<Event> events = eventRepository.findAll();
 
-
-        boolean updated =checkIfClosed(false, events);
+        boolean updated = checkIfClosed(false, events);
 
         if (updated) {
             eventRepository.saveAll(events);
@@ -317,7 +320,8 @@ public class EventService {
      * @param eventId the ID of the event for which the booking must be cancelled
      * @param session the current HTTP session containing the authenticated user ID
      * @throws RuntimeException if the user is not authenticated, the user or event
-     *                          cannot be found, or the user is not booked for the event
+     *                          cannot be found, or the user is not booked for the
+     *                          event
      */
     @Transactional
     public void cancelBooking(Long eventId, HttpSession session) {
@@ -361,18 +365,19 @@ public class EventService {
      * Events found in the past are automatically marked as closed.
      * Only open events are returned in the final response.
      *
-     * @param session the current HTTP session containing the authenticated user ID, if available
-     * @param search free-text search term
-     * @param tags list of tags to filter by
+     * @param session  the current HTTP session containing the authenticated user
+     *                 ID, if available
+     * @param search   free-text search term
+     * @param tags     list of tags to filter by
      * @param location location filter
-     * @param date date filter in ISO format
+     * @param date     date filter in ISO format
      * @return a list of matching open events mapped to response objects
      */
     public List<EventResponse> searchForEvents(HttpSession session,
-                                              String search,
-                                              List<String> tags,
-                                              String location,
-                                              String date) {
+            String search,
+            List<String> tags,
+            String location,
+            String date) {
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -403,11 +408,9 @@ public class EventService {
                 tagCount,
                 locationParam,
                 startDate,
-                endDate
-        );
+                endDate);
 
-
-        boolean updated =checkIfClosed(false, events);
+        boolean updated = checkIfClosed(false, events);
 
         if (updated) {
             eventRepository.saveAll(events);
@@ -426,7 +429,7 @@ public class EventService {
      * booking status for the current user, and whether the current user is
      * the creator of the event.
      *
-     * @param event the event entity to map
+     * @param event  the event entity to map
      * @param userId the ID of the current user, if available
      * @return the mapped event response
      */
@@ -434,12 +437,10 @@ public class EventService {
 
         User creator = event.getCreator();
 
-        EventResponse.CreatorResponse creatorResponse =
-                new EventResponse.CreatorResponse(
-                        creator.getId(),
-                        creator.getName(),
-                        creator.getLastname()
-                );
+        EventResponse.CreatorResponse creatorResponse = new EventResponse.CreatorResponse(
+                creator.getId(),
+                creator.getName(),
+                creator.getLastname());
 
         boolean isBooked = userId != null &&
                 event.getParticipants().stream()
@@ -459,8 +460,7 @@ public class EventService {
                 creatorResponse,
                 event.getParticipants().size(),
                 isBooked,
-                userId != null && creator.getId().equals(userId)
-        );
+                userId != null && creator.getId().equals(userId));
     }
 
     public boolean checkIfClosed(boolean toSave, List<Event> events) {

@@ -1,6 +1,5 @@
-//AllEvents
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, MapPin } from "lucide-react"; 
+import { Search, Filter, MapPin, Calendar } from "lucide-react";
 import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
@@ -10,6 +9,7 @@ export default function AllEvents() {
   const [availableTags, setAvailableTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchLocation, setSearchLocation] = useState(""); 
+  const [searchData, setSearchData] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -18,12 +18,13 @@ export default function AllEvents() {
   
   const dropdownRef = useRef(null);
 
+  const today = new Date().toISOString().split('T')[0];
+
   const canEdit = (event) => {
     const eventStart = new Date(event.dateTime);
     const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
     return event.isCreatedByMe && eventStart > in24Hours;
   };
-
 
   const fetchTags = async () => {
     try {
@@ -35,7 +36,6 @@ export default function AllEvents() {
     } catch (err) { console.error("Errore fetch tags:", err); }
   };
 
-
   const fetchEvents = async () => {
     try {
       setLoading(true);
@@ -44,6 +44,8 @@ export default function AllEvents() {
       const url = new URL("/api/events/search", window.location.origin);
       if (searchTerm) url.searchParams.append("search", searchTerm);
       if (searchLocation) url.searchParams.append("location", searchLocation);
+      if (searchData) url.searchParams.append("date", searchData);
+      
       if (selectedTags.length > 0) {
         selectedTags.forEach((t) => url.searchParams.append("tags", t));
       }
@@ -53,12 +55,9 @@ export default function AllEvents() {
         credentials: "include",
       });
 
-      if (!response.ok) {
-        throw new Error("Errore fetch eventi");
-      }
+      if (!response.ok) throw new Error("Errore fetch eventi");
 
       const data = await response.json();
-
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Errore fetch eventi:", err);
@@ -74,10 +73,9 @@ export default function AllEvents() {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => { fetchEvents(); }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedTags, searchLocation]);
+  }, [searchTerm, selectedTags, searchLocation, searchData]);
 
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
-  
 
   return (
     <div className="p-6 space-y-6">
@@ -87,8 +85,10 @@ export default function AllEvents() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row flex-wrap gap-4">
+        
+        {/* Title Filter */}
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
@@ -99,29 +99,38 @@ export default function AllEvents() {
           />
         </div>
 
-
-
-        {/* NEW: search: Città/Luogo */}
-        <div className="relative md:w-64">
+        {/* Location Filter */}
+        <div className="relative md:w-48">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
             placeholder="Filtra per città..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchLocation}
-            onChange={(e) => setSearchLuogo(e.target.value)}
+            onChange={(e) => setSearchLocation(e.target.value)} // Corretto da setSearchLuogo
           />
         </div>
 
+        {/* Data Filter */}
+        <div className="relative md:w-48">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="date"
+            min={today} 
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+            value={searchData}
+            onChange={(e) => setSearchData(e.target.value)}
+          />
+        </div>
 
-        {/* Dropdown Tag (Multiple) */}
-        <div className="relative md:w-64" ref={dropdownRef}>
+        {/* Dropdown Tag */}
+        <div className="relative md:w-48" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-gray-700 truncate">
               {selectedTags.length === 0 ? "Tutti i tag" : `${selectedTags.length} tag`}
             </span>
             <span className="text-gray-400 text-xs">▼</span>
@@ -142,10 +151,7 @@ export default function AllEvents() {
             </div>
           )}
         </div>
-
       </div>
-
-
 
       {!loading && events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
