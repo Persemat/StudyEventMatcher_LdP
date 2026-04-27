@@ -119,10 +119,10 @@ export default function EventCard({
             {/* Edit button */}
             <button
               disabled={!canEdit}
-              onClick={canEdit ? () => onEdit(event.id) : undefined}
+              onClick={() => onEdit(event.id)}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
                 !canEdit
-                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"
+                  ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
                   : "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
               }`}
               title={
@@ -131,8 +131,7 @@ export default function EventCard({
                   : ""
               }
             >
-              <Pencil className="w-4 h-4" />
-              MODIFICA
+              <Pencil className="w-4 h-4" /> MODIFICA
             </button>
 
             {/* Cancel/leave for creator */}
