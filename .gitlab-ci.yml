@@ -7,10 +7,13 @@ stages:
   - package
   - deploy
 
+variables:
+  # FIX: Forza Maven a usare la cartella in cache
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
 ########################
 # GLOBAL CACHE
 ########################
-
 cache:
   paths:
     - .m2/repository
@@ -19,7 +22,6 @@ cache:
 ########################
 # VALIDATE
 ########################
-
 validate_backend:
   stage: validate
   image: maven:3.9.6-eclipse-temurin-21
@@ -39,7 +41,6 @@ validate_frontend:
 ########################
 # COMPILE
 ########################
-
 compile_backend:
   stage: compile
   image: maven:3.9.6-eclipse-temurin-21
@@ -54,7 +55,6 @@ compile_backend:
 ########################
 # UNIT TEST
 ########################
-
 unit_test_backend:
   stage: unit_test
   image: maven:3.9.6-eclipse-temurin-21
@@ -73,7 +73,6 @@ unit_test_backend:
 ########################
 # INTEGRATION TEST
 ########################
-
 integration_test_backend:
   stage: integration_test
   image: maven:3.9.6-eclipse-temurin-21
@@ -91,10 +90,9 @@ integration_test_backend:
     expire_in: 1 week
 
 ########################
-# DOCUMENTATION
+# DOCUMENTATION (GITLAB PAGES)
 ########################
-
-documentation:
+pages:
   stage: documentation
   image: maven:3.9.6-eclipse-temurin-21
   needs:
@@ -102,15 +100,20 @@ documentation:
   script:
     - cd backend
     - mvn javadoc:javadoc
+    - cd ..
+    - rm -rf public
+    - mkdir public
+    - cp -r backend/target/site/apidocs/* public/
   artifacts:
     paths:
-      - backend/target/reports/apidocs
+      - public
     expire_in: 1 week
+  #rules:
+    #- if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
 # PACKAGE 
 ########################
-
 package_backend:
   stage: package
   image: maven:3.9.6-eclipse-temurin-21
@@ -141,7 +144,6 @@ package_frontend:
 ########################
 # DEPLOY
 ########################
-
 deploy:
   stage: deploy
   image: alpine:latest
