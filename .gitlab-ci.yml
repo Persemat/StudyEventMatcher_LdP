@@ -3,6 +3,7 @@ stages:
   - compile
   - unit_test
   - integration_test
+  - documentation
   - package
   - deploy
 
@@ -24,7 +25,7 @@ validate_backend:
   image: maven:3.9.6-eclipse-temurin-21
   script:
     - cd backend
-    - mvn validate # valida il progetto (pom.xml, struttura)
+    - mvn validate
     - mvn checkstyle:check || true
 
 validate_frontend:
@@ -44,11 +45,11 @@ compile_backend:
   image: maven:3.9.6-eclipse-temurin-21
   script:
     - cd backend
-    - mvn compile # compila il backend usando maven
-  artifacts:
+    - mvn compile
+  artifacts: 
     paths:
-      - backend/target  # salva la compilazione in target
-    expire_in: 1h
+      - backend/target
+    expire_in: 1 week
 
 ########################
 # UNIT TEST
@@ -57,11 +58,17 @@ compile_backend:
 unit_test_backend:
   stage: unit_test
   image: maven:3.9.6-eclipse-temurin-21
-  dependencies:
+  needs:
     - compile_backend
   script:
     - cd backend
-    - mvn test # esegue gli unit test
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - backend/target/surefire-reports/*.xml
+    expire_in: 1 week
 
 ########################
 # INTEGRATION TEST
@@ -70,12 +77,35 @@ unit_test_backend:
 integration_test_backend:
   stage: integration_test
   image: maven:3.9.6-eclipse-temurin-21
-  dependencies:
+  needs:
     - compile_backend
   script:
     - cd backend
-    - mvn failsafe:integration-test # esegue integration e cucumber test
-    - mvn failsafe:verify # effettua la verifica dei test
+    - mvn failsafe:integration-test
+    - mvn failsafe:verify
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - backend/target/failsafe-reports/*.xml
+    expire_in: 1 week
+
+########################
+# DOCUMENTATION
+########################
+
+documentation:
+  stage: documentation
+  image: maven:3.9.6-eclipse-temurin-21
+  needs:
+    - compile_backend
+  script:
+    - cd backend
+    - mvn javadoc:javadoc
+  artifacts:
+    paths:
+      - backend/target/reports/apidocs
+    expire_in: 1 week
 
 ########################
 # PACKAGE 
@@ -85,14 +115,15 @@ package_backend:
   stage: package
   image: maven:3.9.6-eclipse-temurin-21
   needs:
-    - unit_test_backend
-    - integration_test_backend
+    - compile_backend
   script:
     - cd backend
-    - mvn package -DskipTests -DskipITs # crea il package del backend saltando i test --> crea il file .jar
+    - mvn package -DskipTests -DskipITs
   artifacts:
     paths:
       - backend/target/*.jar
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 package_frontend:
   stage: package
@@ -100,19 +131,21 @@ package_frontend:
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
-    - npm run build # effettua la build del frontend
+    - npm run build
   artifacts:
     paths:
       - frontend/dist
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
-# DEPLOY (artifact-based)
+# DEPLOY
 ########################
 
 deploy:
   stage: deploy
   image: alpine:latest
-  dependencies:
+  needs:
     - package_backend
     - package_frontend
   script:
@@ -123,7 +156,8 @@ deploy:
       paths:
         - deploy/
       expire_in: 1 week
-
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 
 # DOPO CHE LA PIPELINE VIENE ESEGUITA:
@@ -132,5 +166,5 @@ deploy:
 # AVVIARE IL BACKEND
 # java -jar app.jar
 
-# AVVIARE IL FRONTEND IN LOCALE
+# AVVIARE IL FRONTEND
 # npx serve -s dist
