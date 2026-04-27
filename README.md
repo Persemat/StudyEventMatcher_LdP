@@ -46,18 +46,19 @@ L’applicazione è suddivisa in tre livelli principali:
 ## ⚙️ Tecnologie Utilizzate
 
 ### Backend
-- Java 
-- Spring Boot
+- Java 21 (Eclipse Temurin)
+- Maven 3.9.6
+- Spring Boot 4.0.5
 - Spring Security
-- Maven 
+- Spring Data JPA (Hibernate)
 
 ### Frontend
-- React
-- Vite
-- Node.js
+- React 19.2.4
+- Vite 8.0.4
+- Node.js 22
 
 ### Database
-- MySQL
+- MySQL 8.x
 
 ### DevOps
 - Docker
@@ -87,6 +88,9 @@ Il progetto utilizza le seguenti tecnologie:
 ### 🧪 Testing
 
 Il progetto include una suite di test strutturata in più livelli.
+- H2 → test DB
+- Cucumber → 7.34.2
+- Testcontainers → 1.21.4
 
 #### 🔹 Unit Test
 - Gestiti da **Maven Surefire Plugin**
