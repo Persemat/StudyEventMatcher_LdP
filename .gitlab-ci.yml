@@ -8,7 +8,6 @@ stages:
   - deploy
 
 variables:
-  # FIX: Forza Maven a usare la cartella in cache
   MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
 
 ########################
@@ -108,8 +107,8 @@ pages:
     paths:
       - public
     expire_in: 1 week
-  #rules:
-    #- if: '$CI_COMMIT_BRANCH == "develop"'
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
 # PACKAGE 
@@ -161,12 +160,3 @@ deploy:
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
-
-# DOPO CHE LA PIPELINE VIENE ESEGUITA:
-# cd deploy
-
-# AVVIARE IL BACKEND
-# java -jar app.jar
-
-# AVVIARE IL FRONTEND
-# npx serve -s dist
