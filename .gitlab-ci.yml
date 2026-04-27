@@ -104,7 +104,7 @@ documentation:
     - mvn javadoc:javadoc
   artifacts:
     paths:
-      - backend/target/site/apidocs
+      - backend/target/reports/apidocs
     expire_in: 1 week
 
 ########################
@@ -123,7 +123,7 @@ package_backend:
     paths:
       - backend/target/*.jar
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
 
 package_frontend:
   stage: package
@@ -136,7 +136,7 @@ package_frontend:
     paths:
       - frontend/dist
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
 
 ########################
 # DEPLOY
@@ -157,7 +157,7 @@ deploy:
         - deploy/
       expire_in: 1 week
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
 
 
 # DOPO CHE LA PIPELINE VIENE ESEGUITA:
