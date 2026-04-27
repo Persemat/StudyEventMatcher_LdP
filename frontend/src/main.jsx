@@ -1,4 +1,4 @@
-//main
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'

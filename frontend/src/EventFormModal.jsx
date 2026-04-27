@@ -1,4 +1,3 @@
-//EventFormalModal
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Info } from "lucide-react";
 
@@ -137,7 +136,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
         const errorText = await response.text();
         setMessage(`Error: ${errorText}`);
       }
-    } catch (error) {
+    } catch {  
       setMessage('Server connection error.');
     } finally {
       setIsLoading(false);

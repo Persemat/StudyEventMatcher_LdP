@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, MapPin, Calendar } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Search, MapPin, Calendar } from "lucide-react";
 import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
@@ -13,18 +13,13 @@ export default function AllEvents() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); 
   const [eventToEdit, setEventToEdit] = useState(null);
   
   const dropdownRef = useRef(null);
-
   const today = new Date().toISOString().split('T')[0];
 
-  const canEdit = (event) => {
-    const eventStart = new Date(event.dateTime);
-    const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    return event.isCreatedByMe && eventStart > in24Hours;
-  };
+  const now = useMemo(() => Date.now(), []);
 
   const fetchTags = async () => {
     try {
@@ -36,11 +31,10 @@ export default function AllEvents() {
     } catch (err) { console.error("Errore fetch tags:", err); }
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      
       const url = new URL("/api/events/search", window.location.origin);
       if (searchTerm) url.searchParams.append("search", searchTerm);
       if (searchLocation) url.searchParams.append("location", searchLocation);
@@ -50,30 +44,28 @@ export default function AllEvents() {
         selectedTags.forEach((t) => url.searchParams.append("tags", t));
       }
 
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
-
+      const response = await fetch(url, { credentials: "include" });
       if (!response.ok) throw new Error("Errore fetch eventi");
 
       const data = await response.json();
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Errore fetch eventi:", err);
-      setError("Impossibile caricare gli eventi");
+      console.error(err);
+      setError("Impossibile caricare gli eventi"); 
       setEvents([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, searchLocation, searchData, selectedTags]);
   
   useEffect(() => { fetchTags(); }, []);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => { fetchEvents(); }, 300);
+    const delayDebounceFn = setTimeout(() => {
+      fetchEvents();
+    }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedTags, searchLocation, searchData]);
+  }, [fetchEvents]);
 
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
@@ -84,10 +76,15 @@ export default function AllEvents() {
         <p className="text-gray-600">Catalogo Gruppi di Studio</p>
       </div>
 
-      {/* Filters */}
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-center">
+          {error}
+        </div>
+      )}
+
+      
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row flex-wrap gap-4">
-        
-        {/* Title Filter */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -99,7 +96,6 @@ export default function AllEvents() {
           />
         </div>
 
-        {/* Location Filter */}
         <div className="relative md:w-48">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -107,11 +103,10 @@ export default function AllEvents() {
             placeholder="Filtra per città..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchLocation}
-            onChange={(e) => setSearchLocation(e.target.value)} // Corretto da setSearchLuogo
+            onChange={(e) => setSearchLocation(e.target.value)}
           />
         </div>
 
-        {/* Data Filter */}
         <div className="relative md:w-48">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -123,7 +118,6 @@ export default function AllEvents() {
           />
         </div>
 
-        {/* Dropdown Tag */}
         <div className="relative md:w-48" ref={dropdownRef}>
           <button
             type="button"
@@ -155,16 +149,22 @@ export default function AllEvents() {
 
       {!loading && events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <EventCard 
-              key={event.id} 
-              event={event} 
-              onBook={() => handleBook(event.id)}
-              onCancelBooking={() => handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)}
-              onEdit={canEdit(event) ? () => setEventToEdit(event) : undefined}
-              canEdit={canEdit(event)}
-            />
-          ))}
+          {events.map((event) => {
+            // Logica canEdit spostata qui per garantire la "purity" del render
+            const eventStart = new Date(event.dateTime).getTime();
+            const editable = event.isCreatedByMe && eventStart > (now + 24 * 60 * 60 * 1000);
+            
+            return (
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                onBook={() => handleBook(event.id)}
+                onCancelBooking={() => handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)}
+                onEdit={editable ? () => setEventToEdit(event) : undefined}
+                canEdit={editable}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">

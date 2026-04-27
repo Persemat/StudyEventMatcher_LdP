@@ -1,4 +1,3 @@
-//MuEvents
 import React, { useState, useEffect } from "react";
 import { Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
@@ -13,12 +12,6 @@ export default function MyEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
-
-  const canEdit = (event) => {
-    const eventStart = new Date(event.dateTime);
-    const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    return event.isCreatedByMe && eventStart > in24Hours;
-  };
 
   const now = new Date();
 

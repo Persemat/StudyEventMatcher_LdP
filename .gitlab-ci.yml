@@ -35,7 +35,7 @@ validate_frontend:
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
-    - npm run lint || true
+    - npm run lint 
 
 ########################
 # COMPILE

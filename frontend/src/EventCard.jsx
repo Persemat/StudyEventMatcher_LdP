@@ -1,4 +1,4 @@
-//EventCard
+import React, { useState } from "react";
 import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
 
 export default function EventCard({
@@ -12,7 +12,9 @@ export default function EventCard({
   const status = event.status || "unknown";
   const isClosed = status === "closed" || isFull;
   const eventStart = new Date(event.dateTime);
-  const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  const [now] = useState(Date.now);
+  const in24Hours = new Date(now + 24 * 60 * 60 * 1000);
 
   // Blocca solo chi NON è creatore e NON è prenotato.
   // Così se l'evento è pieno/chiuso, chi è già prenotato può comunque cancellare.
@@ -154,7 +156,7 @@ export default function EventCard({
           </button>
         ) : isClosed ? (
           /* full/closed event */
-          <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold text-center cursor-not-allowed">
+          <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold flex items-center justify-center cursor-not-allowed">
             {isFull ? "EVENTO AL COMPLETO" : "CHIUSO"}
           </span>
         ) : (
