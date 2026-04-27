@@ -1,4 +1,4 @@
-# 📚 DEM
+# 📚 Study Together
 
 Applicazione web per la creazione e gestione di gruppi di studio.
 
@@ -22,13 +22,13 @@ Il progetto segue un'architettura client-server disaccoppiata.
 - **Frontend**: sviluppato con React  
   Comunica tramite API REST asincrone.
 
-- **Sicurezza**: implementata con Spring Security  
+- **Sicurezza**: implementata con Spring Security
   Include:
   - autenticazione utenti
   - hashing password
   - gestione token (sessioni)
   - autorizzazione endpoint
-
+  
 ---
 
 ## 🔄 Architettura Logica
