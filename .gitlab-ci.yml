@@ -103,7 +103,7 @@ pages:
     - cd ..
     - rm -rf public
     - mkdir public
-    - cp -r backend/target/site/apidocs/* public/
+    - cp -r backend/target/reports/apidocs/* public/
   artifacts:
     paths:
       - public
