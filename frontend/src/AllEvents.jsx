@@ -133,7 +133,7 @@ export default function AllEvents() {
             <span className="text-sm font-medium text-gray-700 truncate">
               {selectedTags.length === 0 ? "Tutti i tag" : `${selectedTags.length} tag`}
             </span>
-            <span className="text-gray-400 text-xs">▼</span>
+            <span className="text-gray-400 text-xs shrink-0">▼</span>
           </button>
           {isDropdownOpen && (
             <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto p-1">
