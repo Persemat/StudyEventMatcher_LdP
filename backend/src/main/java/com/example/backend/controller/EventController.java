@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.dto.EventRequest;
+import com.example.backend.dto.EventResponse;
 import com.example.backend.model.Event;
 import com.example.backend.service.EventService;
 
@@ -248,5 +249,32 @@ public class EventController {
     @GetMapping("/tags")
     public ResponseEntity<?> getAllTags() {
         return ResponseEntity.ok(eventService.getAllDistinctTags());
+    }
+
+    /**
+     * Retrieves the details of a specific event.
+     *
+     * @param id the ID of the event to retrieve
+     * @param session the current HTTP session
+     * @return the event details (EventResponse), 401 if unauthorized, or 404 if not found
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getEventDetails(@PathVariable Long id, HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+        }
+
+        try {
+    
+            EventResponse eventDetails = eventService.getEventDetails(id, session);
+            
+            return ResponseEntity.ok(eventDetails);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity.status(404).body("Errore: " + e.getMessage());
+        }
     }
 }

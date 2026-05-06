@@ -4,6 +4,7 @@ import { useEventActions } from "./hooks/useEventActions";
 
 import EventCard from "./EventCard"; 
 import EventFormModal from "./EventFormModal";
+import EventDetails from "./EventDetails";
 
 export default function MyEvents() {
   const [events, setEvents] = useState([]);
@@ -12,6 +13,7 @@ export default function MyEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(null);
 
   const now = new Date();
 
@@ -155,9 +157,9 @@ export default function MyEvents() {
                   event.id,
                   event.creatorParticipationRequired,
                   event.isCreatedByMe
-                )
-              }
+                )}
               onEdit={() => handleEdit(event)}
+              onShowDetails={() => setSelectedEventId(event.id)}
             />
           ))}
 
@@ -198,6 +200,26 @@ export default function MyEvents() {
           }}
           availableTags={availableTags}
         />
+      )}
+
+      {selectedEventId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+           
+           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border border-gray-100">
+              
+              {/* Close Button */}
+              <button 
+                 onClick={() => setSelectedEventId(null)}
+                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors font-bold text-xl z-10 bg-white rounded-full p-1 shadow-sm"
+              >
+                 ✕
+              </button>
+  
+              {/* Render the details component */}
+              <EventDetails eventId={selectedEventId} />
+  
+           </div>
+        </div>
       )}
 
     </div>
