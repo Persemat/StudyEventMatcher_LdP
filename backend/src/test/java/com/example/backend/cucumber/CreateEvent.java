@@ -1,20 +1,26 @@
 package com.example.backend.cucumber;
 
+import com.example.backend.model.Event;
+import com.example.backend.model.User;
+import com.example.backend.repository.EventRepository;
+import com.example.backend.repository.UserRepository;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import com.example.backend.model.User;
-import com.example.backend.repository.EventRepository;
-import com.example.backend.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CreateEvent {
@@ -28,132 +34,177 @@ public class CreateEvent {
     @Autowired
     private EventRepository eventRepository;
 
+    private Long userId;
     private ResultActions result;
+    
+    // Usiamo una semplice Stringa per il JSON!
+    private String jsonPayload;
 
-    // Variabili di stato
-    private String title = "";
-    private String description = "";
-    private String dateTime = "";
-    private double duration = 0.0;
-    private String location = "";
-    private String tags = "[]";
-    private int maxPartecipants = 0;
-    private boolean setCreatorParticipationRequired = false;
-    private Long creatorId; // Questo verrà usato per popolare l'attributo di sessione
+    // Fissiamo una data per usarla nel test dei duplicati
+    private final String fixedDateString = LocalDateTime.now().plusDays(10).withNano(0).toString();
+
+    // ==========================================
+    // GIVEN - SETUP INIZIALE
+    // ==========================================
 
     @Given("l'utente si trova nella pagina di creazione evento")
-    public void utenteNellaPaginaCreazioneEvento() {
-        // Reset stati
-        title = "";
-        description = "";
-        dateTime = "";
-        duration = 0.0;
-        location = "";
-        tags = "[]";
-        maxPartecipants = 0;
-        setCreatorParticipationRequired = false;
-
+    public void lUtenteSiTrovaNellaPaginaDiCreazioneEvento() {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        // Creazione utente reale per avere un ID valido in sessione
         User user = new User();
-        user.setName("Marco");
-        user.setLastname("Rossi");
-        user.setEmail("marco@example.com");
-        user.setPassword("Password123!");
+        user.setName("Giulia");
+        user.setLastname("Bianchi");
+        user.setEmail("giulia.creazione@example.com");
+        user.setPassword("Pass123!");
         userRepository.save(user);
 
-        this.creatorId = user.getId();
+        this.userId = user.getId();
+        this.jsonPayload = "{}"; // Reset a JSON vuoto
     }
 
+    @And("l'utente ha gia' creato un evento nel sistema")
+    public void lUtenteHaGiaCreatoUnEventoNelSistema() {
+        User creator = userRepository.findById(userId).orElseThrow();
+
+        Event originalEvent = new Event();
+        originalEvent.setTitle("Evento Antiduplicato");
+        originalEvent.setDescription("Descrizione originale");
+        originalEvent.setDateTime(LocalDateTime.parse(fixedDateString));
+        originalEvent.setDuration(2.0);
+        originalEvent.setLocation("Aule Studio");
+        originalEvent.setMaxParticipants(10);
+        originalEvent.setStatus("open");
+        originalEvent.setCreator(creator);
+        
+        eventRepository.save(originalEvent);
+    }
+
+    // ==========================================
+    // WHEN & AND - AZIONI
+    // ==========================================
+
     @When("l'utente inserisce titolo, descrizione, data, durata e luogo")
-    public void utenteInserisceDatiBase() {
-        title = "Gruppo di studio Java";
-        description = "Ripasso per l'esame di architetture";
-        dateTime = "2026-10-15T15:00:00";
-        duration = 2.5;
-        location = "Aula Magna";
+    public void lUtenteInserisceTitoloDescrizioneDataDurataELuogo() {
+        // Questa è la potenza di Java 21: scriviamo il JSON nudo e crudo!
+        jsonPayload = """
+            {
+                "title": "Nuovo Gruppo di Studio",
+                "description": "Prepariamo l'esame insieme",
+                "dateTime": "%s",
+                "duration": 2.0,
+                "location": "Biblioteca"
+            }
+        """.formatted(LocalDateTime.now().plusDays(5).toString());
     }
 
     @And("aggiunge uno o piu tag e imposta un limite di partecipanti")
-    public void aggiungeTagELimite() {
-        tags = "[\"Java\", \"Programmazione\"]";
-        maxPartecipants = 10;
+    public void aggiungeUnoOPiuTagEImpostaUnLimiteDiPartecipanti() {
+        // Sovrascriviamo il payload per includere tutto
+        jsonPayload = """
+            {
+                "title": "Nuovo Gruppo di Studio",
+                "description": "Prepariamo l'esame insieme",
+                "dateTime": "%s",
+                "duration": 2.0,
+                "location": "Biblioteca",
+                "tags": ["STUDIO", "ESAME"],
+                "maxParticipants": 10
+            }
+        """.formatted(LocalDateTime.now().plusDays(5).toString());
     }
 
     @And("imposta il flag Partecipazione del creatore necessaria")
-    public void impostaFlagCreatore() {
-        setCreatorParticipationRequired = true;
+    public void impostaIlFlagPartecipazioneDelCreatoreNecessaria() {
+        // Payload completo finale
+        jsonPayload = """
+            {
+                "title": "Nuovo Gruppo di Studio",
+                "description": "Prepariamo l'esame insieme",
+                "dateTime": "%s",
+                "duration": 2.0,
+                "location": "Biblioteca",
+                "tags": ["STUDIO", "ESAME"],
+                "maxParticipants": 10,
+                "creatorParticipationRequired": true
+            }
+        """.formatted(LocalDateTime.now().plusDays(5).toString());
+    }
+
+    @When("l'utente tenta di creare un evento senza compilare i campi obbligatori")
+    public void lUtenteTentaDiCreareUnEventoSenzaCompilareICampiObbligatori() throws Exception {
+        // Inseriamo i campi vuoti e il boolean, così Jackson non va in crash 
+        // e permette al Controller di fare la sua validazione.
+        jsonPayload = """
+            {
+                "title": "",
+                "description": "",
+                "location": "",
+                "creatorParticipationRequired": false
+            }
+        """; 
+        
+        result = mockMvc.perform(post("/events")
+                .sessionAttr("userId", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonPayload));
+    }
+
+    @When("l'utente compila i campi con gli stessi dati esatti dell'evento esistente")
+    public void lUtenteCompilaICampiConGliStessiDati() {
+        // JSON identico all'evento creato nel Setup
+        jsonPayload = """
+            {
+                "title": "Evento Antiduplicato",
+                "description": "Nuova descrizione che non importa",
+                "dateTime": "%s",
+                "duration": 2.0,
+                "location": "Aule Studio",
+                "tags": ["STUDIO"],
+                "maxParticipants": 10,
+                "creatorParticipationRequired": true
+            }
+        """.formatted(fixedDateString);
     }
 
     @And("conferma la creazione")
     public void confermaLaCreazione() throws Exception {
-        // Il JSON ora non contiene più creatoreId
-        String body = String.format("""
-                {
-                "title": "%s",
-                "description": "%s",
-                "dateTime": "%s",
-                "duration": %s,
-                "location": "%s",
-                "tags": %s,
-                "maxPartecipants": %d,
-                "creatorParticipationRequired": %b
-                }
-                """, title, description, dateTime, String.valueOf(duration), location, tags, maxPartecipants,
-                setCreatorParticipationRequired);
-        // Simuliamo l'utente loggato iniettando l'ID nella sessione
         result = mockMvc.perform(post("/events")
-                .sessionAttr("userId", creatorId) // <--- SESSIONE ATTIVA
+                .sessionAttr("userId", userId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body));
+                .content(jsonPayload)); // Invia la stringa JSON diretta
     }
 
+    // ==========================================
+    // THEN - VERIFICHE
+    // ==========================================
+
     @Then("il sistema salva il nuovo evento")
-    public void sistemaSalvaNuovoEvento() throws Exception {
+    public void ilSistemaSalvaIlNuovoEvento() throws Exception {
         result.andExpect(status().isOk());
     }
 
     @And("il sistema imposta lo stato dell'evento come aperto")
-    public void sistemaImpostaStatoAperto() {
-        // Logica verificata implicitamente dal 200 OK e dalla logica del service
+    public void ilSistemaImpostaLoStatoDellEventoComeAperto() {
+        List<Event> events = eventRepository.findAll();
+        Event savedEvent = events.get(events.size() - 1);
+        Assertions.assertEquals("open", savedEvent.getStatus());
     }
 
     @And("l'evento appare nella lista degli eventi")
-    public void eventoAppareNellaLista() {
-        // Step di accettazione lato utente
-    }
-
-    @When("l'utente tenta di creare un evento senza compilare i campi obbligatori")
-    public void tentaDiCreareSenzaCampi() throws Exception {
-        // JSON incompleto (titolo e luogo vuoti), niente creatoreId
-        String bodyIncompleto = """
-                {
-                "title": "",
-                "description": "test",
-                "dateTime": "2026-10-15T15:00:00",
-                "duration": 1.0,
-                "location": "Aula Magna",
-                "tags": ["test"],
-                "maxPartecipants": 10,
-                "creatorParticipationRequired": true
-                }
-                """;
-
-        result = mockMvc.perform(post("/events")
-                .sessionAttr("userId", creatorId) // <--- SESSIONE ATTIVA
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(bodyIncompleto));
+    public void lEventoAppareNellaListaDegliEventi() throws Exception {
+        mockMvc.perform(get("/events").sessionAttr("userId", userId))
+               .andExpect(status().isOk())
+               .andExpect(content().string(containsString("Nuovo Gruppo di Studio")));
     }
 
     @Then("il sistema impedisce la creazione dell'evento")
-    public void sistemaImpedisceCreazione() throws Exception {
-        result.andExpect(status().is4xxClientError());
+    public void ilSistemaImpedisceLaCreazioneDellEvento() throws Exception {
+        result.andExpect(status().isBadRequest());
     }
 
     @And("il sistema mostra l'errore {string}")
-    public void ilSistemaMOstraErrore(String messaggio) throws Exception {
-        result.andExpect(content().string(org.hamcrest.Matchers.containsString(messaggio)));
+    public void ilSistemaMostraLErrore(String expectedErrorMessage) throws Exception {
+        result.andExpect(content().string(containsString(expectedErrorMessage)));
     }
 }

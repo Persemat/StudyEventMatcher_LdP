@@ -10,7 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-//@Tag("integration")
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
