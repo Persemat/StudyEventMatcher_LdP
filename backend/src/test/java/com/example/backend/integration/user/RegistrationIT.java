@@ -1,0 +1,58 @@
+package com.example.backend.integration.user;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import org.springframework.http.MediaType;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@Tag("integration")
+public class RegistrationIT extends BaseUserIT {
+
+    @Test
+    void validRegistration_shouldReturn200AndSaveUser() throws Exception {
+        String json = """
+                {
+                  "name": "Mario",
+                  "lastname": "Rossi",
+                  "email": "mario@example.com",
+                  "password": "Password123"
+                }
+                """;
+
+        mockMvc.perform(post("/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("mario@example.com")));
+
+        assertTrue(userRepository.findByEmail("mario@example.com").isPresent());
+    }
+
+    @Test
+    void emailAlreadyExists_shouldReturn400() throws Exception {
+        String json = """
+                {
+                  "name": "Mario",
+                  "lastname": "Rossi",
+                  "email": "mario@example.com",
+                  "password": "Password123"
+                }
+                """;
+
+        mockMvc.perform(post("/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Email già registrata")));
+    }
+}

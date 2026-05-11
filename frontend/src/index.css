@@ -1,0 +1,16 @@
+ @import "tailwindcss";
+
+/* Ripristiniamo un minimo di decenza per le pagine che non usano Tailwind */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+/* Assicuriamoci che il root occupi tutto lo spazio */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

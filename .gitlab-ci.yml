@@ -1,0 +1,162 @@
+stages:
+  - validate
+  - compile
+  - unit_test
+  - integration_test
+  - documentation
+  - package
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+########################
+# GLOBAL CACHE
+########################
+cache:
+  paths:
+    - .m2/repository
+    - frontend/.npm
+
+########################
+# VALIDATE
+########################
+validate_backend:
+  stage: validate
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn validate
+    - mvn checkstyle:check || true
+
+validate_frontend:
+  stage: validate
+  image: node:22-alpine
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint 
+
+########################
+# COMPILE
+########################
+compile_backend:
+  stage: compile
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - cd backend
+    - mvn compile
+  artifacts: 
+    paths:
+      - backend/target
+    expire_in: 1 week
+
+########################
+# UNIT TEST
+########################
+unit_test_backend:
+  stage: unit_test
+  image: maven:3.9.6-eclipse-temurin-21
+  needs:
+    - compile_backend
+  script:
+    - cd backend
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - backend/target/surefire-reports/*.xml
+    expire_in: 1 week
+
+########################
+# INTEGRATION TEST
+########################
+integration_test_backend:
+  stage: integration_test
+  image: maven:3.9.6-eclipse-temurin-21
+  needs:
+    - compile_backend
+  script:
+    - cd backend
+    - mvn failsafe:integration-test
+    - mvn failsafe:verify
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - backend/target/failsafe-reports/*.xml
+    expire_in: 1 week
+
+########################
+# DOCUMENTATION (GITLAB PAGES)
+########################
+pages:
+  stage: documentation
+  image: maven:3.9.6-eclipse-temurin-21
+  needs:
+    - compile_backend
+  script:
+    - cd backend
+    - mvn javadoc:javadoc
+    - cd ..
+    - rm -rf public
+    - mkdir public
+    - cp -r backend/target/reports/apidocs/* public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+########################
+# PACKAGE 
+########################
+package_backend:
+  stage: package
+  image: maven:3.9.6-eclipse-temurin-21
+  needs:
+    - compile_backend
+  script:
+    - cd backend
+    - mvn package -DskipTests -DskipITs
+  artifacts:
+    paths:
+      - backend/target/*.jar
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+package_frontend:
+  stage: package
+  image: node:22-alpine
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+########################
+# DEPLOY
+########################
+deploy:
+  stage: deploy
+  image: alpine:latest
+  needs:
+    - package_backend
+    - package_frontend
+  script:
+    - mkdir -p deploy
+    - cp backend/target/*.jar deploy/app.jar
+    - cp -r frontend/dist deploy/
+  artifacts:
+      paths:
+        - deploy/
+      expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+

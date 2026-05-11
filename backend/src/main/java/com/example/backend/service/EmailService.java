@@ -1,0 +1,109 @@
+package com.example.backend.service;
+
+import java.time.format.DateTimeFormatter;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+
+import com.example.backend.model.Event;
+import com.example.backend.model.User;
+
+/**
+ * Service responsible for sending application emails.
+ *
+ * It handles:
+ * - password reset emails
+ * - event cancellation notifications
+ *
+ * Uses {@link JavaMailSender} to send messages.
+ */
+@Service
+public class EmailService {
+
+    private final JavaMailSender mailSender;
+
+    @Value("${app.mail.from}")
+    private String fromEmail;
+
+    /**
+     * Constructs the EmailService.
+     *
+     * @param mailSender Spring component used to send emails
+     */
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
+    /**
+     * Sends a password reset email containing a verification code.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param code the verification code for password reset
+     */
+    public void sendPasswordResetCode(String recipientEmail, String code) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(recipientEmail);
+        message.setSubject("Password Reset - StudyTogether");
+        message.setText(
+                "Hai richiesto il reset della password.\n\n" +
+                "Il tuo codice di verifica è: " + code + "\n\n" +
+                "Questo codice scadrà tra 10 minuti."
+        );
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Sends an event cancellation email to a single user.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param event the cancelled event
+     */
+    public void sendEventCancellationEmail(String recipientEmail, Event event) {
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(recipientEmail);
+        message.setSubject("Evento cancellato - StudyTogether");
+        message.setText(
+                "Ti informiamo che l'evento '" + event.getTitle() + " programmato il  " +
+                event.getDateTime().format(dateFormatter) + " alle " +
+                event.getDateTime().format(timeFormatter) +
+                " è stato cancellato."
+        );
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Sends event cancellation emails to all participants,
+     * excluding the event creator.
+     *
+     * @param event the cancelled event
+     */
+    public void sendEventCancellationEmailToParticipants(Event event) {
+
+        User creator = event.getCreator();
+
+        for (User participant : event.getParticipants()) {
+
+            // Skip creator
+            if (creator != null &&
+                    participant.getId() != null &&
+                    participant.getId().equals(creator.getId())) {
+                continue;
+            }
+
+            if (participant.getEmail() != null && !participant.getEmail().isBlank()) {
+                sendEventCancellationEmail(participant.getEmail(), event);
+            }
+        }
+    }
+}
