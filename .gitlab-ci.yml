@@ -91,6 +91,9 @@ integration_test_backend:
 ########################
 # DOCUMENTATION (GITLAB PAGES)
 ########################
+########################
+# DOCUMENTATION (GITLAB PAGES)
+########################
 pages:
   stage: documentation
   image: maven:3.9.6-eclipse-temurin-21
@@ -98,55 +101,19 @@ pages:
     - compile_backend
   script:
     - cd backend
-
-    # Generate Javadoc
-    - mvn -DskipTests -Dmaven.javadoc.failOnError=false javadoc:javadoc
-
-    # Start backend with test configuration so OpenAPI can be generated without MySQL
-    - mvn -DskipTests spring-boot:start -Dspring-boot.run.profiles=test -Dspring-boot.run.useTestClasspath=true
-
-    # Wait for OpenAPI endpoint and save JSON
-    - |
-      for i in $(seq 1 30); do
-        if curl -f http://localhost:8080/v3/api-docs -o target/openapi.json; then
-          break
-        fi
-        echo "Waiting for /v3/api-docs..."
-        sleep 2
-      done
-
-      if [ ! -f target/openapi.json ]; then
-        echo "OpenAPI JSON was not generated"
-        exit 1
-      fi
-
-    # Stop backend
-    - mvn spring-boot:stop
-
-    # Store OpenAPI beside generated site docs
-    - mkdir -p target/site/openapi
-    - mv target/openapi.json target/site/openapi/openapi.json
-
+    - mvn javadoc:javadoc
     - cd ..
 
     # Prepare GitLab Pages output folder
     - rm -rf public
-    - mkdir -p public/javadoc
+    - mkdir -p public
     - mkdir -p public/api
 
-    # Copy Javadoc into /javadoc
-    - |
-      if [ -d backend/target/reports/apidocs ]; then
-        cp -r backend/target/reports/apidocs/* public/javadoc/
-      elif [ -d backend/target/site/apidocs ]; then
-        cp -r backend/target/site/apidocs/* public/javadoc/
-      else
-        echo "Javadoc folder not found"
-        exit 1
-      fi
+    # Copy Javadoc exactly as before
+    - cp -r backend/target/reports/apidocs/* public/
 
     # Copy OpenAPI JSON into /api
-    - cp backend/target/site/openapi/openapi.json public/api/openapi.json
+    - cp docs/openapi.json public/api/openapi.json
 
     # Create static Swagger UI page
     - |
@@ -181,91 +148,12 @@ pages:
       </html>
       EOF
 
-    # Create GitLab Pages homepage with links to Javadoc and Swagger
-    - |
-      cat > public/index.html <<'EOF'
-      <!DOCTYPE html>
-      <html lang="it">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Project Documentation</title>
-          <style>
-              body {
-                  font-family: Arial, sans-serif;
-                  background: #f4f6f8;
-                  color: #111827;
-                  margin: 0;
-                  padding: 40px;
-              }
-
-              main {
-                  max-width: 800px;
-                  margin: auto;
-                  background: white;
-                  padding: 32px;
-                  border-radius: 12px;
-                  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-              }
-
-              h1 {
-                  margin-top: 0;
-              }
-
-              p {
-                  color: #4b5563;
-              }
-
-              .link-card {
-                  display: block;
-                  padding: 18px;
-                  margin-top: 16px;
-                  border: 1px solid #d1d5db;
-                  border-radius: 10px;
-                  text-decoration: none;
-                  color: #111827;
-                  background: #f9fafb;
-              }
-
-              .link-card:hover {
-                  background: #eef2ff;
-              }
-
-              .title {
-                  font-size: 20px;
-                  font-weight: bold;
-              }
-
-              .description {
-                  margin-top: 6px;
-                  color: #4b5563;
-              }
-          </style>
-      </head>
-      <body>
-          <main>
-              <h1>Project Documentation</h1>
-              <p>From this page you can access the backend technical documentation.</p>
-
-              <a class="link-card" href="./javadoc/">
-                  <div class="title">Javadoc</div>
-                  <div class="description">Java class documentation for the backend.</div>
-              </a>
-
-              <a class="link-card" href="./api/">
-                  <div class="title">Swagger UI</div>
-                  <div class="description">REST API documentation generated from OpenAPI.</div>
-              </a>
-          </main>
-      </body>
-      </html>
-      EOF
-
   artifacts:
     paths:
       - public
+    expire_in: 1 week
   rules:
-   - when: always
+    when: always
     # - if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
