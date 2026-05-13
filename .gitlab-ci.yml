@@ -146,18 +146,38 @@ pages:
       </html>
       EOF
 
-    # Create GitLab Pages homepage
+        # Create redirect index page to avoid old browser cache
     - |
       cat > public/index.html <<'EOF'
       <!DOCTYPE html>
       <html lang="it">
       <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-        <meta http-equiv="Pragma" content="no-cache">
-        <meta http-equiv="Expires" content="0">
-        <title>Documentazione Progetto</title>
+          <meta charset="UTF-8">
+          <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+          <meta http-equiv="Pragma" content="no-cache">
+          <meta http-equiv="Expires" content="0">
+          <meta http-equiv="refresh" content="0; url=./home.html">
+          <title>Redirect</title>
+      </head>
+      <body>
+          <p>Reindirizzamento alla documentazione...</p>
+          <p><a href="./home.html">Apri la documentazione</a></p>
+      </body>
+      </html>
+      EOF
+
+    # Create GitLab Pages homepage
+    - |
+      cat > public/home.html <<'EOF'
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+          <meta http-equiv="Pragma" content="no-cache">
+          <meta http-equiv="Expires" content="0">
+          <title>Documentazione Progetto</title>
           <style>
               body {
                   font-family: Arial, sans-serif;
