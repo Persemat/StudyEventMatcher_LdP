@@ -270,20 +270,20 @@ pages:
 ########################
 # DEPLOY
 ########################
-deploy:
-  stage: deploy
-  image: alpine:latest
-  needs:
-    - package_backend
-    - package_frontend
-  script:
-    - mkdir -p deploy
-    - cp backend/target/*.jar deploy/app.jar
-    - cp -r frontend/dist deploy/
-  artifacts:
-      paths:
-        - deploy/
-      expire_in: 1 week
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+# deploy:
+#   stage: deploy
+#   image: alpine:latest
+#   needs:
+#     - package_backend
+#     - package_frontend
+#   script:
+#     - mkdir -p deploy
+#     - cp backend/target/*.jar deploy/app.jar
+#     - cp -r frontend/dist deploy/
+#   artifacts:
+#       paths:
+#         - deploy/
+#       expire_in: 1 week
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "develop"'
 
