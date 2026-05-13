@@ -104,10 +104,11 @@ pages:
     # Prepare GitLab Pages output folder
     - rm -rf public
     - mkdir -p public
+    - mkdir -p public/javadoc
     - mkdir -p public/api
 
-    # Copy Javadoc exactly as before
-    - cp -r backend/target/reports/apidocs/* public/
+    # Copy Javadoc into /javadoc
+    - cp -r backend/target/reports/apidocs/* public/javadoc/
 
     # Copy OpenAPI JSON into /api
     - cp docs/openapi.json public/api/openapi.json
@@ -145,12 +146,94 @@ pages:
       </html>
       EOF
 
+    # Create GitLab Pages homepage
+    - |
+      cat > public/index.html <<'EOF'
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Documentazione Progetto</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background: #f4f6f8;
+                  color: #111827;
+                  margin: 0;
+                  padding: 40px;
+              }
+
+              main {
+                  max-width: 800px;
+                  margin: auto;
+                  background: white;
+                  padding: 32px;
+                  border-radius: 12px;
+                  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+              }
+
+              h1 {
+                  margin-top: 0;
+              }
+
+              p {
+                  color: #4b5563;
+              }
+
+              .link-card {
+                  display: block;
+                  padding: 18px;
+                  margin-top: 16px;
+                  border: 1px solid #d1d5db;
+                  border-radius: 10px;
+                  text-decoration: none;
+                  color: #111827;
+                  background: #f9fafb;
+              }
+
+              .link-card:hover {
+                  background: #eef2ff;
+              }
+
+              .title {
+                  font-size: 20px;
+                  font-weight: bold;
+              }
+
+              .description {
+                  margin-top: 6px;
+                  color: #4b5563;
+              }
+          </style>
+      </head>
+      <body>
+          <main>
+              <h1>Documentazione Progetto</h1>
+              <p>Da questa pagina puoi accedere alla documentazione tecnica del backend.</p>
+
+              <a class="link-card" href="./javadoc/">
+                  <div class="title">Javadoc</div>
+                  <div class="description">Documentazione delle classi Java del backend.</div>
+              </a>
+
+              <a class="link-card" href="./api/">
+                  <div class="title">Swagger UI</div>
+                  <div class="description">Documentazione degli endpoint REST generata da OpenAPI.</div>
+              </a>
+          </main>
+      </body>
+      </html>
+      EOF
+
   artifacts:
     paths:
       - public
     expire_in: 1 week
+
   rules:
-     - if: '$CI_COMMIT_BRANCH == "develop"'
+    - when: always
+    # - if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
 # DEPLOY
