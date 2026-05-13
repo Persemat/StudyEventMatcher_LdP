@@ -91,9 +91,6 @@ integration_test_backend:
 ########################
 # DOCUMENTATION (GITLAB PAGES)
 ########################
-########################
-# DOCUMENTATION (GITLAB PAGES)
-########################
 pages:
   stage: documentation
   image: maven:3.9.6-eclipse-temurin-21
