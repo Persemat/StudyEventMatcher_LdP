@@ -100,63 +100,75 @@ pages:
     - cd backend
     - mvn javadoc:javadoc
     - cd ..
+
+    # Prepare GitLab Pages output folder
     - rm -rf public
-    - mkdir public
+    - mkdir -p public
+    - mkdir -p public/api
+
+    # Copy Javadoc exactly as before
     - cp -r backend/target/reports/apidocs/* public/
+
+    # Copy OpenAPI JSON into /api
+    - cp docs/openapi.json public/api/openapi.json
+
+    # Create static Swagger UI page
+    - |
+      cat > public/api/index.html <<'EOF'
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Swagger UI - Backend API</title>
+          <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+      </head>
+      <body>
+          <div id="swagger-ui"></div>
+
+          <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+          <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+          <script>
+              window.onload = function () {
+                  SwaggerUIBundle({
+                      url: "./openapi.json",
+                      dom_id: "#swagger-ui",
+                      presets: [
+                          SwaggerUIBundle.presets.apis,
+                          SwaggerUIStandalonePreset
+                      ],
+                      layout: "StandaloneLayout"
+                  });
+              };
+          </script>
+      </body>
+      </html>
+      EOF
+
   artifacts:
     paths:
       - public
     expire_in: 1 week
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-
-########################
-# PACKAGE 
-########################
-package_backend:
-  stage: package
-  image: maven:3.9.6-eclipse-temurin-21
-  needs:
-    - compile_backend
-  script:
-    - cd backend
-    - mvn package -DskipTests -DskipITs
-  artifacts:
-    paths:
-      - backend/target/*.jar
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-
-package_frontend:
-  stage: package
-  image: node:22-alpine
-  script:
-    - cd frontend
-    - npm ci --cache .npm --prefer-offline
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+     - if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
 # DEPLOY
 ########################
-deploy:
-  stage: deploy
-  image: alpine:latest
-  needs:
-    - package_backend
-    - package_frontend
-  script:
-    - mkdir -p deploy
-    - cp backend/target/*.jar deploy/app.jar
-    - cp -r frontend/dist deploy/
-  artifacts:
-      paths:
-        - deploy/
-      expire_in: 1 week
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+# deploy:
+#   stage: deploy
+#   image: alpine:latest
+#   needs:
+#     - package_backend
+#     - package_frontend
+#   script:
+#     - mkdir -p deploy
+#     - cp backend/target/*.jar deploy/app.jar
+#     - cp -r frontend/dist deploy/
+#   artifacts:
+#       paths:
+#         - deploy/
+#       expire_in: 1 week
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "develop"'
 
