@@ -106,7 +106,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
                 () -> passwordResetService.resetPassword(request)
         );
 
-        assertEquals("Codice invalido", ex.getMessage());
+        assertEquals("Codice non valido", ex.getMessage());
     }
 
     @Test

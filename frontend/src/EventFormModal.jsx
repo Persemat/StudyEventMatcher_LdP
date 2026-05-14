@@ -19,7 +19,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   const [formError, setFormError] = useState("");
 
   const [maxParticipants, setMaxParticipants] = useState(event?.maxParticipants || "");
-  const [creatorPartecipationRequired, setCreatorPartecipationRequired] = useState(
+  const [creatorParticipationRequired, setCreatorParticipationRequired] = useState(
     event?.creatorParticipationRequired ?? event?.creatorPartecipationRequired ?? true
   );
 
@@ -126,13 +126,13 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     setFormError("");
 
     if (!city.trim()) {
-      setFormError("La citta e richiesta.");
+      setFormError("La città è richiesta.");
       cityInputRef.current?.focus();
       return;
     }
 
     if (!validCityLabels.has(city.trim())) {
-      setFormError("Seleziona una citta dal catalogo comuni.");
+      setFormError("Seleziona una città dal catalogo comuni.");
       cityInputRef.current?.focus();
       return;
     }
@@ -147,7 +147,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
       (tag) => !tagOptions.some((option) => sameTag(option, tag))
     );
     if (invalidTag) {
-      setFormError("Uno o piu tag non appartengono al catalogo.");
+      setFormError("Uno o più tag non appartengono al catalogo.");
       tagInputRef.current?.focus();
       return;
     }
@@ -168,7 +168,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
       tags,
       description,
       maxParticipants: parseInt(maxParticipants),
-      creatorParticipationRequired: creatorPartecipationRequired,
+      creatorParticipationRequired,
     };
 
     const url = isEdit ? `/api/events/${event.id}` : "/api/events";
@@ -186,10 +186,10 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
         if (onSuccess) onSuccess();
       } else {
         const errorText = await response.text();
-        setMessage(`Error: ${errorText}`);
+        setMessage(`Errore: ${errorText}`);
       }
     } catch {
-      setMessage("Server connection error.");
+      setMessage("Errore di connessione al server.");
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +200,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">
-            {isEdit ? "Modifica Evento" : "Crea Nuovo Evento"}
+            {isEdit ? "Modifica evento" : "Crea nuovo evento"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-6 h-6" />
@@ -210,7 +210,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
         <div className="overflow-y-auto p-6">
           {message && (
             <div className={`p-4 mb-4 rounded-lg font-medium ${
-              message.includes("Error") ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"
+              message.startsWith("Errore") ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"
             }`}>
               {message}
             </div>
@@ -237,7 +237,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Citta *
+                  Città *
                 </label>
                 <input
                   ref={cityInputRef}
@@ -394,7 +394,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Partecipanti *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max partecipanti *</label>
                 <input
                   type="number"
                   min="2"
@@ -410,17 +410,17 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               <input
                 type="checkbox"
                 id="creatorRequired"
-                checked={creatorPartecipationRequired}
-                onChange={(e) => setCreatorPartecipationRequired(e.target.checked)}
+                checked={creatorParticipationRequired}
+                onChange={(e) => setCreatorParticipationRequired(e.target.checked)}
                 className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
               />
               <div className="flex-1">
                 <label htmlFor="creatorRequired" className="text-sm font-bold text-gray-800 cursor-pointer flex items-center gap-2">
-                  La mia presenza e obbligatoria
+                  La mia presenza è obbligatoria
                   <Info size={14} className="text-blue-400" />
                 </label>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Se abilitato, l'evento verra annullato se decidi di ritirarti.
+                  Se abilitato, l'evento verrà annullato se decidi di ritirarti.
                 </p>
               </div>
             </div>
@@ -443,7 +443,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
               >
                 {isLoading
                   ? (isEdit ? "Salvataggio..." : "Creazione...")
-                  : (isEdit ? "Salva modifiche" : "Crea Evento")}
+                  : (isEdit ? "Salva modifiche" : "Crea evento")}
               </button>
             </div>
           </form>

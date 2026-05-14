@@ -133,7 +133,7 @@ public class PasswordResetService {
         String newPassword = request.newPassword();
 
         if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
+            throw new IllegalArgumentException("Email obbligatoria");
         }
 
         if (code == null || code.isBlank()) {
@@ -154,7 +154,7 @@ public class PasswordResetService {
 
         PasswordResetToken token = passwordResetTokenRepository
                 .findByEmailAndCodeAndUsedFalse(email, code)
-                .orElseThrow(() -> new IllegalArgumentException("Codice invalido"));
+                .orElseThrow(() -> new IllegalArgumentException("Codice non valido"));
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
             passwordResetTokenRepository.delete(token);
