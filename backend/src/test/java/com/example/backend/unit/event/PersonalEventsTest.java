@@ -34,9 +34,9 @@ public class PersonalEventsTest extends BaseEventTest {
         Event myEvent = new Event();
         myEvent.setTitle("My Event");
         myEvent.setDateTime(LocalDateTime.of(2026, 4, 20, 15, 0));
-        myEvent.setLocation("Room 1");
+        myEvent.setLocation("Milano (MI)-Aula 1");
         myEvent.setDuration(2.0);
-        myEvent.setTags(List.of("Java"));
+        myEvent.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         myEvent.setDescription("Description");
         myEvent.setStatus("open");
         myEvent.setCreator(user);
@@ -44,9 +44,9 @@ public class PersonalEventsTest extends BaseEventTest {
         Event otherEvent = new Event();
         otherEvent.setTitle("Other Event");
         otherEvent.setDateTime(LocalDateTime.of(2026, 4, 21, 16, 0));
-        otherEvent.setLocation("Room 2");
+        otherEvent.setLocation("Milano (MI)-Aula 2");
         otherEvent.setDuration(1.5);
-        otherEvent.setTags(List.of("React"));
+        otherEvent.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
         otherEvent.setDescription("Description");
         otherEvent.setStatus("open");
         otherEvent.setCreator(otherUser);
@@ -70,9 +70,9 @@ public class PersonalEventsTest extends BaseEventTest {
         Event otherEvent = new Event();
         otherEvent.setTitle("Other Event");
         otherEvent.setDateTime(LocalDateTime.of(2026, 4, 21, 16, 0));
-        otherEvent.setLocation("Room 2");
+        otherEvent.setLocation("Milano (MI)-Aula 2");
         otherEvent.setDuration(1.5);
-        otherEvent.setTags(List.of("React"));
+        otherEvent.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
         otherEvent.setDescription("Description");
         otherEvent.setStatus("open");
         otherEvent.setCreator(otherUser);
@@ -95,9 +95,9 @@ public class PersonalEventsTest extends BaseEventTest {
         Event event = new Event();
         event.setTitle("Database Study");
         event.setDateTime(LocalDateTime.of(2026, 4, 10, 15, 0));
-        event.setLocation("Room 2");
+        event.setLocation("Milano (MI)-Aula 2");
         event.setDuration(2.0);
-        event.setTags(List.of("CS"));
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Informatica")));
         event.setDescription("SQL Review");
         event.setStatus("open");
         event.setCreator(user);

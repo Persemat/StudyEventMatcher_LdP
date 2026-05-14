@@ -59,8 +59,8 @@ public class DeleteEvent {
         event.setDescription("Ripasso SQL");
         event.setDateTime(LocalDateTime.of(2026, 4, 20, 15, 0));
         event.setDuration(2.0);
-        event.setLocation("Aula 2");
-        event.setTags(List.of("Informatica"));
+        event.setLocation("Milano (MI)-Aula 2");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Informatica")));
         event.setMaxParticipants(10);
         event.setStatus("aperto");
         event.setCreator(creator);

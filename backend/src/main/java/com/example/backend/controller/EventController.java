@@ -232,7 +232,7 @@ public class EventController {
         Long userId = (Long) session.getAttribute("userId");
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sesisone invalida o scaduta");
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
         }
 
         return ResponseEntity.ok(

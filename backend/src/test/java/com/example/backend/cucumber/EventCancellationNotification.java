@@ -66,8 +66,8 @@ public class EventCancellationNotification {
         event.setTitle("Ripasso Analisi 1");
         event.setDateTime(LocalDateTime.of(2026, 3, 5, 14, 0));
         event.setDuration(2.0);
-        event.setLocation("Aula 2");
-        event.setTags(List.of("Analisi"));
+        event.setLocation("Milano (MI)-Aula 2");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Analisi matematica")));
         event.setDescription("Ripasso in vista dell'esame");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);

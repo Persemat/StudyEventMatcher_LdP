@@ -77,12 +77,17 @@ public class CreateEvent {
         description = "Ripasso per l'esame di architetture";
         dateTime = "2026-10-15T15:00:00";
         duration = 2.5;
-        location = "Aula Magna";
+        location = "Milano (MI)-Aula Magna";
     }
 
     @And("aggiunge uno o piu tag e imposta un limite di partecipanti")
     public void aggiungeTagELimite() {
-        tags = "[\"Java\", \"Programmazione\"]";
+        tags = """
+                [
+                  { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
+                  { "macroTag": "Informatica e Tecnologie", "microTag": null }
+                ]
+                """;
         maxPartecipants = 10;
     }
 
@@ -138,8 +143,10 @@ public class CreateEvent {
                 "description": "test",
                 "dateTime": "2026-10-15T15:00:00",
                 "duration": 1.0,
-                "location": "Aula Magna",
-                "tags": ["test"],
+                "location": "Milano (MI)-Aula Magna",
+                "tags": [
+                  { "macroTag": "Informatica e Tecnologie", "microTag": "Testing software" }
+                ],
                 "maxPartecipants": 10,
                 "creatorParticipationRequired": true
                 }

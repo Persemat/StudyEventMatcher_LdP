@@ -26,6 +26,7 @@ public class EditEventIT extends BaseEventIT {
   @Test
   void editValidEvent_returns200AndUpdatesEvent() throws Exception {
 
+<<<<<<< HEAD
     Event event = new Event();
     event.setTitle("Java Project");
     event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
@@ -52,6 +53,37 @@ public class EditEventIT extends BaseEventIT {
           "creatorParticipationRequired": false
         }
         """;
+=======
+        Event event = new Event();
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setStatus("open");
+        event.setCreator(userRepository.findById(userId).orElseThrow());
+        event.addParticipant(userRepository.findById(userId).orElseThrow());
+        event = eventRepository.save(event);
+
+        String json = """
+                        {
+                          "title": "Updated Java Project",
+                          "dateTime": "2026-10-16T17:00:00",
+                          "duration": 3.0,
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Sviluppo backend" }
+                          ],
+                          "description": "Updated description",
+                          "maxParticipants": 12,
+                          "creatorParticipationRequired": false
+                        }
+                        """;
+>>>>>>> develop
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -63,6 +95,7 @@ public class EditEventIT extends BaseEventIT {
 
     Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
 
+<<<<<<< HEAD
     assertEquals("Updated Java Project", updatedEvent.getTitle());
     assertEquals(LocalDateTime.of(2026, 10, 16, 17, 0), updatedEvent.getDateTime());
     assertEquals(3.0, updatedEvent.getDuration());
@@ -72,10 +105,23 @@ public class EditEventIT extends BaseEventIT {
     assertEquals(12, updatedEvent.getMaxParticipants());
     assertEquals(false, updatedEvent.isCreatorParticipationRequired());
   }
+=======
+        assertEquals("Updated Java Project", updatedEvent.getTitle());
+        assertEquals(LocalDateTime.of(2026, 10, 16, 17, 0), updatedEvent.getDateTime());
+        assertEquals(3.0, updatedEvent.getDuration());
+        assertEquals("Milano (MI)-Biblioteca", updatedEvent.getLocation());
+        assertTrue(updatedEvent.getTags().contains(
+                new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo backend")));
+        assertEquals("Updated description", updatedEvent.getDescription());
+        assertEquals(12, updatedEvent.getMaxParticipants());
+        assertEquals(false, updatedEvent.isCreatorParticipationRequired());
+    }
+>>>>>>> develop
 
   @Test
   void editEventWithEmptyTitle_returns400() throws Exception {
 
+<<<<<<< HEAD
     Event event = new Event();
     event.setTitle("Java Project");
     event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
@@ -102,6 +148,36 @@ public class EditEventIT extends BaseEventIT {
           "creatorParticipationRequired": false
         }
         """;
+=======
+        Event event = new Event();
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setStatus("open");
+        event.setCreator(userRepository.findById(userId).orElseThrow());
+        event.addParticipant(userRepository.findById(userId).orElseThrow());
+        event = eventRepository.save(event);
+
+        String json = """
+                        {
+                          "title": "",
+                          "dateTime": "2026-10-16T17:00:00",
+                          "duration": 3.0,
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
+                          "description": "Updated description",
+                          "maxParticipants": 12,
+                          "creatorParticipationRequired": false
+                        }
+                        """;
+>>>>>>> develop
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -115,6 +191,7 @@ public class EditEventIT extends BaseEventIT {
   @Test
   void editEventWithInvalidSession_returns401() throws Exception {
 
+<<<<<<< HEAD
     Event event = new Event();
     event.setTitle("Java Project");
     event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
@@ -141,6 +218,36 @@ public class EditEventIT extends BaseEventIT {
           "creatorParticipationRequired": false
         }
         """;
+=======
+        Event event = new Event();
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setStatus("open");
+        event.setCreator(userRepository.findById(userId).orElseThrow());
+        event.addParticipant(userRepository.findById(userId).orElseThrow());
+        event = eventRepository.save(event);
+
+        String json = """
+                        {
+                          "title": "Updated Java Project",
+                          "dateTime": "2026-10-16T17:00:00",
+                          "duration": 3.0,
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
+                          "description": "Updated description",
+                          "maxParticipants": 12,
+                          "creatorParticipationRequired": false
+                        }
+                        """;
+>>>>>>> develop
 
     mockMvc.perform(put("/events/" + event.getId())
         .contentType(MediaType.APPLICATION_JSON)
@@ -157,6 +264,7 @@ public class EditEventIT extends BaseEventIT {
         "Roma", List.of("Tech"), new ArrayList<>());
     otherUser = userRepository.save(otherUser);
 
+<<<<<<< HEAD
     Event event = new Event();
     event.setTitle("Java Project");
     event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
@@ -183,6 +291,36 @@ public class EditEventIT extends BaseEventIT {
           "creatorParticipationRequired": false
         }
         """;
+=======
+        Event event = new Event();
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setStatus("open");
+        event.setCreator(otherUser);
+        event.addParticipant(otherUser);
+        event = eventRepository.save(event);
+
+        String json = """
+                        {
+                          "title": "Updated Java Project",
+                          "dateTime": "2026-10-16T17:00:00",
+                          "duration": 3.0,
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
+                          "description": "Updated description",
+                          "maxParticipants": 12,
+                          "creatorParticipationRequired": false
+                        }
+                        """;
+>>>>>>> develop
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -200,6 +338,7 @@ public class EditEventIT extends BaseEventIT {
         "Roma", List.of("Social"), new ArrayList<>());
     otherUser = userRepository.save(otherUser);
 
+<<<<<<< HEAD
     Event event = new Event();
     event.setTitle("Java Project");
     event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
@@ -238,3 +377,44 @@ public class EditEventIT extends BaseEventIT {
                 .containsString("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali")));
   }
 }
+=======
+        Event event = new Event();
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setStatus("open");
+        event.setCreator(userRepository.findById(userId).orElseThrow());
+        event.addParticipant(userRepository.findById(userId).orElseThrow());
+        event.addParticipant(otherUser);
+        event = eventRepository.save(event);
+
+        String json = """
+                        {
+                          "title": "Updated Java Project",
+                          "dateTime": "2026-10-16T17:00:00",
+                          "duration": 3.0,
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
+                          "description": "Updated description",
+                          "maxParticipants": 1,
+                          "creatorParticipationRequired": false
+                        }
+                        """;
+
+        mockMvc.perform(put("/events/" + event.getId())
+                        .sessionAttr("userId", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.containsString("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali")));
+    }
+}
+>>>>>>> develop

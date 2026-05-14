@@ -66,7 +66,7 @@ public class DeleteBookingIT extends BaseEventIT {
         event = new Event();
         event.setTitle("Database Study");
         event.setDescription("SQL and NoSQL review");
-        event.setLocation("Room 2");
+        event.setLocation("Milano (MI)-Aula 2");
         event.setDateTime(LocalDateTime.now().plusDays(2));
         event.setDuration(2.0);
         event.setMaxParticipants(4);

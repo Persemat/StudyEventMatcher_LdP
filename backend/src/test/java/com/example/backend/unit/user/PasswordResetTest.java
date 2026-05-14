@@ -102,7 +102,7 @@ public class PasswordResetTest extends BasePasswordResetTest {
                                 IllegalArgumentException.class,
                                 () -> passwordResetService.resetPassword(request));
 
-                assertEquals("Codice invalido", ex.getMessage());
+                assertEquals("Codice non valido", ex.getMessage());
         }
 
         @Test

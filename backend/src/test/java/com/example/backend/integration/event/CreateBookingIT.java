@@ -65,7 +65,7 @@ public class CreateBookingIT extends BaseEventIT {
         event = new Event();
         event.setTitle("Software Engineering Study");
         event.setDescription("Study session");
-        event.setLocation("Room 1");
+        event.setLocation("Milano (MI)-Aula 1");
         event.setDateTime(LocalDateTime.now().plusDays(1));
         event.setDuration(2.0);
         event.setMaxParticipants(3);
