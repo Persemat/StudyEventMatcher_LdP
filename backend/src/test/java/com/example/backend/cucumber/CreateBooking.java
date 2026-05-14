@@ -81,7 +81,7 @@ public class CreateBooking {
         event = new Event();
         event.setTitle("Studio Ingegneria del Software");
         event.setDescription("Sessione di studio");
-        event.setLocation("Aula 1");
+        event.setLocation("Milano (MI)-Aula 1");
         event.setDateTime(LocalDateTime.now().plusDays(1));
         event.setDuration(2.0);
         event.setMaxParticipants(3);
@@ -119,7 +119,7 @@ public class CreateBooking {
         event = new Event();
         event.setTitle("Progetto Basi di Dati");
         event.setDescription("Lavoro di gruppo");
-        event.setLocation("Lab 2");
+        event.setLocation("Milano (MI)-Lab 2");
         event.setDateTime(LocalDateTime.now().plusDays(1));
         event.setDuration(2.0);
         event.setMaxParticipants(1);
@@ -158,7 +158,7 @@ public class CreateBooking {
             event = new Event();
             event.setTitle("Progetto Java");
             event.setDescription("Sessione collaborativa");
-            event.setLocation("Lab 1");
+            event.setLocation("Milano (MI)-Lab 1");
             event.setDateTime(LocalDateTime.now().plusDays(1));
             event.setDuration(2.0);
             event.setMaxParticipants(5);

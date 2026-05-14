@@ -20,7 +20,7 @@ Feature: Recupero password
     Given esiste un utente registrato per il reset password
     When l'utente conferma il reset password con un codice non valido
     Then il sistema rifiuta la richiesta di reset password
-    And il sistema mostra il messaggio "Codice invalido"
+    And il sistema mostra il messaggio "Codice non valido"
 
   Scenario: Reset password con codice scaduto
     Given esiste un utente con un codice di recupero scaduto

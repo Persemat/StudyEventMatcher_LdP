@@ -20,8 +20,8 @@ public class ViewEventsIT extends BaseEventIT {
         event.setTitle("React Workshop");
         event.setDateTime(java.time.LocalDateTime.parse("2026-04-15T09:00:00"));
         event.setDuration(1.5);
-        event.setLocation("Online");
-        event.setTags(java.util.List.of("Frontend"));
+        event.setLocation("Milano (MI)-Online");
+        event.setTags(java.util.List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
         event.setDescription("Component-based development");
         event.setStatus("open");
         event.setCreator(creator);
@@ -32,7 +32,7 @@ public class ViewEventsIT extends BaseEventIT {
                 .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title").value("React Workshop"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].location").value("Online"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].location").value("Milano (MI)-Online"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].dateTime").exists());
     }
 

@@ -131,7 +131,7 @@ public class PasswordResetIT extends BasePasswordResetIT{
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Codice invalido")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Codice non valido")));
     }
 
     @Test

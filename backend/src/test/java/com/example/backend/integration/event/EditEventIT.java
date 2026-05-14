@@ -29,8 +29,8 @@ public class EditEventIT extends BaseEventIT {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -44,8 +44,11 @@ public class EditEventIT extends BaseEventIT {
                           "title": "Updated Java Project",
                           "dateTime": "2026-10-16T17:00:00",
                           "duration": 3.0,
-                          "location": "Library",
-                          "tags": ["Java", "Backend"],
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Sviluppo backend" }
+                          ],
                           "description": "Updated description",
                           "maxParticipants": 12,
                           "creatorParticipationRequired": false
@@ -65,8 +68,9 @@ public class EditEventIT extends BaseEventIT {
         assertEquals("Updated Java Project", updatedEvent.getTitle());
         assertEquals(LocalDateTime.of(2026, 10, 16, 17, 0), updatedEvent.getDateTime());
         assertEquals(3.0, updatedEvent.getDuration());
-        assertEquals("Library", updatedEvent.getLocation());
-        assertTrue(updatedEvent.getTags().contains("BACKEND"));
+        assertEquals("Milano (MI)-Biblioteca", updatedEvent.getLocation());
+        assertTrue(updatedEvent.getTags().contains(
+                new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo backend")));
         assertEquals("Updated description", updatedEvent.getDescription());
         assertEquals(12, updatedEvent.getMaxParticipants());
         assertEquals(false, updatedEvent.isCreatorParticipationRequired());
@@ -79,8 +83,8 @@ public class EditEventIT extends BaseEventIT {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -94,8 +98,10 @@ public class EditEventIT extends BaseEventIT {
                           "title": "",
                           "dateTime": "2026-10-16T17:00:00",
                           "duration": 3.0,
-                          "location": "Library",
-                          "tags": ["Java"],
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
                           "description": "Updated description",
                           "maxParticipants": 12,
                           "creatorParticipationRequired": false
@@ -118,8 +124,8 @@ public class EditEventIT extends BaseEventIT {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -133,8 +139,10 @@ public class EditEventIT extends BaseEventIT {
                           "title": "Updated Java Project",
                           "dateTime": "2026-10-16T17:00:00",
                           "duration": 3.0,
-                          "location": "Library",
-                          "tags": ["Java"],
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
                           "description": "Updated description",
                           "maxParticipants": 12,
                           "creatorParticipationRequired": false
@@ -163,8 +171,8 @@ public class EditEventIT extends BaseEventIT {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -178,8 +186,10 @@ public class EditEventIT extends BaseEventIT {
                           "title": "Updated Java Project",
                           "dateTime": "2026-10-16T17:00:00",
                           "duration": 3.0,
-                          "location": "Library",
-                          "tags": ["Java"],
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
                           "description": "Updated description",
                           "maxParticipants": 12,
                           "creatorParticipationRequired": false
@@ -209,8 +219,8 @@ public class EditEventIT extends BaseEventIT {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -225,8 +235,10 @@ public class EditEventIT extends BaseEventIT {
                           "title": "Updated Java Project",
                           "dateTime": "2026-10-16T17:00:00",
                           "duration": 3.0,
-                          "location": "Library",
-                          "tags": ["Java"],
+                          "location": "Milano (MI)-Biblioteca",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
                           "description": "Updated description",
                           "maxParticipants": 1,
                           "creatorParticipationRequired": false

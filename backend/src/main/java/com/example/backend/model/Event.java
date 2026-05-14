@@ -1,6 +1,7 @@
 package com.example.backend.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,11 +40,9 @@ public class Event {
     @Column(nullable = false)
     private String location;
 
-    // ElementCollection for tags
     @ElementCollection
     @CollectionTable(name = "event_tags", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "tag", nullable = false)
-    private List<String> tags;
+    private List<EventTag> tags;
 
     // Optional fields
     @Column(length = 1000)
@@ -105,12 +104,24 @@ public class Event {
         this.location = location;
     }
 
-    public List<String> getTags() {
+    public List<EventTag> getTags() {
         return tags;
     }
 
-    public void setTags(List<String> tags) {
-        this.tags = tags;
+    public void setTags(List<?> tags) {
+        if (tags == null) {
+            this.tags = null;
+            return;
+        }
+
+        this.tags = new ArrayList<>(tags.stream()
+                .map(tag -> {
+                    if (tag instanceof EventTag eventTag) {
+                        return eventTag;
+                    }
+                    return new EventTag(String.valueOf(tag), null);
+                })
+                .toList());
     }
 
     public String getDescription() {

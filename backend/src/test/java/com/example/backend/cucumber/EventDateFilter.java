@@ -41,8 +41,8 @@ public class EventDateFilter {
         event.setDescription("Descrizione test data");
         event.setDateTime(dateTime);
         event.setDuration(1.5);
-        event.setLocation("Aula Test");
-        event.setTags(List.of("Test"));
+        event.setLocation("Milano (MI)-Aula Test");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Testing software")));
         event.setMaxParticipants(5);
         event.setCreatorParticipationRequired(false);
         event.setStatus("open");
