@@ -377,9 +377,13 @@ public class EventService {
         String searchParam = (search == null || search.isBlank()) ? null : search;
         String locationParam = (location == null || location.isBlank()) ? null : location;
 
-        boolean checkTags = tags != null && !tags.isEmpty() && !tags.contains("All");
-        List<String> tagsParam = checkTags ? tags : List.of();
-        long tagCount = checkTags ? tagsParam.size() : 0;
+        List<String> tagsParam = tags == null || tags.contains("All")
+                ? List.of()
+                : tags.stream()
+                        .filter(tag -> tag != null && !tag.isBlank())
+                        .toList();
+        boolean checkTags = !tagsParam.isEmpty();
+        long tagCount = tagsParam.size();
 
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
