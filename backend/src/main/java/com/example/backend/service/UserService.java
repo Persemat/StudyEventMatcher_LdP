@@ -93,11 +93,11 @@ public class UserService {
         }
 
         if (macroTags.size() > 3) {
-            throw new IllegalArgumentException("Si possono indicare al massimo 3 macro tag ");
+            throw new IllegalArgumentException("Si possono indicare al massimo 3 aree di interesse generale ");
         }
 
         if (microTags.size() > 5) {
-            throw new IllegalArgumentException("Si possono indicare al massimo 5 micro tag ");
+            throw new IllegalArgumentException("Si possono indicare al massimo 5 argomenti di interesse specifici ");
         }
 
         User user = new User();
