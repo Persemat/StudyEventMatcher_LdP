@@ -2,6 +2,7 @@ package com.example.backend.unit.event;
 
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.service.EmailService;
 import com.example.backend.service.EventService;
 
 import jakarta.servlet.http.HttpSession;
@@ -24,6 +25,9 @@ public abstract class BaseEventTest {
 
     @Mock
     protected UserRepository userRepository;
+
+    @Mock
+    protected EmailService emailService;
 
     @Mock
     protected HttpSession session;
