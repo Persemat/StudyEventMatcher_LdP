@@ -16,6 +16,7 @@ import com.example.backend.repository.EventRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,11 +42,14 @@ public class ViewEvents {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        User user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario@example.com");
-        user.setPassword("Password123!");
+        User user = new User(
+                "Mario",
+                "Rossi",
+                "mario@example.com",
+                "Password123!",
+                "Milano",
+                List.of("Studio"),
+                new ArrayList<>());
         userRepository.save(user);
 
         this.userId = user.getId();
@@ -99,8 +103,8 @@ public class ViewEvents {
     @Then("il sistema mostra la lista degli eventi disponibili")
     public void ilSistemaMostraLaListaDegliEventiDisponibili() throws Exception {
         result.andExpect(status().isOk())
-              .andExpect(content().string(containsString("Ripasso Analisi 1")))
-              .andExpect(content().string(containsString("Workshop React")));
+                .andExpect(content().string(containsString("Ripasso Analisi 1")))
+                .andExpect(content().string(containsString("Workshop React")));
     }
 
     @And("gli eventi sono visualizzati senza filtri applicati")
@@ -125,6 +129,6 @@ public class ViewEvents {
     @And("il sistema restituisce una lista vuota")
     public void ilSistemaRestituisceUnaListaVuota() throws Exception {
         result.andExpect(status().isOk())
-              .andExpect(content().json("[]"));
+                .andExpect(content().json("[]"));
     }
 }

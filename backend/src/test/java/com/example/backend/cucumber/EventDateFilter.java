@@ -17,6 +17,7 @@ import com.example.backend.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -59,11 +60,14 @@ public class EventDateFilter {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = new User();
-        user.setName("Paolo");
-        user.setLastname("Verdi");
-        user.setEmail("paolo.date@example.com");
-        user.setPassword("Password123!");
+        user = new User(
+                "Paolo",
+                "Verdi",
+                "paolo.date@example.com",
+                "Password123!",
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         userRepository.save(user);
     }
 

@@ -3,6 +3,8 @@ package com.example.backend.integration.event;
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
 
+import java.util.List;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -30,20 +32,28 @@ public class PersonalEventsIT extends BaseEventIT {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/events")
                 .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title").value("Database Study"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].dateTime").exists())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].location").value("Room 2"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].tags[0]").value("Computer Science"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].isCreatedByMe").value(true));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title")
+                        .value("Database Study"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].dateTime")
+                        .exists())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].location")
+                        .value("Room 2"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].tags[0]")
+                        .value("Computer Science"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$[0].isCreatedByMe").value(true));
     }
 
     @Test
     void getAllEvents_eventCreatedByOtherUser_shouldHaveIsCreatedByMeFalse() throws Exception {
-        User otherUser = new User();
-        otherUser.setName("Marco");
-        otherUser.setLastname("Verdi");
-        otherUser.setEmail("marco@example.com");
-        otherUser.setPassword("Pass123");
+        User otherUser = new User(
+                "Marco",
+                "Verdi",
+                "marco@example.com",
+                "Pass123",
+                "Roma",
+                List.of("Social"),
+                new ArrayList<>());
         userRepository.save(otherUser);
 
         Event event = new Event();
@@ -61,17 +71,22 @@ public class PersonalEventsIT extends BaseEventIT {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/events")
                 .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title").value("Other user event"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].isCreatedByMe").value(false));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title")
+                        .value("Other user event"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$[0].isCreatedByMe").value(false));
     }
 
     @Test
     void getAllEvents_authenticatedUserWithoutOwnEvents_shouldNotHavePersonalEvents() throws Exception {
-        User otherUser = new User();
-        otherUser.setName("Marco");
-        otherUser.setLastname("Verdi");
-        otherUser.setEmail("marco2@example.com");
-        otherUser.setPassword("Pass123");
+        User otherUser = new User(
+                "Marco",
+                "Verdi",
+                "marco2@example.com",
+                "Pass123",
+                "Roma",
+                List.of("Math"),
+                new ArrayList<>());
         userRepository.save(otherUser);
 
         Event event = new Event();
@@ -89,6 +104,7 @@ public class PersonalEventsIT extends BaseEventIT {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/events")
                 .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].isCreatedByMe").value(false));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$[0].isCreatedByMe").value(false));
     }
 }

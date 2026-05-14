@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -38,11 +39,8 @@ class DeleteEventIT extends BaseEventIT {
         event.addParticipant(creator);
 
         for (int i = 1; i <= 5; i++) {
-            User user = new User();
-            user.setName("User" + i);
-            user.setLastname("Test");
-            user.setEmail("user" + i + "@example.com");
-            user.setPassword("Pass123");
+            User user = new User("User" + i, "Test", "user" + i + "@example.com", "Pass123",
+                    "Milano", List.of("Tech"), new ArrayList<>());
             userRepository.save(user);
             event.addParticipant(user);
         }
@@ -51,7 +49,7 @@ class DeleteEventIT extends BaseEventIT {
         long eventId = event.getId();
 
         mockMvc.perform(delete("/events/" + eventId)
-                        .sessionAttr("userId", userId))
+                .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Evento cancellato con successo")));
 
@@ -62,18 +60,12 @@ class DeleteEventIT extends BaseEventIT {
     void deleteEvent_whenCreatorNotRequiredWithOthers_shouldReassignCreator() throws Exception {
         User creator = userRepository.findById(userId).orElseThrow();
 
-        User user1 = new User();
-        user1.setName("Marco");
-        user1.setLastname("Verdi");
-        user1.setEmail("marco@example.com");
-        user1.setPassword("Pass123");
+        User user1 = new User("Marco", "Verdi", "marco@example.com", "Pass123",
+                "Roma", List.of("Social"), new ArrayList<>());
         userRepository.save(user1);
 
-        User user2 = new User();
-        user2.setName("Anna");
-        user2.setLastname("Bianchi");
-        user2.setEmail("anna@example.com");
-        user2.setPassword("Pass123");
+        User user2 = new User("Anna", "Bianchi", "anna@example.com", "Pass123",
+                "Napoli", List.of("Music"), new ArrayList<>());
         userRepository.save(user2);
 
         Event event = new Event();
@@ -95,7 +87,7 @@ class DeleteEventIT extends BaseEventIT {
         long eventId = event.getId();
 
         mockMvc.perform(delete("/events/" + eventId)
-                        .sessionAttr("userId", userId))
+                .sessionAttr("userId", userId))
                 .andExpect(status().isOk());
 
         Event updated = eventRepository.findById(eventId).orElseThrow();
@@ -128,7 +120,7 @@ class DeleteEventIT extends BaseEventIT {
         long eventId = event.getId();
 
         mockMvc.perform(delete("/events/" + eventId)
-                        .sessionAttr("userId", userId))
+                .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Evento cancellato con successo")));
 
@@ -137,11 +129,8 @@ class DeleteEventIT extends BaseEventIT {
 
     @Test
     void deleteEvent_whenUserNotCreator_shouldReturnError() throws Exception {
-        User creator = new User();
-        creator.setName("Marco");
-        creator.setLastname("Verdi");
-        creator.setEmail("marco2@example.com");
-        creator.setPassword("Pass123");
+        User creator = new User("Marco", "Verdi", "marco2@example.com", "Pass123",
+                "Roma", List.of("Tech"), new ArrayList<>());
         userRepository.save(creator);
 
         Event event = new Event();
@@ -161,9 +150,10 @@ class DeleteEventIT extends BaseEventIT {
         long eventId = event.getId();
 
         mockMvc.perform(delete("/events/" + eventId)
-                        .sessionAttr("userId", userId))
+                .sessionAttr("userId", userId))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Solo il creatore può cancellare l'evento")));
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("Solo il creatore può cancellare l'evento")));
 
         assertTrue(eventRepository.findById(eventId).isPresent());
     }

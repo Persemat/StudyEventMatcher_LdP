@@ -16,6 +16,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -59,11 +60,15 @@ public class EventTagsFilter {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario.test@example.com");
-        user.setPassword("Password123!");
+        user = new User(
+                "Mario",
+                "Rossi",
+                "mario.test@example.com",
+                "Password123!",
+                "Milano", // favouriteCity
+                List.of("Tech"), // macroTags
+                new ArrayList<>() // microTags
+        );
         userRepository.save(user); // Salva e genera l'ID
     }
 

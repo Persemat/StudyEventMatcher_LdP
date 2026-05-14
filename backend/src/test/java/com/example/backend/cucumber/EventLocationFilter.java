@@ -17,6 +17,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,11 +46,14 @@ public class EventLocationFilter {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = new User();
-        user.setName("Luigi");
-        user.setLastname("Verdi");
-        user.setEmail("luigi.luogo@example.com");
-        user.setPassword("Pass123!");
+        user = new User(
+                "Luigi",
+                "Verdi",
+                "luigi.luogo@example.com",
+                "Pass123!",
+                "Milano",
+                List.of("Studio"),
+                new ArrayList<>());
         userRepository.save(user);
     }
 
