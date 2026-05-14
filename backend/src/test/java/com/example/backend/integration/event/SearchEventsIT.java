@@ -46,6 +46,7 @@ public class SearchEventsIT extends BaseEventIT {
                 new EventTag("Informatica e Tecnologie", "SQL"),
                 new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")), creator);
         createEvent("Only SQL", List.of(new EventTag("Informatica e Tecnologie", "SQL")), creator);
+        createEvent("Only physics", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")), creator);
         createEvent("Only chemistry", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Chimica")), creator);
 
         mockMvc.perform(get("/events/search")
@@ -53,9 +54,25 @@ public class SearchEventsIT extends BaseEventIT {
                 .queryParam("tags", "Scienze Matematiche Fisiche e Naturali > Fisica")
                 .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].title", hasItems("Full match", "Only SQL")))
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[*].title", hasItems("Full match", "Only SQL", "Only physics")))
                 .andExpect(content().string(not(containsString("Only chemistry"))));
+    }
+
+    @Test
+    void searchEvents_byMacroAndMicroOfSameEvent_shouldNotDuplicateResults() throws Exception {
+        User creator = userRepository.findById(userId).orElseThrow();
+        createEvent("SQL study", List.of(new EventTag("Informatica e Tecnologie", "SQL")), creator);
+        createEvent("Physics study", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")), creator);
+
+        mockMvc.perform(get("/events/search")
+                .queryParam("tags", "Informatica e Tecnologie")
+                .queryParam("tags", "Informatica e Tecnologie > SQL")
+                .sessionAttr("userId", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title").value("SQL study"))
+                .andExpect(content().string(not(containsString("Physics study"))));
     }
 
     @Test

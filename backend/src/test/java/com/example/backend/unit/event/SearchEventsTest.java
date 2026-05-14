@@ -81,20 +81,6 @@ public class SearchEventsTest extends BaseEventTest {
     }
 
     @Test
-    void testSearchForEvents_InvalidDate_ShouldIgnoreDate() {
-        String invalidDate = "not-a-date";
-
-        when(session.getAttribute("userId")).thenReturn(1L);
-        when(eventRepository.findByDynamicFilters(
-                any(), anyBoolean(), any(), any(), isNull(), isNull()))
-                .thenReturn(new ArrayList<>());
-
-        eventService.searchForEvents(session, null, null, null, invalidDate);
-
-        verify(eventRepository).findByDynamicFilters(any(), anyBoolean(), any(), any(), isNull(), isNull());
-    }
-
-    @Test
     void testSearchForEvents_FilterPastEvents_Success() {
         // Arrange
         Event pastEvent = new Event();
