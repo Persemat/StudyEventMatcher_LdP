@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
@@ -35,13 +36,13 @@ public class EventTagsFilter {
     private User user;
     private List<String> tags;
 
-    private void creaEventoHelper(String title, List<String> tags) {
+    private void creaEventoHelper(String title, List<EventTag> tags) {
         Event event = new Event();
         event.setTitle(title);
         event.setDescription("Descrizione test");
         event.setDateTime(LocalDateTime.now().plusDays(5));
         event.setDuration(2.0);
-        event.setLocation("Aula Test");
+        event.setLocation("Milano (MI)-Aula Test");
         event.setTags(tags);
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(false);
@@ -73,17 +74,19 @@ public class EventTagsFilter {
 
     @And("ci sono 3 eventi attivi associati a un tag specifico nel database")
     public void ci_sono_3_eventi_attivi_associati_a_un_tag_specifico_nel_database() {
-        creaEventoHelper("Evento Info 1", List.of("Informatica"));
-        creaEventoHelper("Evento Info 2", List.of("Informatica"));
-        creaEventoHelper("Evento Info 3", List.of("Informatica", "Matematica"));
-        creaEventoHelper("Evento Trappola", List.of("Storia"));
+        creaEventoHelper("Evento Info 1", List.of(new EventTag("Informatica e Tecnologie", "Informatica")));
+        creaEventoHelper("Evento Info 2", List.of(new EventTag("Informatica e Tecnologie", "Informatica")));
+        creaEventoHelper("Evento Info 3", List.of(
+                new EventTag("Informatica e Tecnologie", "Informatica"),
+                new EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")));
+        creaEventoHelper("Evento Trappola", List.of(new EventTag("Scienze della Formazione ed Educazione", "Storia della pedagogia")));
     }
 
     @When("seleziono quel tag dalla lista predefinita per filtrare gli eventi")
     public void seleziono_quel_tag_dalla_lista_predefinita_per_filtrare_gli_eventi() throws Exception {
         // AGGIUNTO IL SESSION ATTR!
         result = mockMvc.perform(
-                get("/events/search?tags=Informatica")
+                get("/events/search").queryParam("tags", "Informatica e Tecnologie > Informatica")
                         .sessionAttr("userId", user.getId()));
     }
 
@@ -104,20 +107,26 @@ public class EventTagsFilter {
 
     @And("esiste 1 evento associato sia al “Tag A” che al “Tag B”")
     public void esiste_1_evento_associato_sia_al_tag_a_che_al_tag_b() {
-        creaEventoHelper("Evento Doppio Tag", List.of("Tag A", "Tag B"));
+        creaEventoHelper("Evento Doppio Tag", List.of(
+                new EventTag("Informatica e Tecnologie", "SQL"),
+                new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
     }
 
     @And("esistono 2 eventi associati solo al “Tag A”")
     public void esistono_2_eventi_associati_solo_al_tag_a() {
-        creaEventoHelper("Evento Solo A 1", List.of("Tag A"));
-        creaEventoHelper("Evento Solo A 2", List.of("Tag A", "Tag C"));
+        creaEventoHelper("Evento Solo A 1", List.of(new EventTag("Informatica e Tecnologie", "SQL")));
+        creaEventoHelper("Evento Solo A 2", List.of(
+                new EventTag("Informatica e Tecnologie", "SQL"),
+                new EventTag("Scienze Matematiche Fisiche e Naturali", "Chimica")));
     }
 
     @When("seleziono sia il “Tag A” che il “Tag B” dalla lista predefinita")
     public void seleziono_sia_il_tag_a_che_il_tag_b_dalla_lista_predefinita() throws Exception {
         // AGGIUNTO IL SESSION ATTR!
         result = mockMvc.perform(
-                get("/events/search?tags=Tag A&tags=Tag B")
+                get("/events/search")
+                        .queryParam("tags", "Informatica e Tecnologie > SQL")
+                        .queryParam("tags", "Scienze Matematiche Fisiche e Naturali > Fisica")
                         .sessionAttr("userId", user.getId()));
     }
 
@@ -140,22 +149,20 @@ public class EventTagsFilter {
 
     @And("seleziono una combinazione di tag dalla lista predefinita")
     public void seleziono_una_combinazione_di_tag_dalla_lista_predefinita() {
-        this.tags = List.of("Fisica", "Chimica");
+        this.tags = List.of("Scienze Matematiche Fisiche e Naturali > Fisica", "Scienze Matematiche Fisiche e Naturali > Chimica");
     }
 
     @And("non esistono eventi attivi nel database che possiedano tutti i tag scelti")
     public void non_esistono_eventi_attivi_nel_database_che_possiedano_tutti_i_tag_scelti() {
-        creaEventoHelper("Evento Solo Fisica", List.of("Fisica"));
-        creaEventoHelper("Evento Solo Chimica", List.of("Chimica"));
+        creaEventoHelper("Evento Solo Fisica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
+        creaEventoHelper("Evento Solo Chimica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Chimica")));
     }
 
     @When("il sistema elabora la richiesta di filtraggio")
     public void il_sistema_elabora_la_richiesta_di_filtraggio() throws Exception {
-        String url = "/events/search?tags=" + String.join("&tags=", tags);
-
-        // AGGIUNTO IL SESSION ATTR!
         result = mockMvc.perform(
-                get(url)
+                get("/events/search")
+                        .queryParam("tags", tags.toArray(String[]::new))
                         .sessionAttr("userId", user.getId()));
     }
 

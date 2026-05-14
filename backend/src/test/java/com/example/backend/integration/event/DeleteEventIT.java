@@ -28,8 +28,8 @@ class DeleteEventIT extends BaseEventIT {
         event.setTitle("Event with required creator");
         event.setDateTime(LocalDateTime.parse("2026-04-20T15:00:00"));
         event.setDuration(2.0);
-        event.setLocation("Room 1");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula 1");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Description");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -80,8 +80,8 @@ class DeleteEventIT extends BaseEventIT {
         event.setTitle("Event without required creator");
         event.setDateTime(LocalDateTime.parse("2026-04-20T15:00:00"));
         event.setDuration(2.0);
-        event.setLocation("Library");
-        event.setTags(List.of("Database"));
+        event.setLocation("Milano (MI)-Biblioteca");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Basi di dati")));
         event.setDescription("Description");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(false);
@@ -115,8 +115,8 @@ class DeleteEventIT extends BaseEventIT {
         event.setTitle("Event to delete");
         event.setDateTime(LocalDateTime.parse("2026-04-20T15:00:00"));
         event.setDuration(2.0);
-        event.setLocation("Room 3");
-        event.setTags(List.of("React"));
+        event.setLocation("Milano (MI)-Aula 3");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
         event.setDescription("Description");
         event.setMaxParticipants(5);
         event.setCreatorParticipationRequired(false);
@@ -148,8 +148,8 @@ class DeleteEventIT extends BaseEventIT {
         event.setTitle("Other user event");
         event.setDateTime(LocalDateTime.parse("2026-04-20T15:00:00"));
         event.setDuration(2.0);
-        event.setLocation("Room 5");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula 5");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Description");
         event.setMaxParticipants(8);
         event.setCreatorParticipationRequired(true);
@@ -176,8 +176,8 @@ class DeleteEventIT extends BaseEventIT {
         event.setTitle("Protected event");
         event.setDateTime(LocalDateTime.parse("2026-04-20T15:00:00"));
         event.setDuration(2.0);
-        event.setLocation("Room 6");
-        event.setTags(List.of("Security"));
+        event.setLocation("Milano (MI)-Aula 6");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sicurezza informatica")));
         event.setDescription("Description");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);

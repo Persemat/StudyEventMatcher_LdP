@@ -146,7 +146,7 @@ public class DeleteBooking {
         Event event = new Event();
         event.setTitle("Evento di Test");
         event.setDescription("Test Cucumber");
-        event.setLocation("Aula Virtuale");
+        event.setLocation("Milano (MI)-Aula Virtuale");
         event.setDateTime(LocalDateTime.now().plusDays(5));
         event.setDuration(2.0);
         event.setMaxParticipants(10);

@@ -2,7 +2,9 @@ package com.example.backend.service;
 
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
+import com.example.backend.dto.EventTagDto;
 import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -92,12 +95,7 @@ public class EventService {
         newEvent.setLocation(request.location());
 
         if (request.tags() != null) {
-            List<String> normalizedTags = request.tags().stream()
-                    .filter(tag -> tag != null && !tag.isBlank())
-                    .map(tag -> tag.trim().toUpperCase())
-                    .collect(Collectors.toList());
-
-            newEvent.setTags(normalizedTags);
+            newEvent.setTags(normalizeTags(request.tags()));
         }
 
         newEvent.setDescription(request.description());
@@ -159,12 +157,7 @@ public class EventService {
         event.setDuration(request.duration());
         event.setLocation(request.location());
         if (request.tags() != null) {
-            List<String> normalizedTags = request.tags().stream()
-                    .filter(tag -> tag != null && !tag.isBlank())
-                    .map(tag -> tag.trim().toUpperCase())
-                    .collect(Collectors.toList());
-
-            event.setTags(normalizedTags);
+            event.setTags(normalizeTags(request.tags()));
         }
         event.setDescription(request.description());
         event.setMaxParticipants(request.maxParticipants());
@@ -452,7 +445,9 @@ public class EventService {
                 event.getDateTime(),
                 event.getDuration(),
                 event.getLocation(),
-                event.getTags(),
+                event.getTags() == null
+                        ? List.of()
+                        : event.getTags().stream().map(EventTagDto::from).toList(),
                 event.getDescription(),
                 event.getMaxParticipants(),
                 event.isCreatorParticipationRequired(),
@@ -488,6 +483,48 @@ public class EventService {
         }
 
         return toSave;
+    }
+
+    private List<EventTag> normalizeTags(List<?> tags) {
+        return tags.stream()
+                .map(this::toEventTag)
+                .filter(tag -> tag.getMacroTag() != null && !tag.getMacroTag().isBlank())
+                .map(tag -> new EventTag(
+                        tag.getMacroTag().trim(),
+                        tag.getMicroTag() == null || tag.getMicroTag().isBlank()
+                                ? null
+                                : tag.getMicroTag().trim()))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private EventTag toEventTag(Object rawTag) {
+        if (rawTag == null) {
+            return new EventTag(null, null);
+        }
+
+        if (rawTag instanceof EventTag eventTag) {
+            return eventTag;
+        }
+
+        if (rawTag instanceof EventTagDto eventTagDto) {
+            return new EventTag(eventTagDto.macroTag(), eventTagDto.microTag());
+        }
+
+        if (rawTag instanceof Map<?, ?> map) {
+            Object macroTag = map.get("macroTag");
+            Object microTag = map.get("microTag");
+            return new EventTag(
+                    macroTag == null ? null : String.valueOf(macroTag),
+                    microTag == null ? null : String.valueOf(microTag));
+        }
+
+        String label = String.valueOf(rawTag).trim();
+        String[] parts = label.split("\\s*>\\s*", 2);
+        if (parts.length == 2) {
+            return new EventTag(parts[0], parts[1]);
+        }
+        return new EventTag(label, null);
     }
 
 }

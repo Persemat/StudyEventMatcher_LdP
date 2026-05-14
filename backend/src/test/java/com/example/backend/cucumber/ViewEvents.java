@@ -60,8 +60,8 @@ public class ViewEvents {
         event1.setDescription("Prepariamoci per lo scritto di lunedì");
         event1.setDateTime(LocalDateTime.of(2026, 4, 10, 10, 30));
         event1.setDuration(2.0);
-        event1.setLocation("Aula 4");
-        event1.setTags(List.of("Matematica", "Analisi"));
+        event1.setLocation("Milano (MI)-Aula 4");
+        event1.setTags(List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica"), new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Analisi matematica")));
         event1.setMaxParticipants(10);
         event1.setCreatorParticipationRequired(true);
         event1.setStatus("aperto");
@@ -73,8 +73,8 @@ public class ViewEvents {
         event2.setDescription("Creazione componenti modulari");
         event2.setDateTime(LocalDateTime.of(2026, 4, 15, 9, 0));
         event2.setDuration(1.5);
-        event2.setLocation("Online");
-        event2.setTags(List.of("Frontend"));
+        event2.setLocation("Milano (MI)-Online");
+        event2.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
         event2.setMaxParticipants(20);
         event2.setCreatorParticipationRequired(false);
         event2.setStatus("aperto");

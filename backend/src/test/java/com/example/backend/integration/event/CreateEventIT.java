@@ -19,8 +19,10 @@ public class CreateEventIT extends BaseEventIT {
                   "title": "Java Study Group",
                   "dateTime": "2026-10-15T15:00:00",
                   "duration": 2.5,
-                  "location": "Main Hall",
-                  "tags": ["Java"],
+                  "location": "Milano (MI)-Aula Magna",
+                  "tags": [
+                    { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                  ],
                   "description": "Revision session",
                   "maxParticipants": 10,
                   "creatorParticipationRequired": true
@@ -44,8 +46,10 @@ public class CreateEventIT extends BaseEventIT {
                   "title": "",
                   "dateTime": "2026-10-15T15:00:00",
                   "duration": 2.5,
-                  "location": "Main Hall",
-                  "tags": ["Java"],
+                  "location": "Milano (MI)-Aula Magna",
+                  "tags": [
+                    { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                  ],
                   "maxParticipants": 10
                 }
                 """

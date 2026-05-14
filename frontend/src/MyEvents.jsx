@@ -34,11 +34,6 @@ export default function MyEvents() {
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
 
-  // Extract tags
-  const availableTags = Array.from(
-    new Set(events.flatMap((event) => event.tags || []))
-  );
-
   const fetchEvents = async () => {
     setLoading(true);
     setError("");
@@ -182,7 +177,6 @@ export default function MyEvents() {
             setShowCreateModal(false);
             fetchEvents();
           }}
-          availableTags={availableTags}
         />
       )}
 
@@ -196,7 +190,6 @@ export default function MyEvents() {
             setEventToEdit(null);
             fetchEvents();
           }}
-          availableTags={availableTags}
         />
       )}
 

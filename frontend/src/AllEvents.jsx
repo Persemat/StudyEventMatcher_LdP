@@ -3,6 +3,7 @@ import { Search, MapPin, Calendar } from "lucide-react";
 import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
+import { loadTagOptions } from "./catalogs";
 
 export default function AllEvents() {
   const [events, setEvents] = useState([]);
@@ -23,11 +24,8 @@ export default function AllEvents() {
 
   const fetchTags = async () => {
     try {
-      const res = await fetch("/api/events/tags", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setAvailableTags(data.filter(t => t !== "All"));
-      }
+      const data = await loadTagOptions();
+      setAvailableTags(data);
     } catch (err) { console.error("Errore fetch tags:", err); }
   };
 
@@ -41,7 +39,7 @@ export default function AllEvents() {
       if (searchData) url.searchParams.append("date", searchData);
       
       if (selectedTags.length > 0) {
-        selectedTags.forEach((t) => url.searchParams.append("tags", t));
+        selectedTags.forEach((t) => url.searchParams.append("tags", t.label));
       }
 
       const response = await fetch(url, { credentials: "include" });
@@ -132,14 +130,14 @@ export default function AllEvents() {
           {isDropdownOpen && (
             <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto p-1">
               {availableTags.map((tag) => (
-                <label key={tag} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
+                <label key={tag.label} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selectedTags.includes(tag)}
-                    onChange={() => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                    checked={selectedTags.some((t) => t.label === tag.label)}
+                    onChange={() => setSelectedTags(prev => prev.some((t) => t.label === tag.label) ? prev.filter(t => t.label !== tag.label) : [...prev, tag])}
                     className="rounded text-blue-600"
                   />
-                  <span className="text-sm">{tag}</span>
+                  <span className="text-sm">{tag.label}</span>
                 </label>
               ))}
             </div>
@@ -178,6 +176,7 @@ export default function AllEvents() {
           event={eventToEdit}
           onClose={() => setEventToEdit(null)}
           onSuccess={() => { setEventToEdit(null); fetchEvents(); }}
+          availableTags={availableTags}
         />
       )}
     </div>

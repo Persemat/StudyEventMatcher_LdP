@@ -23,8 +23,8 @@ public class CreateEventTest extends BaseEventTest {
                 "Math",
                 LocalDateTime.parse("2026-10-01T15:00:00"),
                 2.0,
-                "Library",
-                List.of("math"),
+                "Milano (MI)-Biblioteca",
+                List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")),
                 "Revision",
                 5,
                 true
@@ -54,8 +54,8 @@ public class CreateEventTest extends BaseEventTest {
                 "Math",
                 LocalDateTime.now(),
                 2.0,
-                "Room 1",
-                List.of("test"),
+                "Milano (MI)-Aula 1",
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Testing software")),
                 "desc",
                 5,
                 true
@@ -78,8 +78,8 @@ public class CreateEventTest extends BaseEventTest {
                 "Study Session",
                 LocalDateTime.parse("2026-04-10T15:00:00"),
                 2.0,
-                "Room 1",
-                List.of("Math"),
+                "Milano (MI)-Aula 1",
+                List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")),
                 "Revision",
                 5,
                 true

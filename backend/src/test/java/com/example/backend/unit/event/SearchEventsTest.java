@@ -40,8 +40,8 @@ public class SearchEventsTest extends BaseEventTest {
     void testSearchForEvents_FullFilters_Success() {
         // Arrange
         String search = "Party";
-        List<String> tags = List.of("Music", "Social");
-        String location = "Rome";
+        List<String> tags = List.of("Informatica e Tecnologie > SQL", "Scienze Matematiche Fisiche e Naturali > Fisica");
+        String location = "Roma (RM)";
         String date = "2026-05-20";
 
         Event event = new Event();
@@ -50,19 +50,19 @@ public class SearchEventsTest extends BaseEventTest {
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(eventRepository.findByDynamicFilters(
-                eq("Party"), eq(true), eq(tags), eq(2L), eq("Rome"), any(), any())).thenReturn(events);
+                eq("Party"), eq(true), eq(tags), eq(2L), eq("Roma (RM)"), any(), any())).thenReturn(events);
 
         // Act
         List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date);
 
         // Assert
         assertEquals(1, results.size());
-        verify(eventRepository).findByDynamicFilters(eq("Party"), eq(true), any(), eq(2L), eq("Rome"), any(), any());
+        verify(eventRepository).findByDynamicFilters(eq("Party"), eq(true), any(), eq(2L), eq("Roma (RM)"), any(), any());
     }
 
     @Test
     void testSearchForEvents_TagsWithAll_ShouldIgnoreTags() {
-        List<String> tags = List.of("Music", "All");
+        List<String> tags = List.of("Informatica e Tecnologie > SQL", "All");
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(eventRepository.findByDynamicFilters(
