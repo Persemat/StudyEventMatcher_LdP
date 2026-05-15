@@ -174,6 +174,16 @@ public class Event {
     )
     private Set<User> participants = new HashSet<>();
 
+
+
+
+    @ManyToMany(mappedBy = "favorites")
+    private Set<User> favoritedBy = new HashSet<>();
+
+
+
+
+
     public Set<User> getParticipants() {
         return participants;
     }
@@ -192,5 +202,13 @@ public class Event {
 
     public int getCurrentParticipants() {
         return participants != null ? participants.size() : 0;
+    }
+
+    public Set<User> getFavoritedBy() {
+    return favoritedBy;
+}
+
+    public void setFavoritedBy(Set<User> favoritedBy) {
+        this.favoritedBy = favoritedBy;
     }
 }

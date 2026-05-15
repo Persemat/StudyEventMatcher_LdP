@@ -29,6 +29,22 @@ public class User {
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
+
+
+    
+    @ManyToMany
+    @JoinTable(
+        name = "event_favorites",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "event_id")
+    )
+    private Set<Event> favorites = new HashSet<>();
+
+
+
+
+
+
     public User() {}
 
     public User(String name, String lastname, String email, String password) {
@@ -96,5 +112,26 @@ public class User {
     public void removeEvent(Event event) {
         bookedEvents.remove(event);
         event.getParticipants().remove(this);
+    }
+
+    public Set<Event> getFavorites() {
+    return favorites;
+}
+
+
+    public void setFavorites(Set<Event> favorites) {
+        this.favorites = favorites;
+    }
+
+    public void addFavorite(Event event) {
+        if (favorites.add(event)) {
+            event.getBookedFavorites().add(this);
+        }
+    }
+
+    public void removeFavorite(Event event) {
+        if (favorites.remove(event)) {
+            event.getBookedFavorites().remove(this);
+        }
     }
 }
