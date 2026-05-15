@@ -13,6 +13,8 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,18 +43,24 @@ public class DeleteBookingIT extends BaseEventIT {
 
         session = new MockHttpSession();
 
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario.cancel@example.com");
-        user.setPassword("Password123!");
+        user = new User(
+                "Mario",
+                "Rossi",
+                "mario.cancel@example.com",
+                "Password123!",
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         user = userRepository.save(user);
 
-        creator = new User();
-        creator.setName("Luca");
-        creator.setLastname("Bianchi");
-        creator.setEmail("luca.creator.cancel@example.com");
-        creator.setPassword("Password123!");
+        creator = new User(
+                "Luca",
+                "Bianchi",
+                "luca.creator.cancel@example.com",
+                "Password123!",
+                "Roma",
+                List.of("Social"),
+                new ArrayList<>());
         creator = userRepository.save(creator);
 
         event = new Event();
@@ -84,17 +92,15 @@ public class DeleteBookingIT extends BaseEventIT {
 
         // Action: cancel booking
         mockMvc.perform(
-                        delete("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                delete("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Prenotazione cancellata con successo"));
 
         // Verification: simulate React page reload and check data
         mockMvc.perform(
-                        get("/events")
-                                .session(session)
-                )
+                get("/events")
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value(event.getTitle()))
                 .andExpect(jsonPath("$[0].isBooked").value(false)) // Mario should no longer be booked
@@ -106,9 +112,8 @@ public class DeleteBookingIT extends BaseEventIT {
         // No userId set in session!
 
         mockMvc.perform(
-                        delete("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                delete("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Sessione invalida o scaduta"));
     }
@@ -118,9 +123,8 @@ public class DeleteBookingIT extends BaseEventIT {
         session.setAttribute("userId", user.getId());
 
         mockMvc.perform(
-                        delete("/events/{id}/book", 9999L)
-                                .session(session)
-                )
+                delete("/events/{id}/book", 9999L)
+                        .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Errore: Evento non trovato"));
     }
@@ -132,9 +136,8 @@ public class DeleteBookingIT extends BaseEventIT {
         // In @BeforeEach Mario is not added to the event, so he is not booked!
 
         mockMvc.perform(
-                        delete("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                delete("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Errore: Non ti sei prenotato per questo evento"));
     }

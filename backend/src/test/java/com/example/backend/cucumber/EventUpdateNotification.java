@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.ArrayList;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,11 +62,8 @@ public class EventUpdateNotification {
         userRepository.flush();
         clearInvocations(mailSender);
 
-        creator = new User();
-        creator.setName("Mario");
-        creator.setLastname("Rossi");
-        creator.setEmail("mario.update@example.com");
-        creator.setPassword("Password123");
+        creator = new User("Mario", "Rossi", "mario.update@example.com", "Password123",
+                "Milano", List.of("Informatica e Tecnologie"), new ArrayList<>());
         creator = userRepository.saveAndFlush(creator);
 
         event = new Event();
@@ -85,11 +83,8 @@ public class EventUpdateNotification {
 
     @And("l'utente è iscritto all'evento {string}")
     public void utenteIscrittoEvento(String title) {
-        enrolledUser = new User();
-        enrolledUser.setName("Anna");
-        enrolledUser.setLastname("Bianchi");
-        enrolledUser.setEmail("anna.update@example.com");
-        enrolledUser.setPassword("Password123");
+        enrolledUser = new User("Anna", "Bianchi", "anna.update@example.com", "Password123",
+                "Torino", List.of("Informatica e Tecnologie"), new ArrayList<>());
         enrolledUser = userRepository.saveAndFlush(enrolledUser);
 
         event.addParticipant(enrolledUser);
@@ -98,11 +93,8 @@ public class EventUpdateNotification {
 
     @And("un utente non è iscritto all'evento {string}")
     public void utenteNonIscrittoEvento(String title) {
-        notEnrolledUser = new User();
-        notEnrolledUser.setName("Luca");
-        notEnrolledUser.setLastname("Verdi");
-        notEnrolledUser.setEmail("luca.update@example.com");
-        notEnrolledUser.setPassword("Password123");
+        notEnrolledUser = new User("Luca", "Verdi", "luca.update@example.com", "Password123",
+                "Napoli", new ArrayList<>(), new ArrayList<>());
         notEnrolledUser = userRepository.saveAndFlush(notEnrolledUser);
     }
 

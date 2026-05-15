@@ -1,6 +1,5 @@
 package com.example.backend.cucumber;
 
-
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -20,6 +19,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -44,11 +44,8 @@ public class DeleteBooking {
     @Given("l'utente è autenticato per la cancellazione")
     public void utenteAutenticatoPerCancellazione() {
         userRepository.deleteAll();
-        User user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario@test.com");
-        user.setPassword("Pass123!");
+        User user = new User("Mario", "Rossi", "mario@test.com", "Pass123!",
+                "Milano", List.of("Tech"), List.of());
         user = userRepository.save(user);
 
         session.setAttribute("userId", user.getId());
@@ -134,13 +131,9 @@ public class DeleteBooking {
         org.junit.jupiter.api.Assertions.assertTrue(currentPartecipants < initialPartecipants);
     }
 
-    // Metodo Helper (per non ripetere codice)
     private Event createBaseEvent() {
-        User creator = new User();
-        creator.setName("Mario");
-        creator.setLastname("Rossi");
-        creator.setEmail("creatore" + Math.random() + "@test.com"); // Email univoca
-        creator.setPassword("Pass123!");
+        User creator = new User("Mario", "Rossi", "creatore" + Math.random() + "@test.com", "Pass123!",
+                "Roma", List.of("Social"), List.of());
         creator = userRepository.save(creator);
 
         Event event = new Event();

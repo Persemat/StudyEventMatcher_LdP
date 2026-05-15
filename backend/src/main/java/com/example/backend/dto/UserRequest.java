@@ -1,9 +1,13 @@
 package com.example.backend.dto;
 
-public record UserRequest(
-    String name,
-    String lastname,
-    String email,
-    String password
-) {}
+import java.util.List;
 
+public record UserRequest(
+        String name,
+        String lastname,
+        String email,
+        String password,
+        String favouriteCity,
+        List<String> macroTags,
+        List<String> microTags) {
+}
