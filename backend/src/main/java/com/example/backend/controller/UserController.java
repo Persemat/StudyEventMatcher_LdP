@@ -3,11 +3,15 @@ package com.example.backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.dto.LoginRequest;
+import com.example.backend.dto.UpdateEmailRequest;
+import com.example.backend.dto.UpdatePasswordRequest;
+import com.example.backend.dto.UpdatePersonalDataRequest;
 import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
 import com.example.backend.service.UserService;
@@ -91,6 +95,45 @@ public class UserController {
             return ResponseEntity.status(401).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/me/personal-data")
+    public ResponseEntity<?> updatePersonalData(@RequestBody UpdatePersonalDataRequest request, HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            UserResponse response = userService.updatePersonalData(userId, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/me/email")
+    public ResponseEntity<?> updateEmail(@RequestBody UpdateEmailRequest request, HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            UserResponse response = userService.updateEmail(userId, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest request, HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            UserResponse response = userService.updatePassword(userId, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

@@ -2,6 +2,9 @@ package com.example.backend.service;
 
 import org.springframework.stereotype.Service;
 import com.example.backend.dto.LoginRequest;
+import com.example.backend.dto.UpdateEmailRequest;
+import com.example.backend.dto.UpdatePasswordRequest;
+import com.example.backend.dto.UpdatePersonalDataRequest;
 import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
 import com.example.backend.model.User;
@@ -72,17 +75,7 @@ public class UserService {
             throw new IllegalArgumentException("Email già registrata");
         }
 
-        if (password == null || password.length() < 8) {
-            throw new IllegalArgumentException("Password troppo corta");
-        }
-
-        if (!password.matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("La password deve contenere almeno una maiuscola");
-        }
-
-        if (!password.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("La password deve contenere almeno un numero");
-        }
+        validatePassword(password);
 
         if (favouriteCity == null || favouriteCity.isBlank()) {
             throw new IllegalArgumentException("Bisogna indicare una città preferita");
@@ -158,6 +151,99 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
 
         return toResponse(user);
+    }
+
+    public UserResponse updatePersonalData(Long userId, UpdatePersonalDataRequest request) {
+        User user = getUserFromSession(userId);
+
+        String name = request.name();
+        String lastname = request.lastname();
+
+        if (name == null || name.isBlank() || lastname == null || lastname.isBlank()) {
+            throw new IllegalArgumentException("Campi obbligatori mancanti");
+        }
+
+        user.setName(name.trim());
+        user.setLastname(lastname.trim());
+
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updateEmail(Long userId, UpdateEmailRequest request) {
+        User user = getUserFromSession(userId);
+        String email = request.email();
+
+        if (email == null || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException("Email non valida");
+        }
+
+        String normalizedEmail = email.trim();
+
+        userRepository.findByEmail(normalizedEmail)
+                .filter(existingUser -> !user.getId().equals(existingUser.getId()))
+                .ifPresent(existingUser -> {
+                    throw new IllegalArgumentException("Email già registrata");
+                });
+
+        user.setEmail(normalizedEmail);
+
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updatePassword(Long userId, UpdatePasswordRequest request) {
+        User user = getUserFromSession(userId);
+
+        String currentPassword = request.currentPassword();
+        String newPassword = request.newPassword();
+        String confirmPassword = request.confirmPassword();
+
+        if (currentPassword == null || currentPassword.isBlank()) {
+            throw new IllegalArgumentException("Password attuale obbligatoria");
+        }
+
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("Nuova password obbligatoria");
+        }
+
+        if (confirmPassword == null || confirmPassword.isBlank()) {
+            throw new IllegalArgumentException("Conferma password obbligatoria");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Le password non corrispondono");
+        }
+
+        validatePassword(newPassword);
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Password attuale non corretta");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        return toResponse(userRepository.save(user));
+    }
+
+    private User getUserFromSession(Long userId) {
+        if (userId == null) {
+            throw new IllegalStateException("Sessione invalida o scaduta");
+        }
+
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("Password troppo corta");
+        }
+
+        if (!password.matches(".*[A-Z].*")) {
+            throw new IllegalArgumentException("La password deve contenere almeno una maiuscola");
+        }
+
+        if (!password.matches(".*\\d.*")) {
+            throw new IllegalArgumentException("La password deve contenere almeno un numero");
+        }
     }
 
     /**
