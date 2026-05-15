@@ -165,6 +165,8 @@ public class CreateEvent {
 
     @And("il sistema mostra l'errore {string}")
     public void ilSistemaMOstraErrore(String messaggio) throws Exception {
-        result.andExpect(content().string(org.hamcrest.Matchers.containsString(messaggio)));
+        result.andExpect(content().string(org.hamcrest.Matchers.containsString(
+                messaggio)));
     }
+
 }
