@@ -5,6 +5,9 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
@@ -13,7 +16,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,6 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Tag("integration")
 @Transactional
 public class EditEventIT extends BaseEventIT {
+
+    @MockitoBean
+    private JavaMailSender mailSender;
 
     @Test
     void editValidEvent_returns200AndUpdatesEvent() throws Exception {
@@ -74,6 +84,92 @@ public class EditEventIT extends BaseEventIT {
         assertEquals("Updated description", updatedEvent.getDescription());
         assertEquals(12, updatedEvent.getMaxParticipants());
         assertEquals(false, updatedEvent.isCreatorParticipationRequired());
+    }
+
+    @Test
+    void editEventWithBookedUser_sendsUpdateEmailOnlyToBookedUsers() throws Exception {
+        User creator = userRepository.findById(userId).orElseThrow();
+
+        User bookedUser = new User();
+        bookedUser.setName("Anna");
+        bookedUser.setLastname("Bianchi");
+        bookedUser.setEmail("anna.booked@example.com");
+        bookedUser.setPassword("Password123");
+        bookedUser = userRepository.save(bookedUser);
+
+        User notBookedUser = new User();
+        notBookedUser.setName("Luca");
+        notBookedUser.setLastname("Verdi");
+        notBookedUser.setEmail("luca.notbooked@example.com");
+        notBookedUser.setPassword("Password123");
+        notBookedUser = userRepository.save(notBookedUser);
+
+        Event event = new Event();
+        event.setTitle("Progetto Java");
+        event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
+        event.setDuration(2.0);
+        event.setLocation("Biblioteca");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Studio progetto");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setStatus("open");
+        event.setCreator(creator);
+        event.addParticipant(creator);
+        event.addParticipant(bookedUser);
+        event = eventRepository.save(event);
+
+        clearInvocations(mailSender);
+
+        String json = """
+                        {
+                          "title": "Progetto Java",
+                          "dateTime": "2026-05-20T15:00:00",
+                          "duration": 2.0,
+                          "location": "Aula 3",
+                          "tags": [
+                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+                          ],
+                          "description": "Studio progetto",
+                          "maxParticipants": 10,
+                          "creatorParticipationRequired": true
+                        }
+                        """;
+
+        mockMvc.perform(put("/events/" + event.getId())
+                        .sessionAttr("userId", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+
+        org.mockito.ArgumentCaptor<SimpleMailMessage> captor =
+                org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
+
+        verify(mailSender, atLeastOnce()).send(captor.capture());
+
+        String bookedUserEmail = bookedUser.getEmail();
+        String notBookedUserEmail = notBookedUser.getEmail();
+
+        boolean sentToBookedUser = captor.getAllValues().stream()
+                .map(SimpleMailMessage::getTo)
+                .filter(to -> to != null && to.length > 0)
+                .anyMatch(to -> bookedUserEmail.equals(to[0]));
+
+        boolean sentToNotBookedUser = captor.getAllValues().stream()
+                .map(SimpleMailMessage::getTo)
+                .filter(to -> to != null && to.length > 0)
+                .anyMatch(to -> notBookedUserEmail.equals(to[0]));
+
+        boolean messageContainsEventName = captor.getAllValues().stream()
+                .map(SimpleMailMessage::getText)
+                .anyMatch(text -> text != null && text.contains("L'evento Progetto Java \u00e8 stato aggiornato"));
+
+        Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
+
+        assertTrue(sentToBookedUser);
+        assertFalse(sentToNotBookedUser);
+        assertTrue(messageContainsEventName);
+        assertEquals("Aula 3", updatedEvent.getLocation());
     }
 
     @Test
