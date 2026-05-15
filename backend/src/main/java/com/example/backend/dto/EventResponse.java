@@ -31,6 +31,7 @@ public record EventResponse(
             Long id,
             String name,
             String lastName
+            
     ) {}
 /**
 * DTO for the participants' basic information (Name and Last Name).
@@ -38,6 +39,7 @@ public record EventResponse(
     public record ParticipantResponse(
             Long id,
             String name,
-            String lastName
+            String lastName,
+            String email
     ) {}
 }

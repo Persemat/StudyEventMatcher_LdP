@@ -477,7 +477,8 @@ public class EventService {
                 .map(user -> new EventResponse.ParticipantResponse(
                         user.getId(),
                         user.getName(),
-                        user.getLastname()
+                        user.getLastname(),
+                        user.getEmail()
                 ))
                 .toList();
 
