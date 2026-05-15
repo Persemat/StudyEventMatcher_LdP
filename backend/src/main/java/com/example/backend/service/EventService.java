@@ -405,7 +405,6 @@ public class EventService {
                         .filter(tag -> tag != null && !tag.isBlank())
                         .toList();
         boolean checkTags = !tagsParam.isEmpty();
-
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
 
@@ -429,7 +428,6 @@ public class EventService {
                 searchParam,
                 checkTags,
                 tagsParam,
-                tagCount,
                 useDistanceFilter ? null : locationParam,
                 startDate,
                 endDate);

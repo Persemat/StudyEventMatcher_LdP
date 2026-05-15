@@ -56,7 +56,7 @@ public class SearchEventsTest extends BaseEventTest {
                 eq("Party"), eq(true), eq(tags), eq("Roma (RM)"), any(), any())).thenReturn(events);
 
         // Act
-        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date);
+        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date, null, null, null);
 
         // Assert
         assertEquals(1, results.size());
@@ -75,7 +75,7 @@ public class SearchEventsTest extends BaseEventTest {
         when(eventRepository.findByDynamicFilters(
                 any(), eq(false), any(), any(), any(), any())).thenReturn(new ArrayList<>());
 
-        eventService.searchForEvents(session, null, tags, null, null);
+        eventService.searchForEvents(session, null, tags, null, null, null, null, null);
 
         verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull());
     }
@@ -94,7 +94,7 @@ public class SearchEventsTest extends BaseEventTest {
                 any(), any(), any())).thenReturn(List.of(pastEvent, futureEvent));
 
         // Act
-        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null);
+        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null, null, null, null);
 
         // Assert
         assertEquals(1, results.size());
@@ -114,7 +114,7 @@ public class SearchEventsTest extends BaseEventTest {
                 .thenReturn(new ArrayList<>());
 
         // Act
-        eventService.searchForEvents(session, search, null, location, null);
+        eventService.searchForEvents(session, search, null, location, null, null, null, null);
 
         // Assert
         verify(eventRepository).findByDynamicFilters(isNull(), anyBoolean(),

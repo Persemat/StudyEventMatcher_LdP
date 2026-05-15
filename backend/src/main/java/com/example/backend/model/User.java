@@ -1,10 +1,19 @@
 package com.example.backend.model;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
@@ -39,7 +48,6 @@ public class User {
     @Column(name = "micro_tag")
     private List<String> microTags;
 
-    // MANY TO MANY RELATION
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
@@ -57,7 +65,6 @@ public class User {
         this.microTags = microTags;
     }
 
-    // GETTERS & SETTERS
     public Long getId() {
         return id;
     }
@@ -98,7 +105,30 @@ public class User {
         this.password = password;
     }
 
-    // 🔹 RELATION GETTERS/SETTERS
+    public String getFavouriteCity() {
+        return favouriteCity;
+    }
+
+    public void setFavouriteCity(String favouriteCity) {
+        this.favouriteCity = favouriteCity;
+    }
+
+    public List<String> getMacroTags() {
+        return macroTags;
+    }
+
+    public void setMacroTags(List<String> macroTags) {
+        this.macroTags = macroTags;
+    }
+
+    public List<String> getMicroTags() {
+        return microTags;
+    }
+
+    public void setMicroTags(List<String> microTags) {
+        this.microTags = microTags;
+    }
+
     public Set<Event> getBookedEvents() {
         return bookedEvents;
     }

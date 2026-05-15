@@ -26,9 +26,7 @@ export default function AllEvents() {
   const locationInputRef = useRef(null);
   const today = new Date().toISOString().split('T')[0];
 
-  const dropdownRef = useRef(null);
   const cityInputRef = useRef(null);
-  const today = new Date().toISOString().split("T")[0];
   const now = useMemo(() => Date.now(), []);
 
   // Dynamically filters dropdown tags based on the typed text.
