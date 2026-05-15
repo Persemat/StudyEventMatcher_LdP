@@ -91,18 +91,14 @@ public class EditEventIT extends BaseEventIT {
   void editEventWithBookedUser_sendsUpdateEmailOnlyToBookedUsers() throws Exception {
     User creator = userRepository.findById(userId).orElseThrow();
 
-    User bookedUser = new User();
-    bookedUser.setName("Anna");
-    bookedUser.setLastname("Bianchi");
-    bookedUser.setEmail("anna.booked@example.com");
-    bookedUser.setPassword("Password123");
+    User bookedUser = new User("Anna", "Bianchi", "anna.booked@example.com", "Password123", "Milano",
+        List.of("Informatica e Tecnologie"), new ArrayList<>());
+
     bookedUser = userRepository.save(bookedUser);
 
-    User notBookedUser = new User();
-    notBookedUser.setName("Luca");
-    notBookedUser.setLastname("Verdi");
-    notBookedUser.setEmail("luca.notbooked@example.com");
-    notBookedUser.setPassword("Password123");
+    User notBookedUser = new User("Luca", "Verdi", "luca.notbooked@example.com", "Password123",
+        "Milano", List.of("Informatica e Tecnologie"), new ArrayList<>());
+
     notBookedUser = userRepository.save(notBookedUser);
 
     Event event = new Event();
