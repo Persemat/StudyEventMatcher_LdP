@@ -3,22 +3,25 @@ import { Search, MapPin, Calendar } from "lucide-react";
 import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
-import { loadTagOptions } from "./catalogs";
+import { loadCityOptions, loadTagOptions } from "./catalogs";
 
 export default function AllEvents() {
   const [events, setEvents] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
+  const [cityOptions, setCityOptions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchLocation, setSearchLocation] = useState(""); 
   const [searchData, setSearchData] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [tagSearchTerm, setTagSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(""); 
   const [eventToEdit, setEventToEdit] = useState(null);
   
   const dropdownRef = useRef(null);
+  const locationInputRef = useRef(null);
   const today = new Date().toISOString().split('T')[0];
 
   const now = useMemo(() => Date.now(), []);
@@ -30,12 +33,29 @@ export default function AllEvents() {
     return availableTags.filter((tag) => tag.label.toLowerCase().includes(query));
   }, [availableTags, tagSearchTerm]);
 
+  // Suggests matching cities from the shared city catalog while the location filter is typed.
+  const locationSuggestions = useMemo(() => {
+    const query = searchLocation.trim().toLowerCase();
+    if (!query) return [];
+    return cityOptions
+      .filter((option) => option.name.toLowerCase().startsWith(query))
+      .slice(0, 30);
+  }, [cityOptions, searchLocation]);
+
   // Loads the tag catalog used by both filters and the edit modal.
   const fetchTags = async () => {
     try {
       const data = await loadTagOptions();
       setAvailableTags(data);
     } catch (err) { console.error("Errore fetch tags:", err); }
+  };
+
+  // Loads the same city catalog used by create/edit event location autocomplete.
+  const fetchCities = async () => {
+    try {
+      const data = await loadCityOptions();
+      setCityOptions(data);
+    } catch (err) { console.error("Errore fetch comuni:", err); }
   };
 
   // Builds the event search query by combining text, location, date, and selected tags.
@@ -66,7 +86,10 @@ export default function AllEvents() {
     }
   }, [searchTerm, searchLocation, searchData, selectedTags]);
   
-  useEffect(() => { fetchTags(); }, []);
+  useEffect(() => {
+    fetchTags();
+    fetchCities();
+  }, []);
 
   // Adds a small debounce to avoid one API call per keystroke.
   useEffect(() => {
@@ -108,12 +131,33 @@ export default function AllEvents() {
         <div className="relative md:w-48">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
+            ref={locationInputRef}
             type="text"
             placeholder="Filtra per città..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchLocation}
             onChange={(e) => setSearchLocation(e.target.value)}
+            onFocus={() => setIsLocationInputFocused(true)}
+            onBlur={() => setIsLocationInputFocused(false)}
           />
+          {isLocationInputFocused && locationSuggestions.length > 0 && (
+            <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+              {locationSuggestions.map((option) => (
+                <li
+                  key={option.label}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchLocation(option.label);
+                    setIsLocationInputFocused(false);
+                    locationInputRef.current?.blur();
+                  }}
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 transition-colors"
+                >
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="relative md:w-48">

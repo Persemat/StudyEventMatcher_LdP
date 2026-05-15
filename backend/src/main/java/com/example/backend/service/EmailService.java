@@ -16,6 +16,7 @@ import com.example.backend.model.User;
  * It handles:
  * - password reset emails
  * - event cancellation notifications
+ * - event update notifications
  *
  * Uses {@link JavaMailSender} to send messages.
  */
@@ -103,6 +104,55 @@ public class EmailService {
 
             if (participant.getEmail() != null && !participant.getEmail().isBlank()) {
                 sendEventCancellationEmail(participant.getEmail(), event);
+            }
+        }
+    }
+
+    /**
+     * Sends an event update email to a single user.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param event the updated event
+     */
+    public void sendEventUpdateEmail(String recipientEmail, Event event) {
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(recipientEmail);
+        message.setSubject("Evento aggiornato - StudyTogether");
+        message.setText(
+                "L'evento " + event.getTitle() + " \u00e8 stato aggiornato.\n\n" +
+                "Data: " + event.getDateTime().format(dateFormatter) + "\n" +
+                "Ora: " + event.getDateTime().format(timeFormatter) + "\n" +
+                "Luogo: " + event.getLocation()
+        );
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Sends event update emails to all booked participants,
+     * excluding the event creator.
+     *
+     * @param event the updated event
+     */
+    public void sendEventUpdateEmailToParticipants(Event event) {
+
+        User creator = event.getCreator();
+
+        for (User participant : event.getParticipants()) {
+
+            if (creator != null &&
+                    participant.getId() != null &&
+                    participant.getId().equals(creator.getId())) {
+                continue;
+            }
+
+            if (participant.getEmail() != null && !participant.getEmail().isBlank()) {
+                sendEventUpdateEmail(participant.getEmail(), event);
             }
         }
     }

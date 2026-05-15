@@ -73,6 +73,47 @@ public class EditEventTest extends BaseEventTest {
         assertEquals(false, result.isCreatorParticipationRequired());
 
         verify(eventRepository, times(1)).save(any(Event.class));
+        verify(emailService, times(1)).sendEventUpdateEmailToParticipants(result);
+    }
+
+    @Test
+    void testEditEvent_NoRelevantChanges_DoesNotSendEmail() {
+        EventRequest request = new EventRequest(
+                "Java Project",
+                LocalDateTime.parse("2026-10-15T15:00:00"),
+                2.5,
+                "Milano (MI)-Aula Magna",
+                List.of(new EventTag("Informatica e Tecnologie", "Programmazione")),
+                "Review",
+                10,
+                true
+        );
+
+        User creator = new User();
+        creator.setId(1L);
+
+        Event event = new Event();
+        event.setId(10L);
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.parse("2026-10-15T15:00:00"));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setCreator(creator);
+        event.setParticipants(new HashSet<>(Set.of(creator)));
+
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(eventRepository.findById(10L)).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
+
+        Event result = eventService.editEvent(10L, request, session);
+
+        assertNotNull(result);
+        verify(eventRepository, times(1)).save(any(Event.class));
+        verify(emailService, never()).sendEventUpdateEmailToParticipants(any(Event.class));
     }
 
     @Test
