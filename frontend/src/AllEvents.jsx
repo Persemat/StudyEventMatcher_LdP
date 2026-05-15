@@ -16,6 +16,7 @@ export default function AllEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(""); 
   const [eventToEdit, setEventToEdit] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(25);
   
   const dropdownRef = useRef(null);
   const today = new Date().toISOString().split('T')[0];
@@ -36,6 +37,7 @@ export default function AllEvents() {
       const url = new URL("/api/events/search", window.location.origin);
       if (searchTerm) url.searchParams.append("search", searchTerm);
       if (searchLocation) url.searchParams.append("location", searchLocation);
+      if (searchLocation) url.searchParams.append("distanceKm", distanceKm);
       if (searchData) url.searchParams.append("date", searchData);
       
       if (selectedTags.length > 0) {
@@ -54,7 +56,7 @@ export default function AllEvents() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, searchLocation, searchData, selectedTags]);
+  }, [searchTerm, searchLocation, searchData, selectedTags, distanceKm]);
   
   useEffect(() => { fetchTags(); }, []);
 
@@ -102,6 +104,27 @@ export default function AllEvents() {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchLocation}
             onChange={(e) => setSearchLocation(e.target.value)}
+          />
+        </div>
+
+        <div className="md:w-48 px-1">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-gray-600">
+              Distanza
+            </label>
+            <span className="text-xs font-semibold text-blue-600">
+              {distanceKm} km
+            </span>
+          </div>
+          <input
+            type="range"
+            min="1"
+            max="100"
+            step="1"
+            value={distanceKm}
+            onChange={(e) => setDistanceKm(Number(e.target.value))}
+            disabled={!searchLocation}
+            className="w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
 
