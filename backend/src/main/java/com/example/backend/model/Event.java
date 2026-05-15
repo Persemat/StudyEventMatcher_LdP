@@ -176,11 +176,8 @@ public class Event {
 
 
 
-
     @ManyToMany(mappedBy = "favorites")
     private Set<User> favoritedBy = new HashSet<>();
-
-
 
 
 
