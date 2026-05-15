@@ -55,13 +55,16 @@ public class Registration {
         password = "Password123!";
 
         String body = String.format("""
-            {
-              "name": "Mario",
-              "lastname": "Rossi",
-              "email": "%s",
-              "password": "%s"
-            }
-            """, email, password);
+                {
+                  "name": "Mario",
+                  "lastname": "Rossi",
+                  "email": "%s",
+                  "password": "%s",
+                  "favouriteCity": "Milano",
+                  "macroTags": ["Tech"],
+                  "microTags": []
+                }
+                """, email, password);
 
         mockMvc.perform(post("/user")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -82,13 +85,16 @@ public class Registration {
     @When("l'utente prova a registrarsi")
     public void provaARegistrarsi() throws Exception {
         String body = String.format("""
-            {
-              "name": "Mario",
-              "lastname": "Rossi",
-              "email": "%s",
-              "password": "%s"
-            }
-            """, email, password);
+                {
+                  "name": "Mario",
+                  "lastname": "Rossi",
+                  "email": "%s",
+                  "password": "%s",
+                  "favouriteCity": "Milano",
+                  "macroTags": ["Tech"],
+                  "microTags": []
+                }
+                """, email, password);
 
         result = mockMvc.perform(post("/user")
                 .contentType(MediaType.APPLICATION_JSON)

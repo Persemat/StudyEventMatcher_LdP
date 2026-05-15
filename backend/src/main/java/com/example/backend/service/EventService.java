@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -154,6 +155,9 @@ public class EventService {
                     "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
         }
 
+        List<EventTag> normalizedTags = request.tags() == null ? event.getTags() : normalizeTags(request.tags());
+        boolean relevantDetailsChanged = hasRelevantEventChanges(event, request, normalizedTags);
+
         event.setTitle(request.title());
         event.setDateTime(request.dateTime());
         event.setDuration(request.duration());
@@ -161,13 +165,24 @@ public class EventService {
         event.setLatitude(request.latitude());
         event.setLongitude(request.longitude());
         if (request.tags() != null) {
-            event.setTags(normalizeTags(request.tags()));
+            event.setTags(normalizedTags);
         }
         event.setDescription(request.description());
         event.setMaxParticipants(request.maxParticipants());
         event.setCreatorParticipationRequired(request.creatorParticipationRequired());
 
-        return eventRepository.save(event);
+        Event updatedEvent = eventRepository.save(event);
+
+        if (relevantDetailsChanged) {
+            try {
+                emailService.sendEventUpdateEmailToParticipants(updatedEvent);
+            } catch (Exception e) {
+                logger.error("Errore mandando la mail di aggiornamento per questo evento {}",
+                        updatedEvent.getTitle(), e);
+            }
+        }
+
+        return updatedEvent;
     }
 
     /**
@@ -390,7 +405,6 @@ public class EventService {
                         .filter(tag -> tag != null && !tag.isBlank())
                         .toList();
         boolean checkTags = !tagsParam.isEmpty();
-        long tagCount = tagsParam.size();
 
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
@@ -514,6 +528,13 @@ public class EventService {
                 userId != null && creator.getId().equals(userId));
     }
 
+    /**
+     * Recalculates each event status based on date and participant capacity.
+     *
+     * @param toSave current dirty flag, preserved if already true
+     * @param events events to inspect and update in memory
+     * @return true if at least one event status changed
+     */
     public boolean checkIfClosed(boolean toSave, List<Event> events) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -541,6 +562,15 @@ public class EventService {
         return toSave;
     }
 
+    /**
+     * Converts incoming tag payloads to clean {@link EventTag} values.
+     *
+     * Accepts structured DTO/map tags and legacy string labels, removes blank
+     * macro tags, trims values, and drops duplicates.
+     *
+     * @param tags raw tag values from the request
+     * @return normalized tag list ready to be stored
+     */
     private List<EventTag> normalizeTags(List<?> tags) {
         return tags.stream()
                 .map(this::toEventTag)
@@ -554,6 +584,34 @@ public class EventService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Checks whether fields shown to users changed enough to notify participants.
+     *
+     * @param event current persisted event before mutation
+     * @param request requested event values
+     * @param normalizedTags request tags already normalized for fair comparison
+     * @return true when participants should receive an update email
+     */
+    private boolean hasRelevantEventChanges(Event event, EventRequest request, List<EventTag> normalizedTags) {
+        return !Objects.equals(event.getTitle(), request.title())
+                || !Objects.equals(event.getDateTime(), request.dateTime())
+                || !Objects.equals(event.getDuration(), request.duration())
+                || !Objects.equals(event.getLocation(), request.location())
+                || !Objects.equals(event.getTags(), normalizedTags)
+                || !Objects.equals(event.getDescription(), request.description())
+                || !Objects.equals(event.getMaxParticipants(), request.maxParticipants())
+                || event.isCreatorParticipationRequired() != request.creatorParticipationRequired();
+    }
+
+    /**
+     * Converts one raw tag representation into an {@link EventTag}.
+     *
+     * Supported inputs are EventTag, EventTagDto, map objects from JSON, and
+     * legacy strings formatted as "macro > micro" or just "macro".
+     *
+     * @param rawTag raw tag object from request data
+     * @return converted tag, possibly with null fields if input is empty
+     */
     private EventTag toEventTag(Object rawTag) {
         if (rawTag == null) {
             return new EventTag(null, null);

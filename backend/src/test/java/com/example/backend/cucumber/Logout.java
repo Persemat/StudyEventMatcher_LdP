@@ -10,6 +10,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import org.springframework.mock.web.MockHttpSession; // Per il check validità
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -38,11 +41,14 @@ public class Logout {
         // Pulizia preventiva per evitare conflitti di email duplicata
         userRepository.deleteAll();
 
-        User user = new User();
-        user.setName("Marco");
-        user.setLastname("Rossi");
-        user.setEmail("marco@example.com");
-        user.setPassword(passwordEncoder.encode("Password123!"));
+        User user = new User(
+                "Marco",
+                "Rossi",
+                "marco@example.com",
+                passwordEncoder.encode("Password123!"),
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         userRepository.save(user);
 
         this.loggedUserId = user.getId();
@@ -131,7 +137,8 @@ public class Logout {
     public void sistemaRispondeCon200() throws Exception {
         response.andExpect(status().isOk());
         response.andExpect(
-                content().string(org.hamcrest.Matchers.containsString("Nessuna sessione attiva, Utente già disconnesso")));
+                content().string(
+                        org.hamcrest.Matchers.containsString("Nessuna sessione attiva, Utente già disconnesso")));
     }
 
     @And("il sistema mantiene lo stato di utente anonimo")

@@ -9,6 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.List;
+
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
@@ -56,12 +58,14 @@ public class CreateEvent {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        // Creazione utente reale per avere un ID valido in sessione
-        User user = new User();
-        user.setName("Marco");
-        user.setLastname("Rossi");
-        user.setEmail("marco@example.com");
-        user.setPassword("Password123!");
+        User user = new User(
+                "Marco",
+                "Rossi",
+                "marco@example.com",
+                "Password123!",
+                "Milano",
+                List.of("Tech"),
+                List.of());
         userRepository.save(user);
 
         this.creatorId = user.getId();
@@ -161,6 +165,8 @@ public class CreateEvent {
 
     @And("il sistema mostra l'errore {string}")
     public void ilSistemaMOstraErrore(String messaggio) throws Exception {
-        result.andExpect(content().string(org.hamcrest.Matchers.containsString(messaggio)));
+        result.andExpect(content().string(org.hamcrest.Matchers.containsString(
+                messaggio)));
     }
+
 }

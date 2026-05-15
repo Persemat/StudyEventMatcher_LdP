@@ -17,6 +17,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -60,11 +61,15 @@ public class EventTagsFilter {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario.test@example.com");
-        user.setPassword("Password123!");
+        user = new User(
+                "Mario",
+                "Rossi",
+                "mario.test@example.com",
+                "Password123!",
+                "Milano", // favouriteCity
+                List.of("Tech"), // macroTags
+                new ArrayList<>() // microTags
+        );
         userRepository.save(user); // Salva e genera l'ID
     }
 
@@ -93,7 +98,9 @@ public class EventTagsFilter {
     @Then("il sistema deve restituire un elenco contenente esattamente quei 3 eventi")
     public void il_sistema_deve_restituire_un_elenco_contenente_esattamente_quei_3_eventi() throws Exception {
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$", Matchers.hasSize(3)));
+                .andExpect(jsonPath("$", Matchers.hasSize(3)))
+                .andExpect(jsonPath("$[*].tags[0].macroTag", Matchers.everyItem(Matchers.equalTo("Informatica e Tecnologie"))))
+                .andExpect(jsonPath("$[*].tags[0].microTag", Matchers.everyItem(Matchers.equalTo("Informatica"))));
     }
 
     @And("nessun evento privo di quel tag deve apparire nei risultati")
@@ -130,30 +137,61 @@ public class EventTagsFilter {
                         .sessionAttr("userId", user.getId()));
     }
 
-    @Then("il sistema deve restituire solo l'evento che possiede entrambi i tag")
-    public void il_sistema_deve_restituire_solo_l_evento_che_possiede_entrambi_i_tag() throws Exception {
+    @Then("il sistema deve restituire gli eventi che possiedono almeno uno dei tag")
+    public void il_sistema_deve_restituire_gli_eventi_che_possiedono_almeno_uno_dei_tag() throws Exception {
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$", Matchers.hasSize(1)))
-                .andExpect(content().string(Matchers.containsString("Evento Doppio Tag")));
+                .andExpect(jsonPath("$", Matchers.hasSize(3)))
+                .andExpect(content().string(Matchers.containsString("Evento Doppio Tag")))
+                .andExpect(content().string(Matchers.containsString("Evento Solo A 1")))
+                .andExpect(content().string(Matchers.containsString("Evento Solo A 2")));
     }
 
-    @And("gli eventi che possiedono solo uno dei due tag vengono esclusi dai risultati")
-    public void gli_eventi_che_possiedono_solo_uno_dei_due_tag_vengono_esclusi_dai_risultati() throws Exception {
-        result.andExpect(content().string(Matchers.not(Matchers.containsString("Evento Solo A 1"))))
-                .andExpect(content().string(Matchers.not(Matchers.containsString("Evento Solo A 2"))));
+    @And("gli eventi che possiedono uno solo dei due tag vengono inclusi nei risultati")
+    public void gli_eventi_che_possiedono_uno_solo_dei_due_tag_vengono_inclusi_nei_risultati() throws Exception {
+        result.andExpect(content().string(Matchers.containsString("Evento Solo A 1")))
+                .andExpect(content().string(Matchers.containsString("Evento Solo A 2")));
     }
 
     // ==========================================
-    // SCENARIO 3: Risultato Vuoto
+    // SCENARIO 3: Macro Tag
+    // ==========================================
+
+    @And("esistono eventi associati a microtag dello stesso macrotag")
+    public void esistono_eventi_associati_a_microtag_dello_stesso_macrotag() {
+        creaEventoHelper("Evento SQL", List.of(new EventTag("Informatica e Tecnologie", "SQL")));
+        creaEventoHelper("Evento Frontend", List.of(new EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
+        creaEventoHelper("Evento Fisica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
+    }
+
+    @When("seleziono solo il macrotag dalla lista predefinita")
+    public void seleziono_solo_il_macrotag_dalla_lista_predefinita() throws Exception {
+        result = mockMvc.perform(
+                get("/events/search")
+                        .queryParam("tags", "Informatica e Tecnologie")
+                        .sessionAttr("userId", user.getId()));
+    }
+
+    @Then("il sistema deve restituire tutti gli eventi di quel macrotag")
+    public void il_sistema_deve_restituire_tutti_gli_eventi_di_quel_macrotag() throws Exception {
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$", Matchers.hasSize(2)))
+                .andExpect(content().string(Matchers.containsString("Evento SQL")))
+                .andExpect(content().string(Matchers.containsString("Evento Frontend")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("Evento Fisica"))))
+                .andExpect(jsonPath("$[*].tags[0].macroTag", Matchers.everyItem(Matchers.equalTo("Informatica e Tecnologie"))));
+    }
+
+    // ==========================================
+    // SCENARIO 4: Risultato Vuoto
     // ==========================================
 
     @And("seleziono una combinazione di tag dalla lista predefinita")
     public void seleziono_una_combinazione_di_tag_dalla_lista_predefinita() {
-        this.tags = List.of("Scienze Matematiche Fisiche e Naturali > Fisica", "Scienze Matematiche Fisiche e Naturali > Chimica");
+        this.tags = List.of("Informatica e Tecnologie > SQL", "Scienze Matematiche Fisiche e Naturali > Biologia");
     }
 
-    @And("non esistono eventi attivi nel database che possiedano tutti i tag scelti")
-    public void non_esistono_eventi_attivi_nel_database_che_possiedano_tutti_i_tag_scelti() {
+    @And("non esistono eventi attivi nel database che possiedano almeno uno dei tag scelti")
+    public void non_esistono_eventi_attivi_nel_database_che_possiedano_almeno_uno_dei_tag_scelti() {
         creaEventoHelper("Evento Solo Fisica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
         creaEventoHelper("Evento Solo Chimica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Chimica")));
     }

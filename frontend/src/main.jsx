@@ -88,7 +88,11 @@ const App = () => {
           <Route
             path="/profile"
             element={
-              <Profile user={loggedUser} onLogout={handleLogout} />
+              <Profile
+                user={loggedUser}
+                onLogout={handleLogout}
+                onUserUpdated={setLoggedUser}
+              />
             }
           />
         </Route>

@@ -13,18 +13,41 @@ export default function AllEvents() {
   const [searchLocation, setSearchLocation] = useState("");
   const [searchData, setSearchData] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
+  const [tagSearchTerm, setTagSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
   const [distanceKm, setDistanceKm] = useState(25);
   const [isCityInputFocused, setIsCityInputFocused] = useState(false);
+  
+  const dropdownRef = useRef(null);
+  const locationInputRef = useRef(null);
+  const today = new Date().toISOString().split('T')[0];
 
   const dropdownRef = useRef(null);
   const cityInputRef = useRef(null);
   const today = new Date().toISOString().split("T")[0];
   const now = useMemo(() => Date.now(), []);
 
+  // Dynamically filters dropdown tags based on the typed text.
+  const filteredTags = useMemo(() => {
+    const query = tagSearchTerm.trim().toLowerCase();
+    if (!query) return availableTags;
+    return availableTags.filter((tag) => tag.label.toLowerCase().includes(query));
+  }, [availableTags, tagSearchTerm]);
+
+  // Suggests matching cities from the shared city catalog while the location filter is typed.
+  const locationSuggestions = useMemo(() => {
+    const query = searchLocation.trim().toLowerCase();
+    if (!query) return [];
+    return cityOptions
+      .filter((option) => option.name.toLowerCase().startsWith(query))
+      .slice(0, 30);
+  }, [cityOptions, searchLocation]);
+
+  // Loads the tag catalog used by both filters and the edit modal.
   const fetchTags = async () => {
     try {
       const data = await loadTagOptions();
@@ -34,6 +57,7 @@ export default function AllEvents() {
     }
   };
 
+  // Loads the same city catalog used by create/edit event location autocomplete.
   const fetchCities = async () => {
     try {
       const data = await loadCityOptions();
@@ -95,6 +119,7 @@ export default function AllEvents() {
     fetchCities();
   }, []);
 
+  // Adds a small debounce to avoid one API call per keystroke.
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchEvents();
@@ -176,6 +201,24 @@ export default function AllEvents() {
             disabled={!selectedSearchCity}
             className="w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           />
+          {isLocationInputFocused && locationSuggestions.length > 0 && (
+            <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+              {locationSuggestions.map((option) => (
+                <li
+                  key={option.label}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchLocation(option.label);
+                    setIsLocationInputFocused(false);
+                    locationInputRef.current?.blur();
+                  }}
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 transition-colors"
+                >
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="relative md:w-48">
@@ -201,24 +244,35 @@ export default function AllEvents() {
             <span className="text-gray-400 text-xs shrink-0">▼</span>
           </button>
           {isDropdownOpen && (
-            <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto p-1">
-              {availableTags.map((tag) => (
-                <label key={tag.label} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedTags.some((selectedTag) => selectedTag.label === tag.label)}
-                    onChange={() =>
-                      setSelectedTags((prev) =>
-                        prev.some((selectedTag) => selectedTag.label === tag.label)
-                          ? prev.filter((selectedTag) => selectedTag.label !== tag.label)
-                          : [...prev, tag]
-                      )
-                    }
-                    className="rounded text-blue-600"
-                  />
-                  <span className="text-sm">{tag.label}</span>
-                </label>
-              ))}
+            <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <input
+                  type="text"
+                  value={tagSearchTerm}
+                  onChange={(e) => setTagSearchTerm(e.target.value)}
+                  placeholder="Cerca tag..."
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="max-h-52 overflow-y-auto">
+                {filteredTags.length > 0 ? (
+                  filteredTags.map((tag) => (
+                    <label key={tag.label} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedTags.some((t) => t.label === tag.label)}
+                        onChange={() => setSelectedTags(prev => prev.some((t) => t.label === tag.label) ? prev.filter(t => t.label !== tag.label) : [...prev, tag])}
+                        className="rounded text-blue-600"
+                      />
+                      <span className="text-sm">{tag.label}</span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-gray-500">Nessun tag trovato</p>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -227,6 +281,7 @@ export default function AllEvents() {
       {!loading && events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => {
+            // Allows editing only for the creator and only more than 24 hours before start.
             const eventStart = new Date(event.dateTime).getTime();
             const editable = event.isCreatedByMe && eventStart > now + 24 * 60 * 60 * 1000;
 

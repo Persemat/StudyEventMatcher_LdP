@@ -36,6 +36,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   const cityInputRef = useRef(null);
   const MAX_TAGS = 3;
 
+  // Loads catalogs for tag and city autocomplete; reuses parent-provided tags when available.
   useEffect(() => {
     let active = true;
 
@@ -56,6 +57,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     };
   }, [availableTags]);
 
+  // In edit mode, splits the saved "city-address" location into the two form fields.
   useEffect(() => {
     if (isEdit && event?.location) {
       const separatorIndex = event.location.indexOf("-");
@@ -69,6 +71,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     }
   }, [isEdit, event]);
 
+  // Filters typed tags, excludes already selected ones, and groups suggestions by macro tag.
   const tagSuggestions = useMemo(() => {
     const query = tagInput.trim().toLowerCase();
     const filtered = tagOptions
@@ -86,6 +89,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     }, {});
   }, [tagInput, tagOptions, tags]);
 
+  // Suggests only cities that start with the typed text.
   const citySuggestions = useMemo(() => {
     const query = city.trim().toLowerCase();
     if (!query) return [];
@@ -104,6 +108,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     [city, cityOptions]
   );
 
+  // Adds a structured tag to the final payload while enforcing limit and duplicates.
   const addTag = (option) => {
     if (tags.length >= MAX_TAGS || tags.some((tag) => sameTag(tag, option))) {
       return;
@@ -113,6 +118,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     setIsTagInputFocused(false);
   };
 
+  // Enter selects the first available tag suggestion.
   const handleTagKeyDown = (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
@@ -122,10 +128,12 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     }
   };
 
+  // Removes a tag by comparing macro and micro tag.
   const handleRemoveTag = (tagToRemove) => {
     setTags(tags.filter((tag) => !sameTag(tag, tagToRemove)));
   };
 
+  // Validates fields, builds the backend-compatible payload, and creates or updates the event.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
@@ -460,6 +468,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   );
 }
 
+// Normalizes legacy string tags and object tags into the format used by the form.
 function normalizeTag(tag) {
   if (!tag) return { macroTag: "", microTag: null };
   if (typeof tag === "string") {

@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -47,11 +48,8 @@ public class DeleteEvent {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        User creator = new User();
-        creator.setName("Luca");
-        creator.setLastname("Rossi");
-        creator.setEmail("luca@example.com");
-        creator.setPassword("Pass123");
+        User creator = new User("Luca", "Rossi", "luca@example.com", "Pass123!",
+                "Milano", List.of("Tech"), new ArrayList<>());
         userRepository.save(creator);
 
         this.userId = creator.getId();
@@ -91,11 +89,8 @@ public class DeleteEvent {
         Event event = eventRepository.findById(eventId).orElseThrow();
 
         for (int i = 1; i <= 5; i++) {
-            User user = new User();
-            user.setName("Utente" + i);
-            user.setLastname("Test");
-            user.setEmail("utente" + i + "@example.com");
-            user.setPassword("Pass123");
+            User user = new User("Utente" + i, "Test", "utente" + i + "@example.com", "Pass123!",
+                    "CittàTest", List.of("Social"), new ArrayList<>());
             userRepository.save(user);
             event.addParticipant(user);
         }
@@ -108,18 +103,12 @@ public class DeleteEvent {
     public void eventoHaAltriUtentiIscritti() {
         Event event = eventRepository.findById(eventId).orElseThrow();
 
-        User user2 = new User();
-        user2.setName("Marco");
-        user2.setLastname("Verdi");
-        user2.setEmail("marco@example.com");
-        user2.setPassword("Pass123");
+        User user2 = new User("Marco", "Verdi", "marco@example.com", "Pass123!",
+                "Roma", List.of("Tech"), new ArrayList<>());
         userRepository.save(user2);
 
-        User user3 = new User();
-        user3.setName("Anna");
-        user3.setLastname("Bianchi");
-        user3.setEmail("anna@example.com");
-        user3.setPassword("Pass123");
+        User user3 = new User("Anna", "Bianchi", "anna@example.com", "Pass123!",
+                "Napoli", List.of("Musica"), new ArrayList<>());
         userRepository.save(user3);
 
         event.addParticipant(user2);
