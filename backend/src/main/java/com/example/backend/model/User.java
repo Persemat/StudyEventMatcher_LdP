@@ -39,7 +39,7 @@ public class User {
     @Column(name = "micro_tag")
     private List<String> microTags;
 
-    // 🔥 MANY TO MANY RELATION
+    // MANY TO MANY RELATION
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
