@@ -12,63 +12,69 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Tag("integration")
 public class LoginIT extends BaseUserIT {
 
-    @Test
-    void loginValid_shouldReturn200() throws Exception {
-        String registration = """
-                {
-                  "name": "Mario",
-                  "lastname": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void loginValid_shouldReturn200() throws Exception {
+                String registration = """
+                                {
+                                  "name": "Mario",
+                                  "lastname": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123",
+                                  "favouriteCity": "Milano",
+                                  "macroTags": ["Informatica"],
+                                  "microTags": []
+                                }
+                                """;
 
-        mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registration))
-                .andExpect(status().isOk());
+                mockMvc.perform(post("/user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(registration))
+                                .andExpect(status().isOk());
 
-        String login = """
-                {
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+                String login = """
+                                {
+                                  "email": "mario@example.com",
+                                  "password": "Password123"
+                                }
+                                """;
 
-        mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(login))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("mario@example.com")));
-    }
+                mockMvc.perform(post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(login))
+                                .andExpect(status().isOk())
+                                .andExpect(content().string(containsString("mario@example.com")));
+        }
 
-    @Test
-    void loginWrongPassword_shouldReturn400() throws Exception {
-        String registration = """
-                {
-                  "name": "Mario",
-                  "lastname": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void loginWrongPassword_shouldReturn400() throws Exception {
+                String registration = """
+                                {
+                                  "name": "Mario",
+                                  "lastname": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123",
+                                  "favouriteCity": "Milano",
+                                  "macroTags": ["Informatica"],
+                                  "microTags": []
+                                }
+                                """;
 
-        mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registration))
-                .andExpect(status().isOk());
+                mockMvc.perform(post("/user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(registration))
+                                .andExpect(status().isOk());
 
-        String login = """
-                {
-                  "email": "mario@example.com",
-                  "password": "Password999"
-                }
-                """;
+                String login = """
+                                {
+                                  "email": "mario@example.com",
+                                  "password": "Password999"
+                                }
+                                """;
 
-        mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(login))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Credenziali invalide")));
-    }
+                mockMvc.perform(post("/user/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(login))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(content().string(containsString("Credenziali invalide")));
+        }
 }

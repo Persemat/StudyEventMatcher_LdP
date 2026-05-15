@@ -10,6 +10,8 @@ import com.example.backend.dto.UserResponse;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Service responsible for user management.
@@ -28,7 +30,7 @@ public class UserService {
     /**
      * Constructs the UserService.
      *
-     * @param userRepository repository used to access user data
+     * @param userRepository  repository used to access user data
      * @param passwordEncoder encoder used to securely hash passwords
      */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -39,11 +41,13 @@ public class UserService {
     /**
      * Registers a new user.
      *
-     * Validates input data, ensures email uniqueness, and stores the password securely.
+     * Validates input data, ensures email uniqueness, and stores the password
+     * securely.
      *
      * @param request contains user registration data
      * @return the created user as a response DTO
-     * @throws IllegalArgumentException if any field is invalid or the email is already registered
+     * @throws IllegalArgumentException if any field is invalid or the email is
+     *                                  already registered
      */
     public UserResponse register(UserRequest request) {
 
@@ -51,6 +55,9 @@ public class UserService {
         String lastName = request.lastname();
         String email = request.email();
         String password = request.password();
+        String favouriteCity = request.favouriteCity();
+        List<String> macroTags = request.macroTags();
+        List<String> microTags = request.microTags();
 
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Nome obbligatorio");
@@ -70,11 +77,30 @@ public class UserService {
 
         validatePassword(password);
 
+        if (favouriteCity == null || favouriteCity.isBlank()) {
+            throw new IllegalArgumentException("Bisogna indicare una città preferita");
+        }
+
+        if (macroTags == null || macroTags.isEmpty()) {
+            throw new IllegalArgumentException("Almeno una macro area di interesse deve essere indicata");
+        }
+
+        if (macroTags.size() > 3) {
+            throw new IllegalArgumentException("Si possono indicare al massimo 3 aree di interesse generale ");
+        }
+
+        if (microTags.size() > 5) {
+            throw new IllegalArgumentException("Si possono indicare al massimo 5 argomenti di interesse specifici ");
+        }
+
         User user = new User();
         user.setName(name);
         user.setLastname(lastName);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
+        user.setFavouriteCity(favouriteCity);
+        user.setMacroTags(macroTags);
+        user.setMicroTags(microTags != null ? microTags : new ArrayList<>());
 
         return toResponse(userRepository.save(user));
     }
@@ -113,7 +139,7 @@ public class UserService {
      *
      * @param userId ID of the logged user
      * @return the user as a response DTO
-     * @throws IllegalStateException if the session is invalid
+     * @throws IllegalStateException    if the session is invalid
      * @throws IllegalArgumentException if the user does not exist
      */
     public UserResponse getLoggedUser(Long userId) {
@@ -228,10 +254,12 @@ public class UserService {
      */
     private UserResponse toResponse(User user) {
         return new UserResponse(
-            user.getId(),
-            user.getName(),
-            user.getLastname(),
-            user.getEmail()
-        );
+                user.getId(),
+                user.getName(),
+                user.getLastname(),
+                user.getEmail(),
+                user.getFavouriteCity(),
+                user.getMacroTags(),
+                user.getMicroTags());
     }
 }

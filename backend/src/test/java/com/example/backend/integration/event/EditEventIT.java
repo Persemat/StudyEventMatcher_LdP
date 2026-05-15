@@ -14,6 +14,7 @@ import com.example.backend.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,324 +30,314 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 public class EditEventIT extends BaseEventIT {
 
-    @MockitoBean
-    private JavaMailSender mailSender;
+  @MockitoBean
+  private JavaMailSender mailSender;
 
-    @Test
-    void editValidEvent_returns200AndUpdatesEvent() throws Exception {
+  @Test
+  void editValidEvent_returns200AndUpdatesEvent() throws Exception {
 
-        Event event = new Event();
-        event.setTitle("Java Project");
-        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
-        event.setDuration(2.5);
-        event.setLocation("Milano (MI)-Aula Magna");
-        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
-        event.setDescription("Review");
-        event.setMaxParticipants(10);
-        event.setCreatorParticipationRequired(true);
-        event.setStatus("open");
-        event.setCreator(userRepository.findById(userId).orElseThrow());
-        event.addParticipant(userRepository.findById(userId).orElseThrow());
-        event = eventRepository.save(event);
+    Event event = new Event();
+    event.setTitle("Java Project");
+    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDuration(2.5);
+    event.setLocation("Milano (MI)-Aula Magna");
+    event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+    event.setDescription("Review");
+    event.setMaxParticipants(10);
+    event.setCreatorParticipationRequired(true);
+    event.setStatus("open");
+    event.setCreator(userRepository.findById(userId).orElseThrow());
+    event.addParticipant(userRepository.findById(userId).orElseThrow());
+    event = eventRepository.save(event);
 
-        String json = """
-                        {
-                          "title": "Updated Java Project",
-                          "dateTime": "2026-10-16T17:00:00",
-                          "duration": 3.0,
-                          "location": "Milano (MI)-Biblioteca",
-                          "tags": [
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Sviluppo backend" }
-                          ],
-                          "description": "Updated description",
-                          "maxParticipants": 12,
-                          "creatorParticipationRequired": false
-                        }
-                        """;
+    String json = """
+        {
+          "title": "Updated Java Project",
+          "dateTime": "2026-10-16T17:00:00",
+          "duration": 3.0,
+          "location": "Milano (MI)-Biblioteca",
+          "tags": [
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Sviluppo backend" }
+          ],
+          "description": "Updated description",
+          "maxParticipants": 12,
+          "creatorParticipationRequired": false
+        }
+        """;
 
-        mockMvc.perform(put("/events/" + event.getId())
-                        .sessionAttr("userId", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isOk())
-                .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("aggiornato con successo")));
+    mockMvc.perform(put("/events/" + event.getId())
+        .sessionAttr("userId", userId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(json))
+        .andExpect(status().isOk())
+        .andExpect(content().string(
+            org.hamcrest.Matchers.containsString("aggiornato con successo")));
 
-        Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
+    Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
 
-        assertEquals("Updated Java Project", updatedEvent.getTitle());
-        assertEquals(LocalDateTime.of(2026, 10, 16, 17, 0), updatedEvent.getDateTime());
-        assertEquals(3.0, updatedEvent.getDuration());
-        assertEquals("Milano (MI)-Biblioteca", updatedEvent.getLocation());
-        assertTrue(updatedEvent.getTags().contains(
-                new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo backend")));
-        assertEquals("Updated description", updatedEvent.getDescription());
-        assertEquals(12, updatedEvent.getMaxParticipants());
-        assertEquals(false, updatedEvent.isCreatorParticipationRequired());
-    }
+    assertEquals("Updated Java Project", updatedEvent.getTitle());
+    assertEquals(LocalDateTime.of(2026, 10, 16, 17, 0), updatedEvent.getDateTime());
+    assertEquals(3.0, updatedEvent.getDuration());
+    assertEquals("Milano (MI)-Biblioteca", updatedEvent.getLocation());
+    assertTrue(updatedEvent.getTags().contains(
+        new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo backend")));
+    assertEquals("Updated description", updatedEvent.getDescription());
+    assertEquals(12, updatedEvent.getMaxParticipants());
+    assertEquals(false, updatedEvent.isCreatorParticipationRequired());
+  }
 
-    @Test
-    void editEventWithBookedUser_sendsUpdateEmailOnlyToBookedUsers() throws Exception {
-        User creator = userRepository.findById(userId).orElseThrow();
+  @Test
+  void editEventWithBookedUser_sendsUpdateEmailOnlyToBookedUsers() throws Exception {
+    User creator = userRepository.findById(userId).orElseThrow();
 
-        User bookedUser = new User();
-        bookedUser.setName("Anna");
-        bookedUser.setLastname("Bianchi");
-        bookedUser.setEmail("anna.booked@example.com");
-        bookedUser.setPassword("Password123");
-        bookedUser = userRepository.save(bookedUser);
+    User bookedUser = new User("Anna", "Bianchi", "anna.booked@example.com", "Password123", "Milano",
+        List.of("Informatica e Tecnologie"), new ArrayList<>());
 
-        User notBookedUser = new User();
-        notBookedUser.setName("Luca");
-        notBookedUser.setLastname("Verdi");
-        notBookedUser.setEmail("luca.notbooked@example.com");
-        notBookedUser.setPassword("Password123");
-        notBookedUser = userRepository.save(notBookedUser);
+    bookedUser = userRepository.save(bookedUser);
 
-        Event event = new Event();
-        event.setTitle("Progetto Java");
-        event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
-        event.setDuration(2.0);
-        event.setLocation("Biblioteca");
-        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
-        event.setDescription("Studio progetto");
-        event.setMaxParticipants(10);
-        event.setCreatorParticipationRequired(true);
-        event.setStatus("open");
-        event.setCreator(creator);
-        event.addParticipant(creator);
-        event.addParticipant(bookedUser);
-        event = eventRepository.save(event);
+    User notBookedUser = new User("Luca", "Verdi", "luca.notbooked@example.com", "Password123",
+        "Milano", List.of("Informatica e Tecnologie"), new ArrayList<>());
 
-        clearInvocations(mailSender);
+    notBookedUser = userRepository.save(notBookedUser);
 
-        String json = """
-                        {
-                          "title": "Progetto Java",
-                          "dateTime": "2026-05-20T15:00:00",
-                          "duration": 2.0,
-                          "location": "Aula 3",
-                          "tags": [
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
-                          ],
-                          "description": "Studio progetto",
-                          "maxParticipants": 10,
-                          "creatorParticipationRequired": true
-                        }
-                        """;
+    Event event = new Event();
+    event.setTitle("Progetto Java");
+    event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
+    event.setDuration(2.0);
+    event.setLocation("Biblioteca");
+    event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+    event.setDescription("Studio progetto");
+    event.setMaxParticipants(10);
+    event.setCreatorParticipationRequired(true);
+    event.setStatus("open");
+    event.setCreator(creator);
+    event.addParticipant(creator);
+    event.addParticipant(bookedUser);
+    event = eventRepository.save(event);
 
-        mockMvc.perform(put("/events/" + event.getId())
-                        .sessionAttr("userId", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isOk());
+    clearInvocations(mailSender);
 
-        org.mockito.ArgumentCaptor<SimpleMailMessage> captor =
-                org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
+    String json = """
+        {
+          "title": "Progetto Java",
+          "dateTime": "2026-05-20T15:00:00",
+          "duration": 2.0,
+          "location": "Aula 3",
+          "tags": [
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+          ],
+          "description": "Studio progetto",
+          "maxParticipants": 10,
+          "creatorParticipationRequired": true
+        }
+        """;
 
-        verify(mailSender, atLeastOnce()).send(captor.capture());
+    mockMvc.perform(put("/events/" + event.getId())
+        .sessionAttr("userId", userId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(json))
+        .andExpect(status().isOk());
 
-        String bookedUserEmail = bookedUser.getEmail();
-        String notBookedUserEmail = notBookedUser.getEmail();
+    org.mockito.ArgumentCaptor<SimpleMailMessage> captor = org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
 
-        boolean sentToBookedUser = captor.getAllValues().stream()
-                .map(SimpleMailMessage::getTo)
-                .filter(to -> to != null && to.length > 0)
-                .anyMatch(to -> bookedUserEmail.equals(to[0]));
+    verify(mailSender, atLeastOnce()).send(captor.capture());
 
-        boolean sentToNotBookedUser = captor.getAllValues().stream()
-                .map(SimpleMailMessage::getTo)
-                .filter(to -> to != null && to.length > 0)
-                .anyMatch(to -> notBookedUserEmail.equals(to[0]));
+    String bookedUserEmail = bookedUser.getEmail();
+    String notBookedUserEmail = notBookedUser.getEmail();
 
-        boolean messageContainsEventName = captor.getAllValues().stream()
-                .map(SimpleMailMessage::getText)
-                .anyMatch(text -> text != null && text.contains("L'evento Progetto Java \u00e8 stato aggiornato"));
+    boolean sentToBookedUser = captor.getAllValues().stream()
+        .map(SimpleMailMessage::getTo)
+        .filter(to -> to != null && to.length > 0)
+        .anyMatch(to -> bookedUserEmail.equals(to[0]));
 
-        Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
+    boolean sentToNotBookedUser = captor.getAllValues().stream()
+        .map(SimpleMailMessage::getTo)
+        .filter(to -> to != null && to.length > 0)
+        .anyMatch(to -> notBookedUserEmail.equals(to[0]));
 
-        assertTrue(sentToBookedUser);
-        assertFalse(sentToNotBookedUser);
-        assertTrue(messageContainsEventName);
-        assertEquals("Aula 3", updatedEvent.getLocation());
-    }
+    boolean messageContainsEventName = captor.getAllValues().stream()
+        .map(SimpleMailMessage::getText)
+        .anyMatch(text -> text != null && text.contains("L'evento Progetto Java \u00e8 stato aggiornato"));
 
-    @Test
-    void editEventWithEmptyTitle_returns400() throws Exception {
+    Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
 
-        Event event = new Event();
-        event.setTitle("Java Project");
-        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
-        event.setDuration(2.5);
-        event.setLocation("Milano (MI)-Aula Magna");
-        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
-        event.setDescription("Review");
-        event.setMaxParticipants(10);
-        event.setCreatorParticipationRequired(true);
-        event.setStatus("open");
-        event.setCreator(userRepository.findById(userId).orElseThrow());
-        event.addParticipant(userRepository.findById(userId).orElseThrow());
-        event = eventRepository.save(event);
+    assertTrue(sentToBookedUser);
+    assertFalse(sentToNotBookedUser);
+    assertTrue(messageContainsEventName);
+    assertEquals("Aula 3", updatedEvent.getLocation());
+  }
 
-        String json = """
-                        {
-                          "title": "",
-                          "dateTime": "2026-10-16T17:00:00",
-                          "duration": 3.0,
-                          "location": "Milano (MI)-Biblioteca",
-                          "tags": [
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
-                          ],
-                          "description": "Updated description",
-                          "maxParticipants": 12,
-                          "creatorParticipationRequired": false
-                        }
-                        """;
+  @Test
+  void editEventWithEmptyTitle_returns400() throws Exception {
 
-        mockMvc.perform(put("/events/" + event.getId())
-                        .sessionAttr("userId", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Campi obbligatori mancanti")));
-    }
+    Event event = new Event();
+    event.setTitle("Java Project");
+    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDuration(2.5);
+    event.setLocation("Milano (MI)-Aula Magna");
+    event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+    event.setDescription("Review");
+    event.setMaxParticipants(10);
+    event.setCreatorParticipationRequired(true);
+    event.setStatus("open");
+    event.setCreator(userRepository.findById(userId).orElseThrow());
+    event.addParticipant(userRepository.findById(userId).orElseThrow());
+    event = eventRepository.save(event);
 
-    @Test
-    void editEventWithInvalidSession_returns401() throws Exception {
+    String json = """
+        {
+          "title": "",
+          "dateTime": "2026-10-16T17:00:00",
+          "duration": 3.0,
+          "location": "Milano (MI)-Biblioteca",
+          "tags": [
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+          ],
+          "description": "Updated description",
+          "maxParticipants": 12,
+          "creatorParticipationRequired": false
+        }
+        """;
 
-        Event event = new Event();
-        event.setTitle("Java Project");
-        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
-        event.setDuration(2.5);
-        event.setLocation("Milano (MI)-Aula Magna");
-        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
-        event.setDescription("Review");
-        event.setMaxParticipants(10);
-        event.setCreatorParticipationRequired(true);
-        event.setStatus("open");
-        event.setCreator(userRepository.findById(userId).orElseThrow());
-        event.addParticipant(userRepository.findById(userId).orElseThrow());
-        event = eventRepository.save(event);
+    mockMvc.perform(put("/events/" + event.getId())
+        .sessionAttr("userId", userId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(json))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().string(
+            org.hamcrest.Matchers.containsString("Campi obbligatori mancanti")));
+  }
 
-        String json = """
-                        {
-                          "title": "Updated Java Project",
-                          "dateTime": "2026-10-16T17:00:00",
-                          "duration": 3.0,
-                          "location": "Milano (MI)-Biblioteca",
-                          "tags": [
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
-                          ],
-                          "description": "Updated description",
-                          "maxParticipants": 12,
-                          "creatorParticipationRequired": false
-                        }
-                        """;
+  @Test
+  void editEventWithInvalidSession_returns401() throws Exception {
 
-        mockMvc.perform(put("/events/" + event.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isUnauthorized())
-                .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Sessione invalida o scaduta")));
-    }
+    Event event = new Event();
+    event.setTitle("Java Project");
+    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDuration(2.5);
+    event.setLocation("Milano (MI)-Aula Magna");
+    event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+    event.setDescription("Review");
+    event.setMaxParticipants(10);
+    event.setCreatorParticipationRequired(true);
+    event.setStatus("open");
+    event.setCreator(userRepository.findById(userId).orElseThrow());
+    event.addParticipant(userRepository.findById(userId).orElseThrow());
+    event = eventRepository.save(event);
 
-    @Test
-    void editEventByNonCreator_returns400() throws Exception {
+    String json = """
+        {
+          "title": "Updated Java Project",
+          "dateTime": "2026-10-16T17:00:00",
+          "duration": 3.0,
+          "location": "Milano (MI)-Biblioteca",
+          "tags": [
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+          ],
+          "description": "Updated description",
+          "maxParticipants": 12,
+          "creatorParticipationRequired": false
+        }
+        """;
 
-        User otherUser = new User();
-        otherUser.setName("Luca");
-        otherUser.setLastname("Verdi");
-        otherUser.setEmail("luca_edit_test@example.com");
-        otherUser.setPassword("Password123");
-        otherUser = userRepository.save(otherUser);
+    mockMvc.perform(put("/events/" + event.getId())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(json))
+        .andExpect(status().isUnauthorized())
+        .andExpect(content().string(
+            org.hamcrest.Matchers.containsString("Sessione invalida o scaduta")));
+  }
 
-        Event event = new Event();
-        event.setTitle("Java Project");
-        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
-        event.setDuration(2.5);
-        event.setLocation("Milano (MI)-Aula Magna");
-        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
-        event.setDescription("Review");
-        event.setMaxParticipants(10);
-        event.setCreatorParticipationRequired(true);
-        event.setStatus("open");
-        event.setCreator(otherUser);
-        event.addParticipant(otherUser);
-        event = eventRepository.save(event);
+  @Test
+  void editEventByNonCreator_returns400() throws Exception {
 
-        String json = """
-                        {
-                          "title": "Updated Java Project",
-                          "dateTime": "2026-10-16T17:00:00",
-                          "duration": 3.0,
-                          "location": "Milano (MI)-Biblioteca",
-                          "tags": [
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
-                          ],
-                          "description": "Updated description",
-                          "maxParticipants": 12,
-                          "creatorParticipationRequired": false
-                        }
-                        """;
+    User otherUser = new User("Luca", "Verdi", "luca_edit_test@example.com", "Password123",
+        "Roma", List.of("Tech"), new ArrayList<>());
+    otherUser = userRepository.save(otherUser);
 
-        mockMvc.perform(put("/events/" + event.getId())
-                        .sessionAttr("userId", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Solo il creatore può modificare l'evento")));
-    }
+    Event event = new Event();
+    event.setTitle("Java Project");
+    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDuration(2.5);
+    event.setLocation("Milano (MI)-Aula Magna");
+    event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+    event.setDescription("Review");
+    event.setMaxParticipants(10);
+    event.setCreatorParticipationRequired(true);
+    event.setStatus("open");
+    event.setCreator(otherUser);
+    event.addParticipant(otherUser);
+    event = eventRepository.save(event);
 
-    @Test
-    void editEventWithMaxParticipantsLowerThanCurrent_returns400() throws Exception {
+    String json = """
+        {
+          "title": "Updated Java Project",
+          "dateTime": "2026-10-16T17:00:00",
+          "duration": 3.0,
+          "location": "Milano (MI)-Biblioteca",
+          "tags": [
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+          ],
+          "description": "Updated description",
+          "maxParticipants": 12,
+          "creatorParticipationRequired": false
+        }
+        """;
 
-        User otherUser = new User();
-        otherUser.setName("Luca");
-        otherUser.setLastname("Verdi");
-        otherUser.setEmail("luca_participant_test@example.com");
-        otherUser.setPassword("Password123");
-        otherUser = userRepository.save(otherUser);
+    mockMvc.perform(put("/events/" + event.getId())
+        .sessionAttr("userId", userId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(json))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().string(
+            org.hamcrest.Matchers.containsString("Solo il creatore può modificare l'evento")));
+  }
 
-        Event event = new Event();
-        event.setTitle("Java Project");
-        event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
-        event.setDuration(2.5);
-        event.setLocation("Milano (MI)-Aula Magna");
-        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
-        event.setDescription("Review");
-        event.setMaxParticipants(10);
-        event.setCreatorParticipationRequired(true);
-        event.setStatus("open");
-        event.setCreator(userRepository.findById(userId).orElseThrow());
-        event.addParticipant(userRepository.findById(userId).orElseThrow());
-        event.addParticipant(otherUser);
-        event = eventRepository.save(event);
+  @Test
+  void editEventWithMaxParticipantsLowerThanCurrent_returns400() throws Exception {
 
-        String json = """
-                        {
-                          "title": "Updated Java Project",
-                          "dateTime": "2026-10-16T17:00:00",
-                          "duration": 3.0,
-                          "location": "Milano (MI)-Biblioteca",
-                          "tags": [
-                            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
-                          ],
-                          "description": "Updated description",
-                          "maxParticipants": 1,
-                          "creatorParticipationRequired": false
-                        }
-                        """;
+    User otherUser = new User("Luca", "Verdi", "luca_participant_test@example.com", "Password123",
+        "Roma", List.of("Social"), new ArrayList<>());
+    otherUser = userRepository.save(otherUser);
 
-        mockMvc.perform(put("/events/" + event.getId())
-                        .sessionAttr("userId", userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(
-                        org.hamcrest.Matchers.containsString("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali")));
-    }
+    Event event = new Event();
+    event.setTitle("Java Project");
+    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDuration(2.5);
+    event.setLocation("Milano (MI)-Aula Magna");
+    event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
+    event.setDescription("Review");
+    event.setMaxParticipants(10);
+    event.setCreatorParticipationRequired(true);
+    event.setStatus("open");
+    event.setCreator(userRepository.findById(userId).orElseThrow());
+    event.addParticipant(userRepository.findById(userId).orElseThrow());
+    event.addParticipant(otherUser);
+    event = eventRepository.save(event);
+
+    String json = """
+        {
+          "title": "Updated Java Project",
+          "dateTime": "2026-10-16T17:00:00",
+          "duration": 3.0,
+          "location": "Milano (MI)-Biblioteca",
+          "tags": [
+            { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" }
+          ],
+          "description": "Updated description",
+          "maxParticipants": 1,
+          "creatorParticipationRequired": false
+        }
+        """;
+
+    mockMvc.perform(put("/events/" + event.getId())
+        .sessionAttr("userId", userId)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(json))
+        .andExpect(status().isBadRequest())
+        .andExpect(content().string(
+            org.hamcrest.Matchers
+                .containsString("Il numero massimo di partecipanti non può essere minore dei partecipanti attuali")));
+  }
 }

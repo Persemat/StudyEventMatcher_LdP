@@ -2,11 +2,12 @@ package com.example.backend.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 import jakarta.persistence.*;
 
 @Entity
-@Table(name= "users")
+@Table(name = "users")
 public class User {
 
     @Id
@@ -25,17 +26,35 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String favouriteCity;
+
+    @ElementCollection
+    @CollectionTable(name = "user_macro_tags", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "macro_tag", nullable = false)
+    private List<String> macroTags;
+
+    @ElementCollection
+    @CollectionTable(name = "user_micro_tags", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "micro_tag")
+    private List<String> microTags;
+
     // 🔥 MANY TO MANY RELATION
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
-    public User() {}
+    public User() {
+    }
 
-    public User(String name, String lastname, String email, String password) {
+    public User(String name, String lastname, String email, String password, String favouriteCity,
+            List<String> macroTags, List<String> microTags) {
         this.name = name;
         this.lastname = lastname;
         this.email = email;
         this.password = password;
+        this.favouriteCity = favouriteCity;
+        this.macroTags = macroTags;
+        this.microTags = microTags;
     }
 
     // GETTERS & SETTERS
@@ -96,5 +115,29 @@ public class User {
     public void removeEvent(Event event) {
         bookedEvents.remove(event);
         event.getParticipants().remove(this);
+    }
+
+    public void setFavouriteCity(String favouriteCity) {
+        this.favouriteCity = favouriteCity;
+    }
+
+    public String getFavouriteCity() {
+        return this.favouriteCity;
+    }
+
+    public void setMacroTags(List<String> macroTags) {
+        this.macroTags = macroTags;
+    }
+
+    public List<String> getMacroTags() {
+        return this.macroTags;
+    }
+
+    public void setMicroTags(List<String> microTags) {
+        this.microTags = microTags;
+    }
+
+    public List<String> getMicroTags() {
+        return this.microTags;
     }
 }
