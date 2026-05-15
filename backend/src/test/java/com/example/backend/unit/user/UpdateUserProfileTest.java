@@ -168,13 +168,17 @@ public class UpdateUserProfileTest extends BaseUserTest {
         );
 
         assertEquals("Le password non corrispondono", ex.getMessage());
-        verify(passwordEncoder, never()).matches(any(), any());
-        verify(passwordEncoder, never()).encode(any());
+        verify(passwordEncoder, never()).matches(any(CharSequence.class), any(String.class));
+        verify(passwordEncoder, never()).encode(any(CharSequence.class));
         verify(userRepository, never()).save(any());
     }
 
     private User userWithId(Long id, String name, String lastname, String email, String password) throws Exception {
-        User user = new User(name, lastname, email, password);
+        User user = new User();
+        user.setName(name);
+        user.setLastname(lastname);
+        user.setEmail(email);
+        user.setPassword(password);
         Field field = User.class.getDeclaredField("id");
         field.setAccessible(true);
         field.set(user, id);

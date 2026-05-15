@@ -172,7 +172,10 @@ public class UpdateUserProfileIT extends BaseUserIT {
                   "name": "Mario",
                   "lastname": "Rossi",
                   "email": "%s",
-                  "password": "%s"
+                  "password": "%s",
+                  "favouriteCity": "Milano",
+                  "macroTags": ["Informatica e Tecnologie"],
+                  "microTags": ["Programmazione"]
                 }
                 """, email, password);
 

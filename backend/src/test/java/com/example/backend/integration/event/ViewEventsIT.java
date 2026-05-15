@@ -2,9 +2,6 @@ package com.example.backend.integration.event;
 
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
-
-import java.util.List;
-import java.util.ArrayList;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 

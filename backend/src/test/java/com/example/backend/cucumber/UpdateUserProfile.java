@@ -44,7 +44,10 @@ public class UpdateUserProfile {
                   "name": "Mario",
                   "lastname": "Rossi",
                   "email": "mario@example.com",
-                  "password": "Password123"
+                  "password": "Password123",
+                  "favouriteCity": "Milano",
+                  "macroTags": ["Informatica e Tecnologie"],
+                  "microTags": ["Programmazione"]
                 }
                 """;
 
