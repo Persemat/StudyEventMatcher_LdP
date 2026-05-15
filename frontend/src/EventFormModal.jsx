@@ -99,6 +99,11 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
     [cityOptions]
   );
 
+  const selectedCityOption = useMemo(
+    () => cityOptions.find((option) => option.label === city.trim()),
+    [city, cityOptions]
+  );
+
   const addTag = (option) => {
     if (tags.length >= MAX_TAGS || tags.some((tag) => sameTag(tag, option))) {
       return;
@@ -165,6 +170,8 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
       dateTime: dateTimeFormatted,
       duration: parseFloat(duration),
       location: finalLocation,
+      latitude: selectedCityOption?.latitude ?? null,
+      longitude: selectedCityOption?.longitude ?? null,
       tags,
       description,
       maxParticipants: parseInt(maxParticipants),

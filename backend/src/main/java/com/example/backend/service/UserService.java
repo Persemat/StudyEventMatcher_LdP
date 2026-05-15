@@ -62,7 +62,7 @@ public class UserService {
         }
 
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("Email già registrata");
+            throw new IllegalArgumentException("Email gia registrata");
         }
 
         if (password == null || password.length() < 8) {

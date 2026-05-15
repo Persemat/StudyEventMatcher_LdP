@@ -3,32 +3,61 @@ import { Search, MapPin, Calendar } from "lucide-react";
 import EventCard from "./EventCard";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
-import { loadTagOptions } from "./catalogs";
+import { loadCityOptions, loadTagOptions } from "./catalogs";
 
 export default function AllEvents() {
   const [events, setEvents] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
+  const [cityOptions, setCityOptions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchLocation, setSearchLocation] = useState(""); 
+  const [searchLocation, setSearchLocation] = useState("");
   const [searchData, setSearchData] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
   const [distanceKm, setDistanceKm] = useState(25);
-  
-  const dropdownRef = useRef(null);
-  const today = new Date().toISOString().split('T')[0];
+  const [isCityInputFocused, setIsCityInputFocused] = useState(false);
 
+  const dropdownRef = useRef(null);
+  const cityInputRef = useRef(null);
+  const today = new Date().toISOString().split("T")[0];
   const now = useMemo(() => Date.now(), []);
 
   const fetchTags = async () => {
     try {
       const data = await loadTagOptions();
       setAvailableTags(data);
-    } catch (err) { console.error("Errore fetch tags:", err); }
+    } catch (err) {
+      console.error("Errore fetch tags:", err);
+    }
   };
+
+  const fetchCities = async () => {
+    try {
+      const data = await loadCityOptions();
+      setCityOptions(data);
+    } catch (err) {
+      console.error("Errore fetch comuni:", err);
+    }
+  };
+
+  const citySuggestions = useMemo(() => {
+    const query = searchLocation.trim().toLowerCase();
+    if (!query) return [];
+    return cityOptions
+      .filter((option) =>
+        option.name.toLowerCase().startsWith(query) ||
+        option.label.toLowerCase().startsWith(query)
+      )
+      .slice(0, 30);
+  }, [searchLocation, cityOptions]);
+
+  const selectedSearchCity = useMemo(
+    () => cityOptions.find((option) => option.label === searchLocation.trim()),
+    [searchLocation, cityOptions]
+  );
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -37,11 +66,14 @@ export default function AllEvents() {
       const url = new URL("/api/events/search", window.location.origin);
       if (searchTerm) url.searchParams.append("search", searchTerm);
       if (searchLocation) url.searchParams.append("location", searchLocation);
-      if (searchLocation) url.searchParams.append("distanceKm", distanceKm);
+      if (selectedSearchCity) {
+        url.searchParams.append("distanceKm", distanceKm);
+        url.searchParams.append("latitude", selectedSearchCity.latitude);
+        url.searchParams.append("longitude", selectedSearchCity.longitude);
+      }
       if (searchData) url.searchParams.append("date", searchData);
-      
       if (selectedTags.length > 0) {
-        selectedTags.forEach((t) => url.searchParams.append("tags", t.label));
+        selectedTags.forEach((tag) => url.searchParams.append("tags", tag.label));
       }
 
       const response = await fetch(url, { credentials: "include" });
@@ -51,14 +83,17 @@ export default function AllEvents() {
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      setError("Impossibile caricare gli eventi"); 
+      setError("Impossibile caricare gli eventi");
       setEvents([]);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, searchLocation, searchData, selectedTags, distanceKm]);
-  
-  useEffect(() => { fetchTags(); }, []);
+  }, [searchTerm, searchLocation, searchData, selectedTags, distanceKm, selectedSearchCity]);
+
+  useEffect(() => {
+    fetchTags();
+    fetchCities();
+  }, []);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -76,14 +111,12 @@ export default function AllEvents() {
         <p className="text-gray-600">Catalogo Gruppi di Studio</p>
       </div>
 
-      
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-center">
           {error}
         </div>
       )}
 
-      
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -99,22 +132,39 @@ export default function AllEvents() {
         <div className="relative md:w-48">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
+            ref={cityInputRef}
             type="text"
             placeholder="Filtra per città..."
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchLocation}
             onChange={(e) => setSearchLocation(e.target.value)}
+            onFocus={() => setIsCityInputFocused(true)}
+            onBlur={() => setIsCityInputFocused(false)}
           />
+          {isCityInputFocused && citySuggestions.length > 0 && (
+            <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+              {citySuggestions.map((option) => (
+                <li
+                  key={option.label}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchLocation(option.label);
+                    setIsCityInputFocused(false);
+                    cityInputRef.current?.blur();
+                  }}
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700 transition-colors"
+                >
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="md:w-48 px-1">
           <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-medium text-gray-600">
-              Distanza
-            </label>
-            <span className="text-xs font-semibold text-blue-600">
-              {distanceKm} km
-            </span>
+            <label className="text-xs font-medium text-gray-600">Distanza</label>
+            <span className="text-xs font-semibold text-blue-600">{distanceKm} km</span>
           </div>
           <input
             type="range"
@@ -123,7 +173,7 @@ export default function AllEvents() {
             step="1"
             value={distanceKm}
             onChange={(e) => setDistanceKm(Number(e.target.value))}
-            disabled={!searchLocation}
+            disabled={!selectedSearchCity}
             className="w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
@@ -132,7 +182,7 @@ export default function AllEvents() {
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="date"
-            min={today} 
+            min={today}
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
             value={searchData}
             onChange={(e) => setSearchData(e.target.value)}
@@ -156,8 +206,14 @@ export default function AllEvents() {
                 <label key={tag.label} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={selectedTags.some((t) => t.label === tag.label)}
-                    onChange={() => setSelectedTags(prev => prev.some((t) => t.label === tag.label) ? prev.filter(t => t.label !== tag.label) : [...prev, tag])}
+                    checked={selectedTags.some((selectedTag) => selectedTag.label === tag.label)}
+                    onChange={() =>
+                      setSelectedTags((prev) =>
+                        prev.some((selectedTag) => selectedTag.label === tag.label)
+                          ? prev.filter((selectedTag) => selectedTag.label !== tag.label)
+                          : [...prev, tag]
+                      )
+                    }
                     className="rounded text-blue-600"
                   />
                   <span className="text-sm">{tag.label}</span>
@@ -171,16 +227,17 @@ export default function AllEvents() {
       {!loading && events.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((event) => {
-            // Logica canEdit spostata qui per garantire la "purity" del render
             const eventStart = new Date(event.dateTime).getTime();
-            const editable = event.isCreatedByMe && eventStart > (now + 24 * 60 * 60 * 1000);
-            
+            const editable = event.isCreatedByMe && eventStart > now + 24 * 60 * 60 * 1000;
+
             return (
-              <EventCard 
-                key={event.id} 
-                event={event} 
+              <EventCard
+                key={event.id}
+                event={event}
                 onBook={() => handleBook(event.id)}
-                onCancelBooking={() => handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)}
+                onCancelBooking={() =>
+                  handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)
+                }
                 onEdit={editable ? () => setEventToEdit(event) : undefined}
                 canEdit={editable}
               />
@@ -198,7 +255,10 @@ export default function AllEvents() {
           mode="edit"
           event={eventToEdit}
           onClose={() => setEventToEdit(null)}
-          onSuccess={() => { setEventToEdit(null); fetchEvents(); }}
+          onSuccess={() => {
+            setEventToEdit(null);
+            fetchEvents();
+          }}
           availableTags={availableTags}
         />
       )}
