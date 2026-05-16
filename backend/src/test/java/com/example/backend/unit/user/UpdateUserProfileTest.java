@@ -31,8 +31,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         UserResponse response = userService.updatePersonalData(
                 1L,
-                new UpdatePersonalDataRequest("Marco", "Bianchi")
-        );
+                new UpdatePersonalDataRequest("Marco", "Bianchi"));
 
         assertNotNull(response);
         assertEquals("Marco", response.name());
@@ -48,8 +47,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.updatePersonalData(1L, new UpdatePersonalDataRequest("", "Rossi"))
-        );
+                () -> userService.updatePersonalData(1L, new UpdatePersonalDataRequest("", "Rossi")));
 
         assertEquals("Campi obbligatori mancanti", ex.getMessage());
         verify(userRepository, never()).save(any());
@@ -78,8 +76,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.updateEmail(1L, new UpdateEmailRequest("marioexample.com"))
-        );
+                () -> userService.updateEmail(1L, new UpdateEmailRequest("marioexample.com")));
 
         assertEquals("Email non valida", ex.getMessage());
         verify(userRepository, never()).save(any());
@@ -95,8 +92,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.updateEmail(1L, new UpdateEmailRequest("luca@example.com"))
-        );
+                () -> userService.updateEmail(1L, new UpdateEmailRequest("luca@example.com")));
 
         assertEquals("Email già registrata", ex.getMessage());
         verify(userRepository, never()).save(any());
@@ -114,8 +110,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         UserResponse response = userService.updatePassword(
                 1L,
-                new UpdatePasswordRequest("OldPass1", "NewPass1", "NewPass1")
-        );
+                new UpdatePasswordRequest("OldPass1", "NewPass1", "NewPass1"));
 
         assertEquals("mario@example.com", response.email());
         verify(passwordEncoder).encode("NewPass1");
@@ -131,8 +126,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.updatePassword(1L, new UpdatePasswordRequest("WrongPass1", "NewPass1", "NewPass1"))
-        );
+                () -> userService.updatePassword(1L, new UpdatePasswordRequest("WrongPass1", "NewPass1", "NewPass1")));
 
         assertEquals("Password attuale non corretta", ex.getMessage());
         verify(passwordEncoder, never()).encode(any());
@@ -148,8 +142,7 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.updatePassword(1L, new UpdatePasswordRequest("OldPass1", "password", "password"))
-        );
+                () -> userService.updatePassword(1L, new UpdatePasswordRequest("OldPass1", "password", "password")));
 
         assertEquals("La password deve contenere almeno una maiuscola", ex.getMessage());
         verify(passwordEncoder, never()).encode(any());
@@ -164,12 +157,126 @@ public class UpdateUserProfileTest extends BaseUserTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.updatePassword(1L, new UpdatePasswordRequest("OldPass1", "NewPass1", "OtherPass1"))
-        );
+                () -> userService.updatePassword(1L, new UpdatePasswordRequest("OldPass1", "NewPass1", "OtherPass1")));
 
         assertEquals("Le password non corrispondono", ex.getMessage());
         verify(passwordEncoder, never()).matches(any(CharSequence.class), any(String.class));
         verify(passwordEncoder, never()).encode(any(CharSequence.class));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePreferences_shouldSavePreferences_whenValid() throws Exception {
+        // Arrange
+        User user = userWithId(1L, "Mario", "Rossi", "mario@example.com", "HASH");
+        user.setFavouriteCity("Roma");
+        user.setMacroTags(new java.util.ArrayList<>(java.util.List.of("Psicologia")));
+        user.setMicroTags(new java.util.ArrayList<>());
+
+        User saved = userWithId(1L, "Mario", "Rossi", "mario@example.com", "HASH");
+        saved.setFavouriteCity("Milano");
+        saved.setMacroTags(new java.util.ArrayList<>(java.util.List.of("Informatica e Tecnologie")));
+        saved.setMicroTags(new java.util.ArrayList<>(java.util.List.of("Java")));
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(saved);
+
+        com.example.backend.dto.UpdatePreferencesRequest request = new com.example.backend.dto.UpdatePreferencesRequest(
+                "Milano",
+                java.util.List.of("Informatica e Tecnologie"),
+                java.util.List.of("Java"));
+
+        // Act
+        UserResponse response = userService.updatePreferences(1L, request);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("Milano", response.favouriteCity());
+        assertEquals(1, response.macroTags().size());
+        assertEquals("Informatica e Tecnologie", response.macroTags().get(0));
+        assertEquals(1, response.microTags().size());
+        assertEquals("Java", response.microTags().get(0));
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void updatePreferences_shouldThrowException_whenCityIsMissing() throws Exception {
+        // Arrange
+        User user = userWithId(1L, "Mario", "Rossi", "mario@example.com", "HASH");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        com.example.backend.dto.UpdatePreferencesRequest request = new com.example.backend.dto.UpdatePreferencesRequest(
+                "   ", // Città vuota/blank
+                java.util.List.of("Informatica"),
+                java.util.List.of("Java"));
+
+        // Act & Assert
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.updatePreferences(1L, request));
+
+        assertEquals("Bisogna indicare una città preferita", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePreferences_shouldThrowException_whenMacroTagsAreEmpty() throws Exception {
+        // Arrange
+        User user = userWithId(1L, "Mario", "Rossi", "mario@example.com", "HASH");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        com.example.backend.dto.UpdatePreferencesRequest request = new com.example.backend.dto.UpdatePreferencesRequest(
+                "Milano",
+                java.util.List.of(), // Lista vuota
+                java.util.List.of());
+
+        // Act & Assert
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.updatePreferences(1L, request));
+
+        assertEquals("Almeno una macro area di interesse deve essere indicata", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePreferences_shouldThrowException_whenTooManyMacroTags() throws Exception {
+        // Arrange
+        User user = userWithId(1L, "Mario", "Rossi", "mario@example.com", "HASH");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        com.example.backend.dto.UpdatePreferencesRequest request = new com.example.backend.dto.UpdatePreferencesRequest(
+                "Milano",
+                java.util.List.of("T1", "T2", "T3", "T4"), // 4 Macro tag (Max 3)
+                java.util.List.of());
+
+        // Act & Assert
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.updatePreferences(1L, request));
+
+        assertEquals("Si possono indicare al massimo 3 aree di interesse generale ", ex.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePreferences_shouldThrowException_whenTooManyMicroTags() throws Exception {
+        // Arrange
+        User user = userWithId(1L, "Mario", "Rossi", "mario@example.com", "HASH");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        com.example.backend.dto.UpdatePreferencesRequest request = new com.example.backend.dto.UpdatePreferencesRequest(
+                "Milano",
+                java.util.List.of("Informatica"),
+                java.util.List.of("m1", "m2", "m3", "m4", "m5", "m6") // 6 Micro tag (Max 5)
+        );
+
+        // Act & Assert
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.updatePreferences(1L, request));
+
+        assertEquals("Si possono indicare al massimo 5 argomenti di interesse specifici ", ex.getMessage());
         verify(userRepository, never()).save(any());
     }
 
