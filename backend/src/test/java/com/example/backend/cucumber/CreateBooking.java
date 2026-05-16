@@ -1,6 +1,5 @@
 package com.example.backend.cucumber;
 
-
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -19,13 +18,14 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 
 public class CreateBooking {
 
@@ -59,11 +59,8 @@ public class CreateBooking {
 
     @Given("esiste un utente autenticato per la prenotazione")
     public void esisteUnUtenteAutenticatoPerLaPrenotazione() {
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario.prenotazione@example.com");
-        user.setPassword("Password123!");
+        user = new User("Mario", "Rossi", "mario.prenotazione@example.com", "Password123!",
+                "Milano", List.of("Tech"), new ArrayList<>());
         user = userRepository.save(user);
 
         session.setAttribute("userId", user.getId());
@@ -71,17 +68,14 @@ public class CreateBooking {
 
     @And("esiste un evento aperto e non al completo")
     public void esisteUnEventoApertoENonAlCompleto() {
-        User creator = new User();
-        creator.setName("Luca");
-        creator.setLastname("Bianchi");
-        creator.setEmail("luca.creatore@example.com");
-        creator.setPassword("Password123!");
+        User creator = new User("Luca", "Bianchi", "luca.creatore@example.com", "Password123!",
+                "Roma", List.of("Social"), new ArrayList<>());
         creator = userRepository.save(creator);
 
         event = new Event();
         event.setTitle("Studio Ingegneria del Software");
         event.setDescription("Sessione di studio");
-        event.setLocation("Aula 1");
+        event.setLocation("Milano (MI)-Aula 1");
         event.setDateTime(LocalDateTime.now().plusDays(1));
         event.setDuration(2.0);
         event.setMaxParticipants(3);
@@ -96,6 +90,7 @@ public class CreateBooking {
 
         event = eventRepository.save(event);
     }
+
     @Then("il sistema impedisce la prenotazione per evento pieno")
     public void ilSistemaImpedisceLaPrenotazionePerEventoPieno() throws Exception {
         result.andExpect(status().isBadRequest());
@@ -106,20 +101,16 @@ public class CreateBooking {
         result.andExpect(content().string(Matchers.containsString("Errore: L'evento è pieno")));
     }
 
-
     @And("esiste un evento aperto ma al completo")
     public void esisteUnEventoApertoMaAlCompleto() {
-        User creator = new User();
-        creator.setName("Giulia");
-        creator.setLastname("Verdi");
-        creator.setEmail("giulia.creatore@example.com");
-        creator.setPassword("Password123!");
+        User creator = new User("Giulia", "Verdi", "giulia.creatore@example.com", "Password123!",
+                "Napoli", List.of("Cultura"), new ArrayList<>());
         creator = userRepository.save(creator);
 
         event = new Event();
         event.setTitle("Progetto Basi di Dati");
         event.setDescription("Lavoro di gruppo");
-        event.setLocation("Lab 2");
+        event.setLocation("Milano (MI)-Lab 2");
         event.setDateTime(LocalDateTime.now().plusDays(1));
         event.setDuration(2.0);
         event.setMaxParticipants(1);
@@ -138,27 +129,21 @@ public class CreateBooking {
     @And("l'utente è già prenotato a un evento")
     public void utenteGiaPrenotatoAUnEvento() {
         if (user == null) {
-            user = new User();
-            user.setName("Mario");
-            user.setLastname("Rossi");
-            user.setEmail("mario.giaprenotato@example.com");
-            user.setPassword("Password123!");
+            user = new User("Mario", "Rossi", "mario.giaprenotato@example.com", "Password123!",
+                    "Milano", List.of("Tech"), new ArrayList<>());
             user = userRepository.save(user);
             session.setAttribute("userId", user.getId());
         }
 
         if (event == null) {
-            User creator = new User();
-            creator.setName("Anna");
-            creator.setLastname("Neri");
-            creator.setEmail("anna.creatore@example.com");
-            creator.setPassword("Password123!");
+            User creator = new User("Anna", "Neri", "anna.creatore@example.com", "Password123!",
+                    "Torino", List.of("Education"), new ArrayList<>());
             creator = userRepository.save(creator);
 
             event = new Event();
             event.setTitle("Progetto Java");
             event.setDescription("Sessione collaborativa");
-            event.setLocation("Lab 1");
+            event.setLocation("Milano (MI)-Lab 1");
             event.setDateTime(LocalDateTime.now().plusDays(1));
             event.setDuration(2.0);
             event.setMaxParticipants(5);
@@ -206,13 +191,13 @@ public class CreateBooking {
     }
 
     @Then("il sistema non mostra il pulsante {string}")
-public void ilSistemaNonMostraIlPulsante(String pulsante) throws Exception {
-    result.andExpect(status().isOk());
+    public void ilSistemaNonMostraIlPulsante(String pulsante) throws Exception {
+        result.andExpect(status().isOk());
 
-    if ("prenota".equalsIgnoreCase(pulsante)) {
-        result.andExpect(content().string(Matchers.containsString(event.getTitle())));
+        if ("prenota".equalsIgnoreCase(pulsante)) {
+            result.andExpect(content().string(Matchers.containsString(event.getTitle())));
+        }
     }
-}
 
     @And("il sistema segnala che l'evento è al completo")
     public void ilSistemaSegnalaCheLEventoEAlCompleto() throws Exception {
@@ -229,12 +214,12 @@ public void ilSistemaNonMostraIlPulsante(String pulsante) throws Exception {
     }
 
     @And("il sistema mostra il pulsante {string}")
-public void ilSistemaMostraIlPulsante(String pulsante) throws Exception {
-    result.andExpect(status().isOk());
+    public void ilSistemaMostraIlPulsante(String pulsante) throws Exception {
+        result.andExpect(status().isOk());
 
-    if ("annulla prenotazione".equalsIgnoreCase(pulsante)) {
-        result.andExpect(jsonPath("$[0].title").value(event.getTitle()));
-        result.andExpect(jsonPath("$[0].isBooked").value(true));
+        if ("annulla prenotazione".equalsIgnoreCase(pulsante)) {
+            result.andExpect(jsonPath("$[0].title").value(event.getTitle()));
+            result.andExpect(jsonPath("$[0].isBooked").value(true));
+        }
     }
-}
 }

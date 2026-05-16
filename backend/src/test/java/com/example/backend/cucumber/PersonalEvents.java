@@ -16,6 +16,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -39,11 +40,14 @@ public class PersonalEvents {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        User user = new User();
-        user.setName("Luca");
-        user.setLastname("Rossi");
-        user.setEmail("luca@example.com");
-        user.setPassword("Pass123");
+        User user = new User(
+                "Luca",
+                "Rossi",
+                "luca@example.com",
+                "Pass123",
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         userRepository.save(user);
 
         this.userId = user.getId();
@@ -58,8 +62,8 @@ public class PersonalEvents {
         event.setDescription("Ripasso SQL");
         event.setDateTime(LocalDateTime.of(2026, 4, 10, 15, 0));
         event.setDuration(2.0);
-        event.setLocation("Aula 2");
-        event.setTags(List.of("Informatica"));
+        event.setLocation("Milano (MI)-Aula 2");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Informatica")));
         event.setMaxParticipants(5);
         event.setCreatorParticipationRequired(false);
         event.setStatus("aperto");
@@ -70,11 +74,14 @@ public class PersonalEvents {
 
     @And("non ha eventi personali")
     public void nonHaEventiPersonali() {
-        User otherUser = new User();
-        otherUser.setName("Marco");
-        otherUser.setLastname("Verdi");
-        otherUser.setEmail("marco@example.com");
-        otherUser.setPassword("Pass123");
+        User otherUser = new User(
+                "Marco",
+                "Verdi",
+                "marco@example.com",
+                "Pass123",
+                "Roma",
+                List.of("Social"),
+                new ArrayList<>());
         userRepository.save(otherUser);
 
         Event event = new Event();
@@ -82,8 +89,8 @@ public class PersonalEvents {
         event.setDescription("Descrizione");
         event.setDateTime(LocalDateTime.of(2026, 4, 12, 10, 0));
         event.setDuration(3.0);
-        event.setLocation("Biblioteca");
-        event.setTags(List.of("Matematica"));
+        event.setLocation("Milano (MI)-Biblioteca");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")));
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
         event.setStatus("aperto");

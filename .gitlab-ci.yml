@@ -100,63 +100,160 @@ pages:
     - cd backend
     - mvn javadoc:javadoc
     - cd ..
+
+    # Prepare GitLab Pages output folder
     - rm -rf public
-    - mkdir public
-    - cp -r backend/target/reports/apidocs/* public/
+    - mkdir -p public
+    - mkdir -p public/javadoc
+    - mkdir -p public/api
+
+    # Copy Javadoc into /javadoc
+    - cp -r backend/target/reports/apidocs/* public/javadoc/
+
+    # Copy OpenAPI JSON into /api
+    - cp backend/docs/openapi.json public/api/openapi.json
+
+    # Create static Swagger UI page
+    - |
+      cat > public/api/index.html <<'EOF'
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Swagger UI - Backend API</title>
+          <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+      </head>
+      <body>
+          <div id="swagger-ui"></div>
+
+          <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+          <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+          <script>
+              window.onload = function () {
+                  SwaggerUIBundle({
+                      url: "./openapi.json",
+                      dom_id: "#swagger-ui",
+                      presets: [
+                          SwaggerUIBundle.presets.apis,
+                          SwaggerUIStandalonePreset
+                      ],
+                      layout: "StandaloneLayout"
+                  });
+              };
+          </script>
+      </body>
+      </html>
+      EOF
+
+    # Create GitLab Pages homepage
+    - |
+      cat > public/index.html <<'EOF'
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
+        <title>Documentazione Progetto</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background: #f4f6f8;
+                  color: #111827;
+                  margin: 0;
+                  padding: 40px;
+              }
+
+              main {
+                  max-width: 800px;
+                  margin: auto;
+                  background: white;
+                  padding: 32px;
+                  border-radius: 12px;
+                  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+              }
+
+              h1 {
+                  margin-top: 0;
+              }
+
+              p {
+                  color: #4b5563;
+              }
+
+              .link-card {
+                  display: block;
+                  padding: 18px;
+                  margin-top: 16px;
+                  border: 1px solid #d1d5db;
+                  border-radius: 10px;
+                  text-decoration: none;
+                  color: #111827;
+                  background: #f9fafb;
+              }
+
+              .link-card:hover {
+                  background: #eef2ff;
+              }
+
+              .title {
+                  font-size: 20px;
+                  font-weight: bold;
+              }
+
+              .description {
+                  margin-top: 6px;
+                  color: #4b5563;
+              }
+          </style>
+      </head>
+      <body>
+          <main>
+              <h1>Documentazione Progetto</h1>
+              <p>Da questa pagina puoi accedere alla documentazione tecnica del backend.</p>
+
+              <a class="link-card" href="./javadoc/">
+                  <div class="title">Javadoc</div>
+                  <div class="description">Documentazione delle classi Java del backend.</div>
+              </a>
+
+              <a class="link-card" href="./api/">
+                  <div class="title">Swagger UI</div>
+                  <div class="description">Documentazione degli endpoint REST generata da OpenAPI.</div>
+              </a>
+          </main>
+      </body>
+      </html>
+      EOF
+
   artifacts:
     paths:
       - public
     expire_in: 1 week
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
 
-########################
-# PACKAGE 
-########################
-package_backend:
-  stage: package
-  image: maven:3.9.6-eclipse-temurin-21
-  needs:
-    - compile_backend
-  script:
-    - cd backend
-    - mvn package -DskipTests -DskipITs
-  artifacts:
-    paths:
-      - backend/target/*.jar
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-
-package_frontend:
-  stage: package
-  image: node:22-alpine
-  script:
-    - cd frontend
-    - npm ci --cache .npm --prefer-offline
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop"'
 
 ########################
 # DEPLOY
 ########################
-deploy:
-  stage: deploy
-  image: alpine:latest
-  needs:
-    - package_backend
-    - package_frontend
-  script:
-    - mkdir -p deploy
-    - cp backend/target/*.jar deploy/app.jar
-    - cp -r frontend/dist deploy/
-  artifacts:
-      paths:
-        - deploy/
-      expire_in: 1 week
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+# deploy:
+#   stage: deploy
+#   image: alpine:latest
+#   needs:
+#     - package_backend
+#     - package_frontend
+#   script:
+#     - mkdir -p deploy
+#     - cp backend/target/*.jar deploy/app.jar
+#     - cp -r frontend/dist deploy/
+#   artifacts:
+#       paths:
+#         - deploy/
+#       expire_in: 1 week
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "develop"'
 

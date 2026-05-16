@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
+import { formatTagLabel } from "./catalogs";
 
 export default function EventCard({
   event,
@@ -43,9 +44,9 @@ export default function EventCard({
               event.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-semibold"
+                  className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-semibold"
                 >
-                  {tag}
+                  {formatTagLabel(tag)}
                 </span>
               ))}
           </div>

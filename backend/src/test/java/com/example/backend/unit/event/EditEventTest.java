@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import com.example.backend.dto.EventRequest;
 import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 
 public class EditEventTest extends BaseEventTest {
@@ -30,8 +31,8 @@ public class EditEventTest extends BaseEventTest {
                 "Updated Java Project",
                 LocalDateTime.parse("2026-10-16T17:00:00"),
                 3.0,
-                "Library",
-                List.of("Java", "Backend"),
+                "Milano (MI)-Biblioteca",
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione"), new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo backend")),
                 "Updated description",
                 12,
                 false
@@ -45,8 +46,8 @@ public class EditEventTest extends BaseEventTest {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.parse("2026-10-15T15:00:00"));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -63,13 +64,56 @@ public class EditEventTest extends BaseEventTest {
         assertEquals("Updated Java Project", result.getTitle());
         assertEquals(LocalDateTime.parse("2026-10-16T17:00:00"), result.getDateTime());
         assertEquals(3.0, result.getDuration());
-        assertEquals("Library", result.getLocation());
-        assertEquals(List.of("JAVA", "BACKEND"), result.getTags());
+        assertEquals("Milano (MI)-Biblioteca", result.getLocation());
+        assertEquals(List.of(
+                new EventTag("Informatica e Tecnologie", "Programmazione"),
+                new EventTag("Informatica e Tecnologie", "Sviluppo backend")), result.getTags());
         assertEquals("Updated description", result.getDescription());
         assertEquals(12, result.getMaxParticipants());
         assertEquals(false, result.isCreatorParticipationRequired());
 
         verify(eventRepository, times(1)).save(any(Event.class));
+        verify(emailService, times(1)).sendEventUpdateEmailToParticipants(result);
+    }
+
+    @Test
+    void testEditEvent_NoRelevantChanges_DoesNotSendEmail() {
+        EventRequest request = new EventRequest(
+                "Java Project",
+                LocalDateTime.parse("2026-10-15T15:00:00"),
+                2.5,
+                "Milano (MI)-Aula Magna",
+                List.of(new EventTag("Informatica e Tecnologie", "Programmazione")),
+                "Review",
+                10,
+                true
+        );
+
+        User creator = new User();
+        creator.setId(1L);
+
+        Event event = new Event();
+        event.setId(10L);
+        event.setTitle("Java Project");
+        event.setDateTime(LocalDateTime.parse("2026-10-15T15:00:00"));
+        event.setDuration(2.5);
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new EventTag("Informatica e Tecnologie", "Programmazione")));
+        event.setDescription("Review");
+        event.setMaxParticipants(10);
+        event.setCreatorParticipationRequired(true);
+        event.setCreator(creator);
+        event.setParticipants(new HashSet<>(Set.of(creator)));
+
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(eventRepository.findById(10L)).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
+
+        Event result = eventService.editEvent(10L, request, session);
+
+        assertNotNull(result);
+        verify(eventRepository, times(1)).save(any(Event.class));
+        verify(emailService, never()).sendEventUpdateEmailToParticipants(any(Event.class));
     }
 
     @Test
@@ -78,8 +122,8 @@ public class EditEventTest extends BaseEventTest {
                 "Updated Java Project",
                 LocalDateTime.now().plusDays(2),
                 3.0,
-                "Library",
-                List.of("Java"),
+                "Milano (MI)-Biblioteca",
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")),
                 "Updated description",
                 12,
                 false
@@ -102,8 +146,8 @@ public class EditEventTest extends BaseEventTest {
                 "Updated Java Project",
                 LocalDateTime.parse("2026-10-16T17:00:00"),
                 3.0,
-                "Library",
-                List.of("Java"),
+                "Milano (MI)-Biblioteca",
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")),
                 "Updated description",
                 12,
                 false
@@ -126,8 +170,8 @@ public class EditEventTest extends BaseEventTest {
                 "Updated Java Project",
                 LocalDateTime.parse("2026-10-16T17:00:00"),
                 3.0,
-                "Library",
-                List.of("Java"),
+                "Milano (MI)-Biblioteca",
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")),
                 "Updated description",
                 12,
                 false
@@ -159,8 +203,8 @@ public class EditEventTest extends BaseEventTest {
                 "Updated Java Project",
                 LocalDateTime.parse("2026-10-16T17:00:00"),
                 3.0,
-                "Library",
-                List.of("Java"),
+                "Milano (MI)-Biblioteca",
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")),
                 "Updated description",
                 2,
                 false
@@ -180,8 +224,8 @@ public class EditEventTest extends BaseEventTest {
         event.setTitle("Java Project");
         event.setDateTime(LocalDateTime.now().plusDays(3));
         event.setDuration(2.5);
-        event.setLocation("Main Hall");
-        event.setTags(List.of("Java"));
+        event.setLocation("Milano (MI)-Aula Magna");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
         event.setDescription("Review");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);

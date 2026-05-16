@@ -21,12 +21,21 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     );
 
     // ================= DISTINCT TAGS =================
-    @Query("SELECT DISTINCT t FROM Event e JOIN e.tags t")
+    @Query("""
+            SELECT DISTINCT
+                CASE
+                    WHEN t.microTag IS NULL OR t.microTag = '' THEN t.macroTag
+                    ELSE CONCAT(t.macroTag, ' > ', t.microTag)
+                END
+            FROM Event e JOIN e.tags t
+            """)
     List<String> findDistinctTags();
 
     // ================= DYNAMIC FILTER SEARCH =================
-    @Query("SELECT e FROM Event e WHERE " +
-            "(:checkTags = false OR :tagCount = (SELECT COUNT(t) FROM Event e2 JOIN e2.tags t WHERE e2.id = e.id AND t IN :tags)) AND " +
+    @Query("SELECT DISTINCT e FROM Event e WHERE " +
+            "(:checkTags = false OR EXISTS (SELECT t FROM Event e2 JOIN e2.tags t WHERE e2.id = e.id AND " +
+            "(t.macroTag IN :tags OR " +
+            "(CASE WHEN t.microTag IS NULL OR t.microTag = '' THEN t.macroTag ELSE CONCAT(t.macroTag, ' > ', t.microTag) END) IN :tags))) AND " +
             "(:search IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "(:location IS NULL OR LOWER(e.location) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
             "(:startDate IS NULL OR e.dateTime >= :startDate) AND " +
@@ -35,7 +44,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("search") String search,
             @Param("checkTags") boolean checkTags,
             @Param("tags") List<String> tags,
-            @Param("tagCount") long tagCount,
             @Param("location") String location,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate

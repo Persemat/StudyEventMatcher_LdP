@@ -8,7 +8,7 @@ public record EventRequest(
         LocalDateTime dateTime,
         Double duration,
         String location,
-        List<String> tags,
+        List<?> tags,
         String description,
         Integer maxParticipants,
         boolean creatorParticipationRequired

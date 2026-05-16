@@ -17,30 +17,26 @@ export default function MyEvents() {
 
   const now = new Date();
 
-  // Check if event is future or past
+  // Splits future and past events relative to the current time.
   const isFutureEvent = (event) => new Date(event.dateTime) >= now;
   const isPastEvent = (event) => new Date(event.dateTime) < now;
 
-  // Only future events created by me
+  // Shows only future events created by the current user.
   const createdEvents = events.filter(
     (e) => e.isCreatedByMe && isFutureEvent(e)
   );
 
-  // Only future events I joined but didn't create
+  // Shows only future events booked by the user but created by someone else.
   const bookedEvents = events.filter(
     (e) => e.isBooked && !e.isCreatedByMe && isFutureEvent(e)
   );
 
-  // History: past events created by me or joined
+  // History includes past events created or booked by the user.
   const historyEvents = events.filter(
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
 
-  // Extract tags
-  const availableTags = Array.from(
-    new Set(events.flatMap((event) => event.tags || []))
-  );
-
+  // Reloads all visible events and refreshes the three sections.
   const fetchEvents = async () => {
     setLoading(true);
     setError("");
@@ -72,10 +68,12 @@ export default function MyEvents() {
 
   const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
 
+  // Opens the modal in edit mode with the selected event data.
   const handleEdit = (event) => {
     setEventToEdit(event);
   };
 
+  // Chooses which event list to render based on the active tab.
   const displayedEvents =
     activeTab === "created"
       ? createdEvents
@@ -184,7 +182,6 @@ export default function MyEvents() {
             setShowCreateModal(false);
             fetchEvents();
           }}
-          availableTags={availableTags}
         />
       )}
 
@@ -198,7 +195,6 @@ export default function MyEvents() {
             setEventToEdit(null);
             fetchEvents();
           }}
-          availableTags={availableTags}
         />
       )}
 

@@ -17,6 +17,7 @@ import com.example.backend.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,8 +42,8 @@ public class EventDateFilter {
         event.setDescription("Descrizione test data");
         event.setDateTime(dateTime);
         event.setDuration(1.5);
-        event.setLocation("Aula Test");
-        event.setTags(List.of("Test"));
+        event.setLocation("Milano (MI)-Aula Test");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Testing software")));
         event.setMaxParticipants(5);
         event.setCreatorParticipationRequired(false);
         event.setStatus("open");
@@ -59,11 +60,14 @@ public class EventDateFilter {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = new User();
-        user.setName("Paolo");
-        user.setLastname("Verdi");
-        user.setEmail("paolo.date@example.com");
-        user.setPassword("Password123!");
+        user = new User(
+                "Paolo",
+                "Verdi",
+                "paolo.date@example.com",
+                "Password123!",
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         userRepository.save(user);
     }
 

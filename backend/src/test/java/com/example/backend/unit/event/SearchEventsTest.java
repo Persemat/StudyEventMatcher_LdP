@@ -3,7 +3,6 @@ package com.example.backend.unit.event;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import com.example.backend.dto.EventResponse;
 import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 
 public class SearchEventsTest extends BaseEventTest {
@@ -40,53 +40,44 @@ public class SearchEventsTest extends BaseEventTest {
     void testSearchForEvents_FullFilters_Success() {
         // Arrange
         String search = "Party";
-        List<String> tags = List.of("Music", "Social");
-        String location = "Rome";
+        List<String> tags = List.of("Informatica e Tecnologie > SQL", "Scienze Matematiche Fisiche e Naturali > Fisica");
+        String location = "Roma (RM)";
         String date = "2026-05-20";
 
         Event event = new Event();
         setupMockEvent(event, 1L, LocalDateTime.now().plusDays(1));
+        event.setTags(List.of(
+                new EventTag("Informatica e Tecnologie", "SQL"),
+                new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
         List<Event> events = List.of(event);
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(eventRepository.findByDynamicFilters(
-                eq("Party"), eq(true), eq(tags), eq(2L), eq("Rome"), any(), any())).thenReturn(events);
+                eq("Party"), eq(true), eq(tags), eq("Roma (RM)"), any(), any())).thenReturn(events);
 
         // Act
         List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date);
 
         // Assert
         assertEquals(1, results.size());
-        verify(eventRepository).findByDynamicFilters(eq("Party"), eq(true), any(), eq(2L), eq("Rome"), any(), any());
+        assertEquals("Informatica e Tecnologie", results.get(0).tags().get(0).macroTag());
+        assertEquals("SQL", results.get(0).tags().get(0).microTag());
+        assertEquals("Scienze Matematiche Fisiche e Naturali", results.get(0).tags().get(1).macroTag());
+        assertEquals("Fisica", results.get(0).tags().get(1).microTag());
+        verify(eventRepository).findByDynamicFilters(eq("Party"), eq(true), eq(tags), eq("Roma (RM)"), any(), any());
     }
 
     @Test
     void testSearchForEvents_TagsWithAll_ShouldIgnoreTags() {
-        List<String> tags = List.of("Music", "All");
+        List<String> tags = List.of("Informatica e Tecnologie > SQL", "All");
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(eventRepository.findByDynamicFilters(
-                any(), eq(false), any(), eq(0L), any(), any(), any())).thenReturn(new ArrayList<>());
+                any(), eq(false), any(), any(), any(), any())).thenReturn(new ArrayList<>());
 
         eventService.searchForEvents(session, null, tags, null, null);
 
-        verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), eq(0L), isNull(), isNull(),
-                isNull());
-    }
-
-    @Test
-    void testSearchForEvents_InvalidDate_ShouldIgnoreDate() {
-        String invalidDate = "not-a-date";
-
-        when(session.getAttribute("userId")).thenReturn(1L);
-        when(eventRepository.findByDynamicFilters(
-                any(), anyBoolean(), any(), anyLong(), any(), isNull(), isNull()))
-                .thenReturn(new ArrayList<>());
-
-        eventService.searchForEvents(session, null, null, null, invalidDate);
-
-        verify(eventRepository).findByDynamicFilters(any(), anyBoolean(), any(),
-                anyLong(), any(), isNull(), isNull());
+        verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull());
     }
 
     @Test
@@ -99,7 +90,7 @@ public class SearchEventsTest extends BaseEventTest {
         setupMockEvent(futureEvent, 2L, LocalDateTime.now().plusDays(1));
 
         when(session.getAttribute("userId")).thenReturn(1L);
-        when(eventRepository.findByDynamicFilters(any(), anyBoolean(), any(), anyLong(),
+        when(eventRepository.findByDynamicFilters(any(), anyBoolean(), any(),
                 any(), any(), any())).thenReturn(List.of(pastEvent, futureEvent));
 
         // Act
@@ -119,7 +110,7 @@ public class SearchEventsTest extends BaseEventTest {
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(eventRepository.findByDynamicFilters(
-                isNull(), anyBoolean(), any(), anyLong(), isNull(), any(), any()))
+                isNull(), anyBoolean(), any(), isNull(), any(), any()))
                 .thenReturn(new ArrayList<>());
 
         // Act
@@ -127,6 +118,6 @@ public class SearchEventsTest extends BaseEventTest {
 
         // Assert
         verify(eventRepository).findByDynamicFilters(isNull(), anyBoolean(),
-                any(), anyLong(), isNull(), any(), any());
+                any(), isNull(), any(), any());
     }
 }

@@ -18,6 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 
 @Tag("integration")
 public class CreateBookingIT extends BaseEventIT {
@@ -40,24 +42,30 @@ public class CreateBookingIT extends BaseEventIT {
 
         session = new MockHttpSession();
 
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario.booking@example.com");
-        user.setPassword("Password123!");
+        user = new User(
+                "Mario",
+                "Rossi",
+                "mario.booking@example.com",
+                "Password123!",
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         user = userRepository.save(user);
 
-        creator = new User();
-        creator.setName("Luca");
-        creator.setLastname("Bianchi");
-        creator.setEmail("luca.creator@example.com");
-        creator.setPassword("Password123!");
+        creator = new User(
+                "Luca",
+                "Bianchi",
+                "luca.creator@example.com",
+                "Password123!",
+                "Roma",
+                List.of("Social"),
+                new ArrayList<>());
         creator = userRepository.save(creator);
 
         event = new Event();
         event.setTitle("Software Engineering Study");
         event.setDescription("Study session");
-        event.setLocation("Room 1");
+        event.setLocation("Milano (MI)-Aula 1");
         event.setDateTime(LocalDateTime.now().plusDays(1));
         event.setDuration(2.0);
         event.setMaxParticipants(3);
@@ -79,16 +87,14 @@ public class CreateBookingIT extends BaseEventIT {
         session.setAttribute("userId", user.getId());
 
         mockMvc.perform(
-                        post("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                post("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Prenotazione completata con successo"));
 
         mockMvc.perform(
-                        get("/events")
-                                .session(session)
-                )
+                get("/events")
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value(event.getTitle()))
                 .andExpect(jsonPath("$[0].isBooked").value(true))
@@ -98,9 +104,8 @@ public class CreateBookingIT extends BaseEventIT {
     @Test
     void bookingUnauthenticated_shouldReturn400() throws Exception {
         mockMvc.perform(
-                        post("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                post("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Errore: Utente non autenticato"));
     }
@@ -110,9 +115,8 @@ public class CreateBookingIT extends BaseEventIT {
         session.setAttribute("userId", user.getId());
 
         mockMvc.perform(
-                        post("/events/{id}/book", 9999L)
-                                .session(session)
-                )
+                post("/events/{id}/book", 9999L)
+                        .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Errore: Evento non trovato"));
     }
@@ -125,9 +129,8 @@ public class CreateBookingIT extends BaseEventIT {
         eventRepository.save(event);
 
         mockMvc.perform(
-                        post("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                post("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Errore: Sei già prenotato per questo evento"));
     }
@@ -140,9 +143,8 @@ public class CreateBookingIT extends BaseEventIT {
         eventRepository.save(event);
 
         mockMvc.perform(
-                        post("/events/{id}/book", event.getId())
-                                .session(session)
-                )
+                post("/events/{id}/book", event.getId())
+                        .session(session))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Errore: L'evento è pieno"));
     }

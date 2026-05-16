@@ -13,7 +13,7 @@ public record EventResponse(
         LocalDateTime dateTime,
         Double duration,
         String location,
-        List<String> tags,
+        List<EventTagDto> tags,
         String description,
         Integer maxParticipants,
         boolean creatorParticipationRequired,

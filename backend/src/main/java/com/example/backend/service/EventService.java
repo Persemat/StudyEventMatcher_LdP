@@ -2,7 +2,9 @@ package com.example.backend.service;
 
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
+import com.example.backend.dto.EventTagDto;
 import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
@@ -12,6 +14,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -92,12 +96,7 @@ public class EventService {
         newEvent.setLocation(request.location());
 
         if (request.tags() != null) {
-            List<String> normalizedTags = request.tags().stream()
-                    .filter(tag -> tag != null && !tag.isBlank())
-                    .map(tag -> tag.trim().toUpperCase())
-                    .collect(Collectors.toList());
-
-            newEvent.setTags(normalizedTags);
+            newEvent.setTags(normalizeTags(request.tags()));
         }
 
         newEvent.setDescription(request.description());
@@ -154,23 +153,32 @@ public class EventService {
                     "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
         }
 
+        List<EventTag> normalizedTags = request.tags() == null ? event.getTags() : normalizeTags(request.tags());
+        boolean relevantDetailsChanged = hasRelevantEventChanges(event, request, normalizedTags);
+
         event.setTitle(request.title());
         event.setDateTime(request.dateTime());
         event.setDuration(request.duration());
         event.setLocation(request.location());
         if (request.tags() != null) {
-            List<String> normalizedTags = request.tags().stream()
-                    .filter(tag -> tag != null && !tag.isBlank())
-                    .map(tag -> tag.trim().toUpperCase())
-                    .collect(Collectors.toList());
-
             event.setTags(normalizedTags);
         }
         event.setDescription(request.description());
         event.setMaxParticipants(request.maxParticipants());
         event.setCreatorParticipationRequired(request.creatorParticipationRequired());
 
-        return eventRepository.save(event);
+        Event updatedEvent = eventRepository.save(event);
+
+        if (relevantDetailsChanged) {
+            try {
+                emailService.sendEventUpdateEmailToParticipants(updatedEvent);
+            } catch (Exception e) {
+                logger.error("Errore mandando la mail di aggiornamento per questo evento {}",
+                        updatedEvent.getTitle(), e);
+            }
+        }
+
+        return updatedEvent;
     }
 
     /**
@@ -411,9 +419,12 @@ public class EventService {
         String searchParam = (search == null || search.isBlank()) ? null : search;
         String locationParam = (location == null || location.isBlank()) ? null : location;
 
-        boolean checkTags = tags != null && !tags.isEmpty() && !tags.contains("All");
-        List<String> tagsParam = checkTags ? tags : List.of();
-        long tagCount = checkTags ? tagsParam.size() : 0;
+        List<String> tagsParam = tags == null || tags.contains("All")
+                ? List.of()
+                : tags.stream()
+                        .filter(tag -> tag != null && !tag.isBlank())
+                        .toList();
+        boolean checkTags = !tagsParam.isEmpty();
 
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
@@ -432,7 +443,6 @@ public class EventService {
                 searchParam,
                 checkTags,
                 tagsParam,
-                tagCount,
                 locationParam,
                 startDate,
                 endDate);
@@ -488,7 +498,9 @@ public class EventService {
                 event.getDateTime(),
                 event.getDuration(),
                 event.getLocation(),
-                event.getTags(),
+                event.getTags() == null
+                        ? List.of()
+                        : event.getTags().stream().map(EventTagDto::from).toList(),
                 event.getDescription(),
                 event.getMaxParticipants(),
                 event.isCreatorParticipationRequired(),
@@ -501,6 +513,13 @@ public class EventService {
         );
     }
 
+    /**
+     * Recalculates each event status based on date and participant capacity.
+     *
+     * @param toSave current dirty flag, preserved if already true
+     * @param events events to inspect and update in memory
+     * @return true if at least one event status changed
+     */
     public boolean checkIfClosed(boolean toSave, List<Event> events) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -526,6 +545,85 @@ public class EventService {
         }
 
         return toSave;
+    }
+
+    /**
+     * Converts incoming tag payloads to clean {@link EventTag} values.
+     *
+     * Accepts structured DTO/map tags and legacy string labels, removes blank
+     * macro tags, trims values, and drops duplicates.
+     *
+     * @param tags raw tag values from the request
+     * @return normalized tag list ready to be stored
+     */
+    private List<EventTag> normalizeTags(List<?> tags) {
+        return tags.stream()
+                .map(this::toEventTag)
+                .filter(tag -> tag.getMacroTag() != null && !tag.getMacroTag().isBlank())
+                .map(tag -> new EventTag(
+                        tag.getMacroTag().trim(),
+                        tag.getMicroTag() == null || tag.getMicroTag().isBlank()
+                                ? null
+                                : tag.getMicroTag().trim()))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Checks whether fields shown to users changed enough to notify participants.
+     *
+     * @param event current persisted event before mutation
+     * @param request requested event values
+     * @param normalizedTags request tags already normalized for fair comparison
+     * @return true when participants should receive an update email
+     */
+    private boolean hasRelevantEventChanges(Event event, EventRequest request, List<EventTag> normalizedTags) {
+        return !Objects.equals(event.getTitle(), request.title())
+                || !Objects.equals(event.getDateTime(), request.dateTime())
+                || !Objects.equals(event.getDuration(), request.duration())
+                || !Objects.equals(event.getLocation(), request.location())
+                || !Objects.equals(event.getTags(), normalizedTags)
+                || !Objects.equals(event.getDescription(), request.description())
+                || !Objects.equals(event.getMaxParticipants(), request.maxParticipants())
+                || event.isCreatorParticipationRequired() != request.creatorParticipationRequired();
+    }
+
+    /**
+     * Converts one raw tag representation into an {@link EventTag}.
+     *
+     * Supported inputs are EventTag, EventTagDto, map objects from JSON, and
+     * legacy strings formatted as "macro > micro" or just "macro".
+     *
+     * @param rawTag raw tag object from request data
+     * @return converted tag, possibly with null fields if input is empty
+     */
+    private EventTag toEventTag(Object rawTag) {
+        if (rawTag == null) {
+            return new EventTag(null, null);
+        }
+
+        if (rawTag instanceof EventTag eventTag) {
+            return eventTag;
+        }
+
+        if (rawTag instanceof EventTagDto eventTagDto) {
+            return new EventTag(eventTagDto.macroTag(), eventTagDto.microTag());
+        }
+
+        if (rawTag instanceof Map<?, ?> map) {
+            Object macroTag = map.get("macroTag");
+            Object microTag = map.get("microTag");
+            return new EventTag(
+                    macroTag == null ? null : String.valueOf(macroTag),
+                    microTag == null ? null : String.valueOf(microTag));
+        }
+
+        String label = String.valueOf(rawTag).trim();
+        String[] parts = label.split("\\s*>\\s*", 2);
+        if (parts.length == 2) {
+            return new EventTag(parts[0], parts[1]);
+        }
+        return new EventTag(label, null);
     }
 
 }

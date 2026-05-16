@@ -78,9 +78,18 @@ export default function EventDetails({ eventId }) {
         </div>
 
         {event.tags && event.tags.length > 0 && (
-          <div className="flex items-center gap-3">
-            <Tag className="text-blue-500" size={20} />
-            <span>{event.tags.join(', ')}</span>
+          <div className="flex items-start gap-3">
+            <Tag className="text-blue-500 mt-1" size={20} />
+            <div className="flex flex-wrap gap-2">
+              {event.tags.map((tag, index) => (
+                <span 
+                  key={index} 
+                  className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-sm font-medium border border-blue-100"
+                >
+                  {tag.macroTag} {tag.microTag ? `> ${tag.microTag}` : ''}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>

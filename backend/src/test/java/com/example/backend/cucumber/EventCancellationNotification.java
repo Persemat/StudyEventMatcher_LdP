@@ -20,6 +20,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,19 +58,16 @@ public class EventCancellationNotification {
         userRepository.deleteAll();
         userRepository.flush();
 
-        creator = new User();
-        creator.setName("Mario");
-        creator.setLastname("Rossi");
-        creator.setEmail("mario@example.com");
-        creator.setPassword("Password123");
+        creator = new User("Mario", "Rossi", "mario@example.com", "Password123",
+                "Milano", List.of("Studio"), new ArrayList<>());
         creator = userRepository.saveAndFlush(creator);
 
         event = new Event();
         event.setTitle("Ripasso Analisi 1");
         event.setDateTime(LocalDateTime.of(2026, 3, 5, 14, 0));
         event.setDuration(2.0);
-        event.setLocation("Aula 2");
-        event.setTags(List.of("Analisi"));
+        event.setLocation("Milano (MI)-Aula 2");
+        event.setTags(List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Analisi matematica")));
         event.setDescription("Ripasso in vista dell'esame");
         event.setMaxParticipants(10);
         event.setCreatorParticipationRequired(true);
@@ -85,11 +83,8 @@ public class EventCancellationNotification {
     public void esisteUnEventoConPartecipantiIscritti() {
         esisteUnEventoConCreatoreObbligatorio();
 
-        enrolledUser = new User();
-        enrolledUser.setName("Paolo");
-        enrolledUser.setLastname("Neri");
-        enrolledUser.setEmail("paolo@example.com");
-        enrolledUser.setPassword("Password123");
+        enrolledUser = new User("Paolo", "Neri", "paolo@example.com", "Password123",
+                "Roma", List.of("Tech"), new ArrayList<>());
         enrolledUser = userRepository.saveAndFlush(enrolledUser);
 
         event.addParticipant(enrolledUser);
@@ -98,11 +93,8 @@ public class EventCancellationNotification {
 
     @And("l'utente è iscritto all'evento")
     public void lUtenteEIscrittoAllEvento() {
-        enrolledUser = new User();
-        enrolledUser.setName("Anna");
-        enrolledUser.setLastname("Bianchi");
-        enrolledUser.setEmail("anna@example.com");
-        enrolledUser.setPassword("Password123");
+        enrolledUser = new User("Anna", "Bianchi", "anna@example.com", "Password123",
+                "Napoli", List.of("Musica"), new ArrayList<>());
         enrolledUser = userRepository.saveAndFlush(enrolledUser);
 
         event.addParticipant(enrolledUser);
@@ -111,11 +103,8 @@ public class EventCancellationNotification {
 
     @And("un altro utente non è iscritto all'evento")
     public void unAltroUtenteNonEIscrittoAllEvento() {
-        notEnrolledUser = new User();
-        notEnrolledUser.setName("Luca");
-        notEnrolledUser.setLastname("Verdi");
-        notEnrolledUser.setEmail("luca@example.com");
-        notEnrolledUser.setPassword("Password123");
+        notEnrolledUser = new User("Luca", "Verdi", "luca@example.com", "Password123",
+                "Torino", List.of("Sport"), new ArrayList<>());
         notEnrolledUser = userRepository.saveAndFlush(notEnrolledUser);
     }
 
