@@ -226,9 +226,12 @@ public class EventController {
     @GetMapping("/search")
     public ResponseEntity<?> searchEvents(HttpSession session,
                                          @RequestParam(required = false) String search,
-                                         @RequestParam(required = false) List<String> tags,
-                                         @RequestParam(required = false) String location,
-                                         @RequestParam(required = false) String date) {
+                                      @RequestParam(required = false) List<String> tags,
+                                      @RequestParam(required = false) String location,
+                                      @RequestParam(required = false) String date,
+                                      @RequestParam(required = false) Double latitude,
+                                      @RequestParam(required = false) Double longitude,
+                                      @RequestParam(required = false) Integer distanceKm) {
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -236,10 +239,10 @@ public class EventController {
             return ResponseEntity.status(401).body("Sessione invalida o scaduta");
         }
 
-        return ResponseEntity.ok(
-                eventService.searchForEvents(session, search, tags, location, date)
-        );
-    }
+    return ResponseEntity.ok(
+            eventService.searchForEvents(session, search, tags, location, date, latitude, longitude, distanceKm)
+    );
+}
 
     /**
      * Retrieves all distinct event tags available in the system.

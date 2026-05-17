@@ -8,6 +8,8 @@ public record EventRequest(
         LocalDateTime dateTime,
         Double duration,
         String location,
+        Double latitude,
+        Double longitude,
         List<?> tags,
         String description,
         Integer maxParticipants,

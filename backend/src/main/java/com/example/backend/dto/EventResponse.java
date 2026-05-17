@@ -13,6 +13,8 @@ public record EventResponse(
         LocalDateTime dateTime,
         Double duration,
         String location,
+        Double latitude,
+        Double longitude,
         List<EventTagDto> tags,
         String description,
         Integer maxParticipants,

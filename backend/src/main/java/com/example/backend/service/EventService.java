@@ -94,6 +94,8 @@ public class EventService {
         newEvent.setDateTime(request.dateTime());
         newEvent.setDuration(request.duration());
         newEvent.setLocation(request.location());
+        newEvent.setLatitude(request.latitude());
+        newEvent.setLongitude(request.longitude());
 
         if (request.tags() != null) {
             newEvent.setTags(normalizeTags(request.tags()));
@@ -160,6 +162,8 @@ public class EventService {
         event.setDateTime(request.dateTime());
         event.setDuration(request.duration());
         event.setLocation(request.location());
+        event.setLatitude(request.latitude());
+        event.setLongitude(request.longitude());
         if (request.tags() != null) {
             event.setTags(normalizedTags);
         }
@@ -412,7 +416,10 @@ public class EventService {
             String search,
             List<String> tags,
             String location,
-            String date) {
+            String date,
+            Double latitude,
+            Double longitude,
+            Integer distanceKm) {
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -425,7 +432,6 @@ public class EventService {
                         .filter(tag -> tag != null && !tag.isBlank())
                         .toList();
         boolean checkTags = !tagsParam.isEmpty();
-
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
 
@@ -439,13 +445,25 @@ public class EventService {
             }
         }
 
+        boolean useDistanceFilter = locationParam != null &&
+                latitude != null &&
+                longitude != null &&
+                distanceKm != null &&
+                distanceKm > 0;
+
         List<Event> events = eventRepository.findByDynamicFilters(
                 searchParam,
                 checkTags,
                 tagsParam,
-                locationParam,
+                useDistanceFilter ? null : locationParam,
                 startDate,
                 endDate);
+
+        if (useDistanceFilter) {
+            events = events.stream()
+                    .filter(event -> isWithinDistance(event, latitude, longitude, distanceKm))
+                    .toList();
+        }
 
         boolean updated = checkIfClosed(false, events);
 
@@ -457,6 +475,37 @@ public class EventService {
                 .filter(e -> e.getDateTime().isAfter(now))
                 .map(event -> toResponse(event, userId))
                 .toList();
+    }
+
+    private boolean isWithinDistance(Event event, double latitude, double longitude, int distanceKm) {
+        if (event.getLatitude() == null || event.getLongitude() == null) {
+            return false;
+        }
+
+        return calculateDistanceKm(
+                latitude,
+                longitude,
+                event.getLatitude(),
+                event.getLongitude()) <= distanceKm;
+    }
+
+    private double calculateDistanceKm(double firstLatitude,
+            double firstLongitude,
+            double secondLatitude,
+            double secondLongitude) {
+
+        final double earthRadiusKm = 6371.0;
+        double latDistance = Math.toRadians(secondLatitude - firstLatitude);
+        double lonDistance = Math.toRadians(secondLongitude - firstLongitude);
+        double firstLat = Math.toRadians(firstLatitude);
+        double secondLat = Math.toRadians(secondLatitude);
+
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(firstLat) * Math.cos(secondLat)
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return earthRadiusKm * c;
     }
 
     /**
@@ -498,6 +547,8 @@ public class EventService {
                 event.getDateTime(),
                 event.getDuration(),
                 event.getLocation(),
+                event.getLatitude(),
+                event.getLongitude(),
                 event.getTags() == null
                         ? List.of()
                         : event.getTags().stream().map(EventTagDto::from).toList(),
