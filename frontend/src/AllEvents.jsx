@@ -23,6 +23,7 @@ export default function AllEvents() {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [distanceKm, setDistanceKm] = useState(25);
   const [isCityInputFocused, setIsCityInputFocused] = useState(false);
+  const [hideOverlapping, setHideOverlapping] = useState(false);
   
   const dropdownRef = useRef(null);
   const locationInputRef = useRef(null);
@@ -96,6 +97,7 @@ export default function AllEvents() {
         url.searchParams.append("longitude", selectedSearchCity.longitude);
       }
       if (searchData) url.searchParams.append("date", searchData);
+      if (hideOverlapping) url.searchParams.append("hideOverlapping", "true");
       if (selectedTags.length > 0) {
         selectedTags.forEach((tag) => url.searchParams.append("tags", tag.label));
       }
@@ -112,7 +114,7 @@ export default function AllEvents() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, searchLocation, searchData, selectedTags, distanceKm, selectedSearchCity]);
+  }, [searchTerm, searchLocation, searchData, selectedTags, distanceKm, selectedSearchCity, hideOverlapping]);
 
   useEffect(() => {
     fetchTags();
@@ -142,7 +144,26 @@ export default function AllEvents() {
         </div>
       )}
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row flex-wrap gap-4">
+      <div className="space-y-2">
+        <div className="flex justify-end">
+          <label
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium cursor-pointer transition-colors ${
+              hideOverlapping
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={hideOverlapping}
+              onChange={(e) => setHideOverlapping(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span>Compatibili con i miei orari</span>
+          </label>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -276,6 +297,7 @@ export default function AllEvents() {
             </div>
           )}
         </div>
+        </div>
       </div>
 
       {!loading && events.length > 0 ? (
@@ -320,8 +342,14 @@ export default function AllEvents() {
       )}
 
       {selectedEventId && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={() => setSelectedEventId(null)}
+    >
+       <div
+        className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border-2 border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+       >
           
           <button 
              onClick={() => setSelectedEventId(null)}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Calendar, Plus } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { AlertTriangle, Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
 
 import EventCard from "./EventCard"; 
@@ -16,10 +16,11 @@ export default function MyEvents() {
   const [selectedEventId, setSelectedEventId] = useState(null);
 
   const now = new Date();
+  const nowTime = now.getTime();
 
   // Splits future and past events relative to the current time.
-  const isFutureEvent = (event) => new Date(event.dateTime) >= now;
-  const isPastEvent = (event) => new Date(event.dateTime) < now;
+  const isFutureEvent = (event) => new Date(event.dateTime).getTime() >= nowTime;
+  const isPastEvent = (event) => new Date(event.dateTime).getTime() < nowTime;
 
   // Shows only future events created by the current user.
   const createdEvents = events.filter(
@@ -35,6 +36,45 @@ export default function MyEvents() {
   const historyEvents = events.filter(
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
+
+  const overlappingEvents = useMemo(() => {
+    const userFutureEvents = events
+      .filter((event) => (event.isCreatedByMe || event.isBooked) && new Date(event.dateTime).getTime() >= nowTime)
+      .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+    const overlappingEventIds = new Set();
+    const overlappingEventTitles = [];
+
+    const addOverlappingEvent = (event) => {
+      if (overlappingEventIds.has(event.id)) return;
+      overlappingEventIds.add(event.id);
+      overlappingEventTitles.push(event.title);
+    };
+
+    for (let i = 0; i < userFutureEvents.length; i += 1) {
+      for (let j = i + 1; j < userFutureEvents.length; j += 1) {
+        const first = userFutureEvents[i];
+        const second = userFutureEvents[j];
+        const firstStart = new Date(first.dateTime).getTime();
+        const firstEnd = firstStart + Math.round((first.duration || 0) * 60) * 60 * 1000;
+        const secondStart = new Date(second.dateTime).getTime();
+        const secondEnd = secondStart + Math.round((second.duration || 0) * 60) * 60 * 1000;
+
+        if (firstStart < secondEnd && firstEnd > secondStart) {
+          addOverlappingEvent(first);
+          addOverlappingEvent(second);
+        }
+      }
+    }
+
+    return overlappingEventTitles;
+  }, [events, nowTime]);
+
+  const formatOverlappingEventTitles = (titles) => {
+    if (titles.length <= 2) return titles.join(" e ");
+
+    return `${titles.slice(0, -1).join(", ")} e ${titles[titles.length - 1]}`;
+  };
 
   // Reloads all visible events and refreshes the three sections.
   const fetchEvents = async () => {
@@ -100,6 +140,20 @@ export default function MyEvents() {
           <Plus className="w-5 h-5" /> Crea Evento
         </button>
       </div>
+
+      {overlappingEvents.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-xl px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-semibold">
+              Attenzione: hai {overlappingEvents.length} eventi con orari sovrapposti.
+            </p>
+            <p className="text-sm mt-1">
+              Controlla: {formatOverlappingEventTitles(overlappingEvents) }.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -199,9 +253,15 @@ export default function MyEvents() {
       )}
 
       {selectedEventId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedEventId(null)}
+        >
            
-           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border border-gray-100">
+           <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border-2 border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+           >
               
               {/* Close Button */}
               <button 
