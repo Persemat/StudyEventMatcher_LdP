@@ -5,6 +5,7 @@ import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.UpdateEmailRequest;
 import com.example.backend.dto.UpdatePasswordRequest;
 import com.example.backend.dto.UpdatePersonalDataRequest;
+import com.example.backend.dto.UpdatePreferencesRequest;
 import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
 import com.example.backend.model.User;
@@ -165,6 +166,42 @@ public class UserService {
 
         user.setName(name.trim());
         user.setLastname(lastname.trim());
+
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updatePreferences(Long userId, UpdatePreferencesRequest request) {
+        User user = getUserFromSession(userId);
+
+        String favouriteCity = request.favouriteCity();
+        List<String> macroTags = request.macroTags();
+        List<String> microTags = request.microTags();
+
+        if (favouriteCity == null || favouriteCity.isBlank()) {
+            throw new IllegalArgumentException("Bisogna indicare una città preferita");
+        }
+
+        if (macroTags == null || macroTags.isEmpty()) {
+            throw new IllegalArgumentException("Almeno una macro area di interesse deve essere indicata");
+        }
+
+        if (macroTags.size() > 3) {
+            throw new IllegalArgumentException("Si possono indicare al massimo 3 aree di interesse generale ");
+        }
+
+        if (microTags != null && microTags.size() > 5) {
+            throw new IllegalArgumentException("Si possono indicare al massimo 5 argomenti di interesse specifici ");
+        }
+
+        user.setFavouriteCity(request.favouriteCity());
+
+        user.getMacroTags().clear();
+        user.getMacroTags().addAll(request.macroTags());
+
+        user.getMicroTags().clear();
+        if (request.microTags() != null) {
+            user.getMicroTags().addAll(request.microTags());
+        }
 
         return toResponse(userRepository.save(user));
     }

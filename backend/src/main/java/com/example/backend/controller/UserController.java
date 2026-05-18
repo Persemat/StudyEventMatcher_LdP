@@ -12,6 +12,7 @@ import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.UpdateEmailRequest;
 import com.example.backend.dto.UpdatePasswordRequest;
 import com.example.backend.dto.UpdatePersonalDataRequest;
+import com.example.backend.dto.UpdatePreferencesRequest;
 import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
 import com.example.backend.service.UserService;
@@ -129,6 +130,19 @@ public class UserController {
         try {
             Long userId = (Long) session.getAttribute("userId");
             UserResponse response = userService.updatePassword(userId, request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/me/preferences")
+    public ResponseEntity<?> updatePreferences(@RequestBody UpdatePreferencesRequest request, HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            UserResponse response = userService.updatePreferences(userId, request);
             return ResponseEntity.ok(response);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(401).body(e.getMessage());

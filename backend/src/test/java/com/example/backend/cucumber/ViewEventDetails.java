@@ -15,6 +15,7 @@ import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -93,7 +94,7 @@ public class ViewEventDetails {
         event.setLocation("Laboratorio");
         event.setStatus("open");
         event.setCreator(creator);
-        event.addParticipant(creator); 
+        event.addParticipant(creator);
 
         event = eventRepository.save(event);
         this.eventId = event.getId();
@@ -117,7 +118,6 @@ public class ViewEventDetails {
         event = eventRepository.save(event);
         this.eventId = event.getId();
     }
-
 
     @When("l'utente seleziona un evento dalla lista")
     public void lUtenteSelezionaUnEventoDallaLista() throws Exception {
