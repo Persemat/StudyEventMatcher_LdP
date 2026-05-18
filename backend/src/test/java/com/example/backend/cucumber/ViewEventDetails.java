@@ -47,6 +47,10 @@ public class ViewEventDetails {
         user.setLastname("Rossi");
         user.setEmail("mario.dettagli@example.com");
         user.setPassword("Password123!");
+        // Required profile fields must be populated to satisfy the User entity constraints.
+        user.setFavouriteCity("Milano");
+        user.setMacroTags(List.of("Tech"));
+        user.setMicroTags(List.of());
         userRepository.save(user);
 
         this.userId = user.getId();

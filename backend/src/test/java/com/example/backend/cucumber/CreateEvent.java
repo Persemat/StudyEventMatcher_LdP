@@ -10,7 +10,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
+import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
@@ -167,6 +170,61 @@ public class CreateEvent {
     public void ilSistemaMOstraErrore(String messaggio) throws Exception {
         result.andExpect(content().string(org.hamcrest.Matchers.containsString(
                 messaggio)));
+    }
+
+    @And("l'utente ha gia' creato un evento nel sistema")
+    public void utenteHaGiaCreatoUnEventoNelSistema() {
+        // Seed the first event with the same key fields used by the duplicate request.
+        title = "Gruppo di studio Java";
+        description = "Ripasso per l'esame di architetture";
+        dateTime = "2026-10-15T15:00:00";
+        duration = 2.5;
+        location = "Milano (MI)-Aula Magna";
+        tags = """
+                [
+                  { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
+                  { "macroTag": "Informatica e Tecnologie", "microTag": null }
+                ]
+                """;
+        maxPartecipants = 10;
+        setCreatorParticipationRequired = true;
+
+        User creator = userRepository.findById(creatorId).orElseThrow();
+
+        Event event = new Event();
+        event.setTitle(title);
+        event.setDescription(description);
+        event.setDateTime(LocalDateTime.parse(dateTime));
+        event.setDuration(duration);
+        event.setLocation(location);
+        event.setTags(List.of(
+                new EventTag("Informatica e Tecnologie", "Programmazione"),
+                new EventTag("Informatica e Tecnologie", null)));
+        event.setMaxParticipants(maxPartecipants);
+        event.setCreatorParticipationRequired(setCreatorParticipationRequired);
+        event.setStatus("open");
+        event.setCreator(creator);
+        event.addParticipant(creator);
+
+        eventRepository.save(event);
+    }
+
+    @When("l'utente compila i campi con gli stessi dati esatti dell'evento esistente")
+    public void utenteCompilaCampiConStessiDatiEsattiEventoEsistente() {
+        // Reuse the seeded event data so the service duplicate guard is exercised.
+        title = "Gruppo di studio Java";
+        description = "Ripasso per l'esame di architetture";
+        dateTime = "2026-10-15T15:00:00";
+        duration = 2.5;
+        location = "Milano (MI)-Aula Magna";
+        tags = """
+                [
+                  { "macroTag": "Informatica e Tecnologie", "microTag": "Programmazione" },
+                  { "macroTag": "Informatica e Tecnologie", "microTag": null }
+                ]
+                """;
+        maxPartecipants = 10;
+        setCreatorParticipationRequired = true;
     }
 
 }

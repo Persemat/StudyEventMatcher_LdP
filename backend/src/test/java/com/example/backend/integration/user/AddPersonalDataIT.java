@@ -3,9 +3,6 @@ package com.example.backend.integration.user;
 import com.example.backend.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

@@ -80,7 +80,7 @@ const App = () => {
           />
 
           <Route 
-            path="/events" element={<AllEvents />} />
+            path="/events" element={<AllEvents user={loggedUser} />} />
 
           <Route 
             path="/my-events" element={<MyEvents />} />
