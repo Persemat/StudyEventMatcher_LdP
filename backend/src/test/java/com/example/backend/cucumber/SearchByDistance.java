@@ -46,11 +46,10 @@ public class SearchByDistance {
     private final List<String> eventiCreati = new ArrayList<>();
 
     private final Map<String, double[]> coordinateCitta = Map.of(
-            "Milano", new double[]{45.4642, 9.1900},
-            "Monza", new double[]{45.5845, 9.2744},
-            "Bergamo", new double[]{45.6983, 9.6773},
-            "Torino", new double[]{45.0703, 7.6869}
-    );
+            "Milano", new double[] { 45.4642, 9.1900 },
+            "Monza", new double[] { 45.5845, 9.2744 },
+            "Bergamo", new double[] { 45.6983, 9.6773 },
+            "Torino", new double[] { 45.0703, 7.6869 });
 
     @Given("l'utente è autenticato")
     public void utenteAutenticato() throws Exception {
@@ -70,8 +69,8 @@ public class SearchByDistance {
                 """, email, password);
 
         mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(bodyRegistration))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyRegistration))
                 .andExpect(status().isOk());
 
         String loginBody = String.format("""
@@ -82,8 +81,8 @@ public class SearchByDistance {
                 """, email, password);
 
         String loginResponse = mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginBody))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -98,7 +97,8 @@ public class SearchByDistance {
     }
 
     @And("esiste un evento {string} a {word}, distante {int} km da Milano")
-    public void esisteUnEventoADistanzaDaMilano(String titoloEvento, String cittaEvento, int distanzaKm) throws Exception {
+    public void esisteUnEventoADistanzaDaMilano(String titoloEvento, String cittaEvento, int distanzaKm)
+            throws Exception {
         double[] coordinate = coordinateCitta.get(cittaEvento);
 
         if (coordinate == null) {
@@ -121,8 +121,7 @@ public class SearchByDistance {
                 cittaEvento,
                 coordinate[0],
                 coordinate[1],
-                LocalDateTime.now().plusDays(10)
-        );
+                LocalDateTime.now().plusDays(10));
 
         MockHttpServletRequestBuilder request = post(CREATE_EVENT_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -193,7 +192,7 @@ public class SearchByDistance {
         }
     }
 
-    @And("il sistema mostra il messaggio {string}")
+    @And("il sistema mostra il messaggio {string} nella pagina")
     public void ilSistemaMostraIlMessaggio(String messaggio) throws Exception {
         result.andExpect(status().isOk())
                 .andExpect(content().string(containsString(messaggio)));

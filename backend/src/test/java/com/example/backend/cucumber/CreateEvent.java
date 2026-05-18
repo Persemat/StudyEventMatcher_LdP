@@ -71,6 +71,16 @@ public class CreateEvent {
         this.creatorId = user.getId();
     }
 
+    // --- NUOVO STEP AGGIUNTO ---
+    @And("l'utente ha gia' creato un evento nel sistema")
+    public void utenteHaGiaCreatoEvento() throws Exception {
+        // Simuliamo la creazione del primo evento riutilizzando i metodi di test
+        utenteInserisceDatiBase();
+        aggiungeTagELimite();
+        impostaFlagCreatore();
+        confermaLaCreazione(); // Questo salva l'evento nel DB fittizio
+    }
+
     @When("l'utente inserisce titolo, descrizione, data, durata e luogo")
     public void utenteInserisceDatiBase() {
         title = "Gruppo di studio Java";
@@ -96,6 +106,16 @@ public class CreateEvent {
         setCreatorParticipationRequired = true;
     }
 
+    // --- NUOVO STEP AGGIUNTO ---
+    @When("l'utente compila i campi con gli stessi dati esatti dell'evento esistente")
+    public void compilaCampiConStessiDati() {
+        // Ricarichiamo le stesse identiche variabili in memoria
+        // in preparazione alla seconda chiamata "confermaLaCreazione"
+        utenteInserisceDatiBase();
+        aggiungeTagELimite();
+        impostaFlagCreatore();
+    }
+
     @And("conferma la creazione")
     public void confermaLaCreazione() throws Exception {
         // Il JSON ora non contiene più creatoreId
@@ -112,6 +132,7 @@ public class CreateEvent {
                 }
                 """, title, description, dateTime, String.valueOf(duration), location, tags, maxPartecipants,
                 setCreatorParticipationRequired);
+
         // Simuliamo l'utente loggato iniettando l'ID nella sessione
         result = mockMvc.perform(post("/events")
                 .sessionAttr("userId", creatorId) // <--- SESSIONE ATTIVA
