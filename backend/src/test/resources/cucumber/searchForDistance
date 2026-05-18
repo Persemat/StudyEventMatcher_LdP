@@ -30,4 +30,4 @@ Feature: Ricerca per distanza
     And esiste un evento "Economia" a Bergamo, distante 50 km da Milano
     When l'utente seleziona un raggio di distanza di 5 km
     Then il sistema non mostra nessun evento
-    And il sistema mostra il messaggio "Nessun evento trovato entro il raggio selezionato"
+    And il sistema mostra il messaggio "Nessun evento trovato entro il raggio selezionato" nella pagina
