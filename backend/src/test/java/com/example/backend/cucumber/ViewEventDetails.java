@@ -15,7 +15,6 @@ import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
