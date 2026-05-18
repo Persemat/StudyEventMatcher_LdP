@@ -231,7 +231,8 @@ public class EventController {
                                       @RequestParam(required = false) String date,
                                       @RequestParam(required = false) Double latitude,
                                       @RequestParam(required = false) Double longitude,
-                                      @RequestParam(required = false) Integer distanceKm) {
+                                      @RequestParam(required = false) Integer distanceKm,
+                                      @RequestParam(required = false) Boolean hideOverlapping) {
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -240,7 +241,7 @@ public class EventController {
         }
 
     return ResponseEntity.ok(
-            eventService.searchForEvents(session, search, tags, location, date, latitude, longitude, distanceKm)
+            eventService.searchForEvents(session, search, tags, location, date, latitude, longitude, distanceKm, hideOverlapping)
     );
 }
 

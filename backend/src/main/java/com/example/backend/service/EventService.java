@@ -419,7 +419,8 @@ public class EventService {
             String date,
             Double latitude,
             Double longitude,
-            Integer distanceKm) {
+            Integer distanceKm,
+            Boolean hideOverlapping) {
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -445,23 +446,23 @@ public class EventService {
             }
         }
 
-        boolean useDistanceFilter = locationParam != null &&
-                latitude != null &&
-                longitude != null &&
-                distanceKm != null &&
-                distanceKm > 0;
+        DistanceFilter distanceFilter = createDistanceFilter(locationParam, latitude, longitude, distanceKm);
 
         List<Event> events = eventRepository.findByDynamicFilters(
                 searchParam,
                 checkTags,
                 tagsParam,
-                useDistanceFilter ? null : locationParam,
+                distanceFilter != null ? null : locationParam,
                 startDate,
                 endDate);
 
-        if (useDistanceFilter) {
+        if (distanceFilter != null) {
             events = events.stream()
-                    .filter(event -> isWithinDistance(event, latitude, longitude, distanceKm))
+                    .filter(event -> isWithinDistance(
+                            event,
+                            distanceFilter.latitude(),
+                            distanceFilter.longitude(),
+                            distanceFilter.distanceKm()))
                     .toList();
         }
 
@@ -471,10 +472,54 @@ public class EventService {
             eventRepository.saveAll(events);
         }
         LocalDateTime now = LocalDateTime.now();
-        return events.stream()
+        List<Event> visibleEvents = events.stream()
                 .filter(e -> e.getDateTime().isAfter(now))
+                .toList();
+
+        if (Boolean.TRUE.equals(hideOverlapping)) {
+            List<Event> bookedEvents = eventRepository.findBookedByParticipantId(userId);
+            visibleEvents = visibleEvents.stream()
+                    .filter(event -> !overlapsWithBookedEvents(event, bookedEvents))
+                    .toList();
+        }
+
+        return visibleEvents.stream()
                 .map(event -> toResponse(event, userId))
                 .toList();
+    }
+
+    private boolean overlapsWithBookedEvents(Event candidate, List<Event> bookedEvents) {
+        boolean candidateIsBooked = bookedEvents.stream()
+                .anyMatch(bookedEvent -> bookedEvent.getId() == candidate.getId());
+
+        if (candidateIsBooked) {
+            return false;
+        }
+
+        return bookedEvents.stream()
+                .anyMatch(bookedEvent -> eventsOverlap(candidate, bookedEvent));
+    }
+
+    private boolean eventsOverlap(Event first, Event second) {
+        LocalDateTime firstStart = first.getDateTime();
+        LocalDateTime firstEnd = eventEnd(first);
+        LocalDateTime secondStart = second.getDateTime();
+        LocalDateTime secondEnd = eventEnd(second);
+
+        return firstStart.isBefore(secondEnd) && firstEnd.isAfter(secondStart);
+    }
+
+    private LocalDateTime eventEnd(Event event) {
+        long minutes = Math.round(event.getDuration() * 60);
+        return event.getDateTime().plusMinutes(minutes);
+    }
+
+    private DistanceFilter createDistanceFilter(String location, Double latitude, Double longitude, Integer distanceKm) {
+        if (location == null || latitude == null || longitude == null || distanceKm == null || distanceKm <= 0) {
+            return null;
+        }
+
+        return new DistanceFilter(latitude, longitude, distanceKm);
     }
 
     private boolean isWithinDistance(Event event, double latitude, double longitude, int distanceKm) {
@@ -506,6 +551,9 @@ public class EventService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return earthRadiusKm * c;
+    }
+
+    private record DistanceFilter(double latitude, double longitude, int distanceKm) {
     }
 
     /**

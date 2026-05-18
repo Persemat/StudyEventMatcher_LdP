@@ -36,6 +36,14 @@ public class SearchEventsTest extends BaseEventTest {
         event.setStatus("open");
     }
 
+    private Event createSearchEvent(Long id, String title, LocalDateTime dateTime, double duration) {
+        Event event = new Event();
+        setupMockEvent(event, id, dateTime);
+        event.setTitle(title);
+        event.setDuration(duration);
+        return event;
+    }
+
     @Test
     void testSearchForEvents_FullFilters_Success() {
         // Arrange
@@ -56,7 +64,7 @@ public class SearchEventsTest extends BaseEventTest {
                 eq("Party"), eq(true), eq(tags), eq("Roma (RM)"), any(), any())).thenReturn(events);
 
         // Act
-        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date, null, null, null);
+        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date, null, null, null, false);
 
         // Assert
         assertEquals(1, results.size());
@@ -75,7 +83,7 @@ public class SearchEventsTest extends BaseEventTest {
         when(eventRepository.findByDynamicFilters(
                 any(), eq(false), any(), any(), any(), any())).thenReturn(new ArrayList<>());
 
-        eventService.searchForEvents(session, null, tags, null, null, null, null, null);
+        eventService.searchForEvents(session, null, tags, null, null, null, null, null, false);
 
         verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull());
     }
@@ -94,7 +102,7 @@ public class SearchEventsTest extends BaseEventTest {
                 any(), any(), any())).thenReturn(List.of(pastEvent, futureEvent));
 
         // Act
-        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null, null, null, null);
+        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null, null, null, null, false);
 
         // Assert
         assertEquals(1, results.size());
@@ -114,7 +122,7 @@ public class SearchEventsTest extends BaseEventTest {
                 .thenReturn(new ArrayList<>());
 
         // Act
-        eventService.searchForEvents(session, search, null, location, null, null, null, null);
+        eventService.searchForEvents(session, search, null, location, null, null, null, null, false);
 
         // Assert
         verify(eventRepository).findByDynamicFilters(isNull(), anyBoolean(),
@@ -150,7 +158,8 @@ void testSearchForEvents_DistanceFilter_ShouldIncludeEventsWithinRadius() {
             null,
             milanLat,
             milanLon,
-            distanceKm
+            distanceKm,
+            false
     );
 
     assertEquals(2, results.size());
@@ -181,7 +190,8 @@ void testSearchForEvents_DistanceFilter_ShouldExcludeEventsOutsideRadius() {
             null,
             milanLat,
             milanLon,
-            distanceKm
+            distanceKm,
+            false
     );
 
     assertEquals(0, results.size());
@@ -216,7 +226,8 @@ void testSearchForEvents_DistanceFilter_ShouldUpdateResultsWhenRadiusChanges() {
             null,
             milanLat,
             milanLon,
-            20
+            20,
+            false
     );
 
     List<EventResponse> results100Km = eventService.searchForEvents(
@@ -227,7 +238,8 @@ void testSearchForEvents_DistanceFilter_ShouldUpdateResultsWhenRadiusChanges() {
             null,
             milanLat,
             milanLon,
-            100
+            100,
+            false
     );
 
     assertEquals(1, results20Km.size());
@@ -259,7 +271,8 @@ void testSearchForEvents_DistanceFilter_ShouldExcludeEventsWithoutCoordinates() 
             null,
             milanLat,
             milanLon,
-            distanceKm
+            distanceKm,
+            false
     );
 
     assertEquals(0, results.size());
@@ -282,7 +295,8 @@ void testSearchForEvents_DistanceFilter_ShouldUseTextLocationWhenCoordinatesAreM
             null,
             null,
             null,
-            50
+            50,
+            false
     );
 
     verify(eventRepository).findByDynamicFilters(
@@ -314,7 +328,8 @@ void testSearchForEvents_DistanceFilter_ShouldSkipTextLocationFilterWhenCoordina
             null,
             milanLat,
             milanLon,
-            50
+            50,
+            false
     );
 
     verify(eventRepository).findByDynamicFilters(
@@ -325,6 +340,117 @@ void testSearchForEvents_DistanceFilter_ShouldSkipTextLocationFilterWhenCoordina
             isNull(),
             isNull()
     );
+}
+
+@Test
+void testSearchForEvents_HideOverlapping_ShouldExcludeOverlappingEvents() {
+    LocalDateTime baseTime = LocalDateTime.now().plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    Event bookedEvent = createSearchEvent(10L, "Analisi 1", baseTime, 2.0);
+    Event overlappingEvent = createSearchEvent(11L, "Basi di Dati", baseTime.plusHours(1), 2.0);
+    Event compatibleEvent = createSearchEvent(12L, "Programmazione Java", baseTime.plusHours(4), 2.0);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()))
+            .thenReturn(List.of(overlappingEvent, compatibleEvent));
+    when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session, null, null, null, null, null, null, null, true);
+
+    assertEquals(1, results.size());
+    assertEquals("Programmazione Java", results.get(0).title());
+}
+
+@Test
+void testSearchForEvents_HideOverlapping_ShouldKeepNonOverlappingEvents() {
+    LocalDateTime baseTime = LocalDateTime.now().plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    Event bookedEvent = createSearchEvent(10L, "Analisi 1", baseTime, 2.0);
+    Event firstCompatibleEvent = createSearchEvent(11L, "Basi di Dati", baseTime.plusHours(3), 2.0);
+    Event secondCompatibleEvent = createSearchEvent(12L, "Programmazione Java", baseTime.plusHours(6), 2.0);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()))
+            .thenReturn(List.of(firstCompatibleEvent, secondCompatibleEvent));
+    when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session, null, null, null, null, null, null, null, true);
+
+    assertEquals(2, results.size());
+    assertEquals("Basi di Dati", results.get(0).title());
+    assertEquals("Programmazione Java", results.get(1).title());
+}
+
+@Test
+void testSearchForEvents_HideOverlapping_ShouldKeepAllEventsWhenUserHasNoBookings() {
+    LocalDateTime baseTime = LocalDateTime.now().plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    Event firstEvent = createSearchEvent(11L, "Basi di Dati", baseTime, 2.0);
+    Event secondEvent = createSearchEvent(12L, "Programmazione Java", baseTime.plusHours(1), 2.0);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()))
+            .thenReturn(List.of(firstEvent, secondEvent));
+    when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of());
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session, null, null, null, null, null, null, null, true);
+
+    assertEquals(2, results.size());
+}
+
+@Test
+void testSearchForEvents_HideOverlapping_ShouldReturnEmptyWhenAllEventsOverlap() {
+    LocalDateTime baseTime = LocalDateTime.now().plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    Event bookedEvent = createSearchEvent(10L, "Analisi 1", baseTime, 2.0);
+    Event firstOverlappingEvent = createSearchEvent(11L, "Basi di Dati", baseTime.plusMinutes(30), 1.0);
+    Event secondOverlappingEvent = createSearchEvent(12L, "Programmazione Java", baseTime.plusHours(1), 2.0);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()))
+            .thenReturn(List.of(firstOverlappingEvent, secondOverlappingEvent));
+    when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session, null, null, null, null, null, null, null, true);
+
+    assertEquals(0, results.size());
+}
+
+@Test
+void testSearchForEvents_HideOverlapping_ShouldKeepAdjacentEvents() {
+    LocalDateTime baseTime = LocalDateTime.now().plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    Event bookedEvent = createSearchEvent(10L, "Analisi 1", baseTime, 2.0);
+    Event adjacentEvent = createSearchEvent(11L, "Basi di Dati", baseTime.plusHours(2), 1.0);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()))
+            .thenReturn(List.of(adjacentEvent));
+    when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session, null, null, null, null, null, null, null, true);
+
+    assertEquals(1, results.size());
+    assertEquals("Basi di Dati", results.get(0).title());
+}
+
+@Test
+void testSearchForEvents_HideOverlapping_ShouldKeepOverlappingBookedEvents() {
+    LocalDateTime baseTime = LocalDateTime.now().plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0);
+    Event myEvent = createSearchEvent(10L, "Evento creato da me", baseTime, 2.0);
+    Event otherBookedEvent = createSearchEvent(11L, "Evento prenotato", baseTime.plusHours(1), 2.0);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()))
+            .thenReturn(List.of(myEvent, otherBookedEvent));
+    when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(myEvent, otherBookedEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session, null, null, null, null, null, null, null, true);
+
+    assertEquals(2, results.size());
+    assertEquals("Evento creato da me", results.get(0).title());
+    assertEquals("Evento prenotato", results.get(1).title());
 }
 
 }

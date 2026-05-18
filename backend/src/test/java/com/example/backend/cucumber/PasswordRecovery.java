@@ -171,7 +171,7 @@ public class PasswordRecovery {
         result.andExpect(status().isBadRequest());
     }
 
-    @Then("il sistema mostra il messaggio {string}")
+    @Then("il sistema mostra il messaggio password {string}")
     public void ilSistemaMostraIlMessaggio(String messaggio) throws Exception {
         result.andExpect(content().string(Matchers.containsString(messaggio)));
     }

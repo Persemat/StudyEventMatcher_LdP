@@ -15,7 +15,6 @@ import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -43,9 +42,15 @@ public class ViewEventDetails {
         eventRepository.deleteAll();
         userRepository.deleteAll();
 
-        User user = new User("Mario", "Rossi", "mario.dettagli@example.com", "Password123!",
-                "Milano", List.of("Informatica"), new ArrayList<>());
-
+        User user = new User();
+        user.setName("Mario");
+        user.setLastname("Rossi");
+        user.setEmail("mario.dettagli@example.com");
+        user.setPassword("Password123!");
+        // Required profile fields must be populated to satisfy the User entity constraints.
+        user.setFavouriteCity("Milano");
+        user.setMacroTags(List.of("Tech"));
+        user.setMicroTags(List.of());
         userRepository.save(user);
 
         this.userId = user.getId();
