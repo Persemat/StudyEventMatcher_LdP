@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Search, MapPin, Calendar } from "lucide-react";
 import EventCard from "./EventCard";
+import EventDetails from "./EventDetails";
 import { useEventActions } from "./hooks/useEventActions";
 import EventFormModal from "./EventFormModal";
 import { loadCityOptions, loadTagOptions } from "./catalogs";
@@ -19,6 +20,7 @@ export default function AllEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(null);
   const [distanceKm, setDistanceKm] = useState(25);
   const [isCityInputFocused, setIsCityInputFocused] = useState(false);
   
@@ -293,6 +295,7 @@ export default function AllEvents() {
                 }
                 onEdit={editable ? () => setEventToEdit(event) : undefined}
                 canEdit={editable}
+                onShowDetails={() => setSelectedEventId(event.id)}
               />
             );
           })}
@@ -315,6 +318,23 @@ export default function AllEvents() {
           availableTags={availableTags}
         />
       )}
+
+      {selectedEventId && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+          
+          <button 
+             onClick={() => setSelectedEventId(null)}
+             className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 font-bold text-xl"
+          >
+             ✕
+          </button>
+          
+          <EventDetails eventId={selectedEventId} />
+
+       </div>
+    </div>
+  )}
     </div>
   );
 }

@@ -213,6 +213,33 @@ public class EventService {
     }
 
     /**
+     * Retrieves the complete details of a specific event.
+     *
+     * It uses the existing toResponse method to map the entity to an EventResponse,
+     * which automatically calculates current participants and booking status.
+     *
+     * @param eventId the ID of the event to retrieve
+     * @param session the current HTTP session containing the authenticated user ID
+     * @return the event details mapped to an EventResponse
+     * @throws RuntimeException if the user is not authenticated or the event does not exist
+     */
+    public EventResponse getEventDetails(Long eventId, HttpSession session) {
+        
+        Long userId = (Long) session.getAttribute("userId");
+        
+        if (userId == null) {
+            throw new RuntimeException("Sessione invalida o scaduta");
+        }
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        return toResponse(event, userId);
+    }
+
+
+
+    /**
      * Deletes an event or reassigns its creator depending on the event settings.
      *
      * If creator participation is required, the event is deleted and cancellation
@@ -486,7 +513,7 @@ public class EventService {
      *
      * The response includes creator information, current participant count,
      * booking status for the current user, and whether the current user is
-     * the creator of the event.
+     * the creator of the event. It also exctracts the list of participants.
      *
      * @param event  the event entity to map
      * @param userId the ID of the current user, if available
@@ -504,6 +531,15 @@ public class EventService {
         boolean isBooked = userId != null &&
                 event.getParticipants().stream()
                         .anyMatch(u -> u.getId().equals(userId));
+        
+        List<EventResponse.ParticipantResponse> participantList = event.getParticipants().stream()
+                .map(user -> new EventResponse.ParticipantResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getLastname(),
+                        user.getEmail()
+                ))
+                .toList();
 
         return new EventResponse(
                 event.getId(),
@@ -523,7 +559,9 @@ public class EventService {
                 creatorResponse,
                 event.getParticipants().size(),
                 isBooked,
-                userId != null && creator.getId().equals(userId));
+                userId != null && creator.getId().equals(userId),
+                participantList
+        );
     }
 
     /**
