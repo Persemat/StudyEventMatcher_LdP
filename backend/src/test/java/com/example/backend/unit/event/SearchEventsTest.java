@@ -56,7 +56,7 @@ public class SearchEventsTest extends BaseEventTest {
                 eq("Party"), eq(true), eq(tags), eq("Roma (RM)"), any(), any())).thenReturn(events);
 
         // Act
-        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date);
+        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date, null, null, null);
 
         // Assert
         assertEquals(1, results.size());
@@ -75,7 +75,7 @@ public class SearchEventsTest extends BaseEventTest {
         when(eventRepository.findByDynamicFilters(
                 any(), eq(false), any(), any(), any(), any())).thenReturn(new ArrayList<>());
 
-        eventService.searchForEvents(session, null, tags, null, null);
+        eventService.searchForEvents(session, null, tags, null, null, null, null, null);
 
         verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull());
     }
@@ -94,7 +94,7 @@ public class SearchEventsTest extends BaseEventTest {
                 any(), any(), any())).thenReturn(List.of(pastEvent, futureEvent));
 
         // Act
-        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null);
+        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null, null, null, null);
 
         // Assert
         assertEquals(1, results.size());
@@ -114,10 +114,217 @@ public class SearchEventsTest extends BaseEventTest {
                 .thenReturn(new ArrayList<>());
 
         // Act
-        eventService.searchForEvents(session, search, null, location, null);
+        eventService.searchForEvents(session, search, null, location, null, null, null, null);
 
         // Assert
         verify(eventRepository).findByDynamicFilters(isNull(), anyBoolean(),
                 any(), isNull(), any(), any());
     }
+    @Test
+void testSearchForEvents_DistanceFilter_ShouldIncludeEventsWithinRadius() {
+    String location = "Milano (MI)";
+    double milanLat = 45.4642;
+    double milanLon = 9.1900;
+    int distanceKm = 50;
+
+    Event milanEvent = new Event();
+    setupMockEvent(milanEvent, 1L, LocalDateTime.now().plusDays(1));
+    milanEvent.setLatitude(45.4642);
+    milanEvent.setLongitude(9.1900);
+
+    Event monzaEvent = new Event();
+    setupMockEvent(monzaEvent, 2L, LocalDateTime.now().plusDays(1));
+    monzaEvent.setLatitude(45.5845);
+    monzaEvent.setLongitude(9.2744);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(
+            isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
+    )).thenReturn(List.of(milanEvent, monzaEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            milanLat,
+            milanLon,
+            distanceKm
+    );
+
+    assertEquals(2, results.size());
+}
+
+@Test
+void testSearchForEvents_DistanceFilter_ShouldExcludeEventsOutsideRadius() {
+    String location = "Milano (MI)";
+    double milanLat = 45.4642;
+    double milanLon = 9.1900;
+    int distanceKm = 50;
+
+    Event romeEvent = new Event();
+    setupMockEvent(romeEvent, 1L, LocalDateTime.now().plusDays(1));
+    romeEvent.setLatitude(41.9028);
+    romeEvent.setLongitude(12.4964);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(
+            isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
+    )).thenReturn(List.of(romeEvent));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            milanLat,
+            milanLon,
+            distanceKm
+    );
+
+    assertEquals(0, results.size());
+}
+
+@Test
+void testSearchForEvents_DistanceFilter_ShouldUpdateResultsWhenRadiusChanges() {
+    String location = "Milano (MI)";
+    double milanLat = 45.4642;
+    double milanLon = 9.1900;
+
+    Event milanEvent = new Event();
+    setupMockEvent(milanEvent, 1L, LocalDateTime.now().plusDays(1));
+    milanEvent.setLatitude(45.4642);
+    milanEvent.setLongitude(9.1900);
+
+    Event bergamoEvent = new Event();
+    setupMockEvent(bergamoEvent, 2L, LocalDateTime.now().plusDays(1));
+    bergamoEvent.setLatitude(45.6983);
+    bergamoEvent.setLongitude(9.6773);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(
+            isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
+    )).thenReturn(List.of(milanEvent, bergamoEvent));
+
+    List<EventResponse> results20Km = eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            milanLat,
+            milanLon,
+            20
+    );
+
+    List<EventResponse> results100Km = eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            milanLat,
+            milanLon,
+            100
+    );
+
+    assertEquals(1, results20Km.size());
+    assertEquals(2, results100Km.size());
+}
+
+@Test
+void testSearchForEvents_DistanceFilter_ShouldExcludeEventsWithoutCoordinates() {
+    String location = "Milano (MI)";
+    double milanLat = 45.4642;
+    double milanLon = 9.1900;
+    int distanceKm = 50;
+
+    Event eventWithoutCoordinates = new Event();
+    setupMockEvent(eventWithoutCoordinates, 1L, LocalDateTime.now().plusDays(1));
+    eventWithoutCoordinates.setLatitude(null);
+    eventWithoutCoordinates.setLongitude(null);
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(
+            isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
+    )).thenReturn(List.of(eventWithoutCoordinates));
+
+    List<EventResponse> results = eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            milanLat,
+            milanLon,
+            distanceKm
+    );
+
+    assertEquals(0, results.size());
+}
+
+@Test
+void testSearchForEvents_DistanceFilter_ShouldUseTextLocationWhenCoordinatesAreMissing() {
+    String location = "Milano (MI)";
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(
+            isNull(), eq(false), eq(List.of()), eq(location), isNull(), isNull()
+    )).thenReturn(List.of());
+
+    eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            null,
+            null,
+            50
+    );
+
+    verify(eventRepository).findByDynamicFilters(
+            isNull(),
+            eq(false),
+            eq(List.of()),
+            eq(location),
+            isNull(),
+            isNull()
+    );
+}
+
+@Test
+void testSearchForEvents_DistanceFilter_ShouldSkipTextLocationFilterWhenCoordinatesArePresent() {
+    String location = "Milano (MI)";
+    double milanLat = 45.4642;
+    double milanLon = 9.1900;
+
+    when(session.getAttribute("userId")).thenReturn(1L);
+    when(eventRepository.findByDynamicFilters(
+            isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
+    )).thenReturn(List.of());
+
+    eventService.searchForEvents(
+            session,
+            null,
+            null,
+            location,
+            null,
+            milanLat,
+            milanLon,
+            50
+    );
+
+    verify(eventRepository).findByDynamicFilters(
+            isNull(),
+            eq(false),
+            eq(List.of()),
+            isNull(),
+            isNull(),
+            isNull()
+    );
+}
+
 }

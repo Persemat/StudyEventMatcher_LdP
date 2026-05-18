@@ -6,7 +6,8 @@ export default function EventCard({
   event,
   onBook,
   onCancelBooking,
-  onEdit
+  onEdit,
+  onShowDetails
 }) {
   const currentParticipants = event.currentParticipants || 0;
   const isFull = event.maxParticipants != null && currentParticipants >= event.maxParticipants;
@@ -17,14 +18,16 @@ export default function EventCard({
   const [now] = useState(Date.now);
   const in24Hours = new Date(now + 24 * 60 * 60 * 1000);
 
-  // Blocca solo chi NON è creatore e NON è prenotato.
-  // Così se l'evento è pieno/chiuso, chi è già prenotato può comunque cancellare.
+
   const isInterationBlocked = isClosed && !event.isCreatedByMe && !event.isBooked;
 
   const canEdit = event.isCreatedByMe && eventStart > in24Hours;
 
   return (
     <div
+    
+    onClick={onShowDetails}
+
       className={`bg-white rounded-lg shadow transition-all p-6 space-y-4 border ${
         isClosed ? "border-gray-200 bg-gray-50 opacity-75" : "border-gray-100 hover:shadow-lg"
       } ${
@@ -122,7 +125,14 @@ export default function EventCard({
             {/* Edit button */}
             <button
               disabled={!canEdit}
-              onClick={() => onEdit(event.id)}
+              onClick={(e) => {
+                /**
+                 * Stop event propagation to prevent the card's onClick from firing.
+                 * Then, execute the edit action.
+                 */
+                e.stopPropagation();
+                onEdit(event.id);
+              }}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
                 !canEdit
                   ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
@@ -139,7 +149,10 @@ export default function EventCard({
 
             {/* Cancel/leave for creator */}
             <button
-              onClick={onCancelBooking}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancelBooking();
+              }}
               className="flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
             >
               <X className="w-4 h-4" />
@@ -149,7 +162,10 @@ export default function EventCard({
         ) : event.isBooked ? (
           /* booked user */
           <button
-            onClick={onCancelBooking}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancelBooking();
+            }}
             className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 bg-orange-100 text-orange-700 hover:bg-orange-200"
           >
             <X className="w-4 h-4" />
@@ -163,7 +179,10 @@ export default function EventCard({
         ) : (
           /* book button */
           <button
-            onClick={() => onBook(event.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onBook(event.id);
+            }}
             className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
           >
             <Check className="w-4 h-4" />

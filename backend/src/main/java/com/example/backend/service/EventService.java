@@ -94,6 +94,8 @@ public class EventService {
         newEvent.setDateTime(request.dateTime());
         newEvent.setDuration(request.duration());
         newEvent.setLocation(request.location());
+        newEvent.setLatitude(request.latitude());
+        newEvent.setLongitude(request.longitude());
 
         if (request.tags() != null) {
             newEvent.setTags(normalizeTags(request.tags()));
@@ -160,6 +162,8 @@ public class EventService {
         event.setDateTime(request.dateTime());
         event.setDuration(request.duration());
         event.setLocation(request.location());
+        event.setLatitude(request.latitude());
+        event.setLongitude(request.longitude());
         if (request.tags() != null) {
             event.setTags(normalizedTags);
         }
@@ -207,6 +211,33 @@ public class EventService {
                 .map(event -> toResponse(event, userId))
                 .toList();
     }
+
+    /**
+     * Retrieves the complete details of a specific event.
+     *
+     * It uses the existing toResponse method to map the entity to an EventResponse,
+     * which automatically calculates current participants and booking status.
+     *
+     * @param eventId the ID of the event to retrieve
+     * @param session the current HTTP session containing the authenticated user ID
+     * @return the event details mapped to an EventResponse
+     * @throws RuntimeException if the user is not authenticated or the event does not exist
+     */
+    public EventResponse getEventDetails(Long eventId, HttpSession session) {
+        
+        Long userId = (Long) session.getAttribute("userId");
+        
+        if (userId == null) {
+            throw new RuntimeException("Sessione invalida o scaduta");
+        }
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        return toResponse(event, userId);
+    }
+
+
 
     /**
      * Deletes an event or reassigns its creator depending on the event settings.
@@ -385,7 +416,10 @@ public class EventService {
             String search,
             List<String> tags,
             String location,
-            String date) {
+            String date,
+            Double latitude,
+            Double longitude,
+            Integer distanceKm) {
 
         Long userId = (Long) session.getAttribute("userId");
 
@@ -398,7 +432,6 @@ public class EventService {
                         .filter(tag -> tag != null && !tag.isBlank())
                         .toList();
         boolean checkTags = !tagsParam.isEmpty();
-
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
 
@@ -412,13 +445,25 @@ public class EventService {
             }
         }
 
+        boolean useDistanceFilter = locationParam != null &&
+                latitude != null &&
+                longitude != null &&
+                distanceKm != null &&
+                distanceKm > 0;
+
         List<Event> events = eventRepository.findByDynamicFilters(
                 searchParam,
                 checkTags,
                 tagsParam,
-                locationParam,
+                useDistanceFilter ? null : locationParam,
                 startDate,
                 endDate);
+
+        if (useDistanceFilter) {
+            events = events.stream()
+                    .filter(event -> isWithinDistance(event, latitude, longitude, distanceKm))
+                    .toList();
+        }
 
         boolean updated = checkIfClosed(false, events);
 
@@ -432,12 +477,43 @@ public class EventService {
                 .toList();
     }
 
+    private boolean isWithinDistance(Event event, double latitude, double longitude, int distanceKm) {
+        if (event.getLatitude() == null || event.getLongitude() == null) {
+            return false;
+        }
+
+        return calculateDistanceKm(
+                latitude,
+                longitude,
+                event.getLatitude(),
+                event.getLongitude()) <= distanceKm;
+    }
+
+    private double calculateDistanceKm(double firstLatitude,
+            double firstLongitude,
+            double secondLatitude,
+            double secondLongitude) {
+
+        final double earthRadiusKm = 6371.0;
+        double latDistance = Math.toRadians(secondLatitude - firstLatitude);
+        double lonDistance = Math.toRadians(secondLongitude - firstLongitude);
+        double firstLat = Math.toRadians(firstLatitude);
+        double secondLat = Math.toRadians(secondLatitude);
+
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(firstLat) * Math.cos(secondLat)
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return earthRadiusKm * c;
+    }
+
     /**
      * Maps an {@link Event} entity to an {@link EventResponse}.
      *
      * The response includes creator information, current participant count,
      * booking status for the current user, and whether the current user is
-     * the creator of the event.
+     * the creator of the event. It also exctracts the list of participants.
      *
      * @param event  the event entity to map
      * @param userId the ID of the current user, if available
@@ -455,6 +531,15 @@ public class EventService {
         boolean isBooked = userId != null &&
                 event.getParticipants().stream()
                         .anyMatch(u -> u.getId().equals(userId));
+        
+        List<EventResponse.ParticipantResponse> participantList = event.getParticipants().stream()
+                .map(user -> new EventResponse.ParticipantResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getLastname(),
+                        user.getEmail()
+                ))
+                .toList();
 
         return new EventResponse(
                 event.getId(),
@@ -462,6 +547,8 @@ public class EventService {
                 event.getDateTime(),
                 event.getDuration(),
                 event.getLocation(),
+                event.getLatitude(),
+                event.getLongitude(),
                 event.getTags() == null
                         ? List.of()
                         : event.getTags().stream().map(EventTagDto::from).toList(),
@@ -472,7 +559,9 @@ public class EventService {
                 creatorResponse,
                 event.getParticipants().size(),
                 isBooked,
-                userId != null && creator.getId().equals(userId));
+                userId != null && creator.getId().equals(userId),
+                participantList
+        );
     }
 
     /**
