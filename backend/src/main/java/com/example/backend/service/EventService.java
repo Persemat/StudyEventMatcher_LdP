@@ -2,12 +2,14 @@ package com.example.backend.service;
 
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
+import com.example.backend.dto.RecommendationResponse;
 import com.example.backend.dto.EventTagDto;
 import com.example.backend.model.Event;
 import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +41,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private static final int MAX_RECOMMENDATION_DISTANCE_KM = 50;
 
     /**
      * Constructs the EventService.
@@ -611,6 +614,155 @@ public class EventService {
                 participantList
         );
     }
+
+    /**
+     * Retrieves a list of recommended events for the authenticated user based on their 
+     * saved tags (macro and micro) and geographical location.
+     * <p>
+     * The recommendation engine follows a pipeline approach:
+     * <ol>
+     * <li>Filters out past events, closed events, and events already joined/created by the user.</li>
+     * <li>Filters out events that do not share any macro or micro tag with the user.</li>
+     * <li>Calculates the distance and discards events beyond the maximum threshold.</li>
+     * <li>Assigns a cumulative score based on distance proximity and tag match accuracy.</li>
+     * <li>Sorts the results in descending order by score.</li>
+     * </ol>
+     *
+     * @param session the current HTTP session containing the authenticated user ID
+     * @param userLat the latitude of the user's favorite city (provided by the frontend via geocoding)
+     * @param userLon the longitude of the user's favorite city
+     * @return a {@link RecommendationResponse} containing the sorted events and an outcome code
+     * @throws RuntimeException if the user is not authenticated or not found in the database
+     */
+    public RecommendationResponse getRecommendedEvents(HttpSession session, Double userLat, Double userLon) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            throw new RuntimeException("Utente non autenticato");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        if (userLat == null || userLon == null) {
+            return new RecommendationResponse(List.of(), "MISSING_COORDINATES");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Step 1: Base filters (future, open, not mine, not booked)
+        List<Event> eligibleEvents = eventRepository.findAll().stream()
+                .filter(e -> e.getDateTime().isAfter(now))
+                .filter(e -> "open".equalsIgnoreCase(e.getStatus()))
+                .filter(e -> !e.getCreator().getId().equals(userId))
+                .filter(e -> e.getParticipants().stream().noneMatch(p -> p.getId().equals(userId)))
+                .toList();
+
+        // Step 2: Tag matching
+        List<Event> eventsWithMatchingTags = eligibleEvents.stream()
+                .filter(e -> hasMatchingTag(e, user))
+                .toList();
+
+        if (eventsWithMatchingTags.isEmpty()) {
+            return new RecommendationResponse(List.of(), "NO_TAG_MATCH");
+        }
+
+        // Step 3: Distance calculation and scoring
+        List<ScoredEvent> scoredEvents = new ArrayList<>();
+        for (Event event : eventsWithMatchingTags) {
+            if (event.getLatitude() == null || event.getLongitude() == null) continue;
+
+            double distance = calculateDistanceKm(userLat, userLon, event.getLatitude(), event.getLongitude());
+
+            if (distance <= MAX_RECOMMENDATION_DISTANCE_KM) {
+                int score = calculateScore(event, user, distance);
+                scoredEvents.add(new ScoredEvent(event, score, distance));
+            }
+        }
+
+        if (scoredEvents.isEmpty()) {
+            return new RecommendationResponse(List.of(), "NO_LOCATION_MATCH");
+        }
+
+        // Step 4: Sorting and mapping to DTO
+        List<EventResponse> finalRecommendations = scoredEvents.stream()
+                .sorted((s1, s2) -> Integer.compare(s2.score(), s1.score()))
+                .map(se -> toResponse(se.event(), userId))
+                .toList();
+
+        return new RecommendationResponse(finalRecommendations, "SUCCESS");
+    }
+
+    /**
+     * Internal record to temporarily hold an event along with its calculated recommendation score and distance.
+     * * @param event the event being evaluated
+     * @param score the total score assigned to the event (higher is better)
+     * @param distance the physical distance in kilometers from the user's preferred city
+     */
+    private record ScoredEvent(Event event, int score, double distance) {
+
+    }
+
+    /**
+     * Evaluates if there is at least one overlapping tag between the event and the user.
+     * * @param event the event to check
+     * @param user the user whose interests are being matched
+     * @return true if at least one macro or micro tag matches; false otherwise
+     */
+    private boolean hasMatchingTag(Event event, User user) {
+        if (event.getTags() == null || event.getTags().isEmpty()) return false;
+
+    List<String> userMacro = user.getMacroTags() != null ? 
+            user.getMacroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
+        List<String> userMicro = user.getMicroTags() != null ? 
+            user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
+
+        for (EventTag eTag : event.getTags()) {
+            // Facciamo lo stesso per i tag dell'evento
+            String eventMacro = eTag.getMacroTag() != null ? eTag.getMacroTag().toLowerCase().trim() : "";
+            String eventMicro = eTag.getMicroTag() != null ? eTag.getMicroTag().toLowerCase().trim() : "";
+
+            // Controlliamo se c'è almeno un match
+            if (userMacro.contains(eventMacro) || (!eventMicro.isEmpty() && userMicro.contains(eventMicro))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Calculates the overall recommendation score for an event.
+     * <p>
+     * The scoring logic favors precise matches (micro tags) over generic matches (macro tags),
+     * and assigns a geographical bonus inversely proportional to the physical distance.
+     * * @param event the event being scored
+     * @param user the user targeted for the recommendation
+     * @param distance the distance in kilometers between the user and the event
+     * @return the total calculated integer score
+     */
+    private int calculateScore(Event event, User user, double distance) {
+        int score = 0;
+
+        List<String> userMacro = user.getMacroTags() != null ? 
+            user.getMacroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
+        List<String> userMicro = user.getMicroTags() != null ? 
+            user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
+
+        // 1. Assegnazione punteggio per i TAG (La vostra regola 1 a 3)
+        for (EventTag eTag : event.getTags()) {
+            String eventMacro = eTag.getMacroTag() != null ? eTag.getMacroTag().toLowerCase().trim() : "";
+            String eventMicro = eTag.getMicroTag() != null ? eTag.getMicroTag().toLowerCase().trim() : "";
+
+            if (!eventMicro.isEmpty() && userMicro.contains(eventMicro)) {
+                score += 300; // Match fortissimo (il vostro +3)
+            } else if (userMacro.contains(eventMacro)) {
+                score += 100; // Match generico (il vostro +1)
+            }
+        }
+        score += Math.max(0, MAX_RECOMMENDATION_DISTANCE_KM - (int) distance);
+        return score;
+    }
+
+
 
     /**
      * Recalculates each event status based on date and participant capacity.
