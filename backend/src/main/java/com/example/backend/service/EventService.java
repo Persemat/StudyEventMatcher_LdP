@@ -342,6 +342,31 @@ public class EventService {
         eventRepository.save(event);
     }
 
+    @Transactional
+    public void toggleFavorite(Long eventId, HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            throw new RuntimeException("Utente non autenticato");
+        }
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+
+        if (event.getFavorites().contains(user)) {
+            event.removeFavorite(user);
+        } else {
+            event.addFavorite(user);
+        }
+
+        eventRepository.save(event);
+    }
+
+
     /**
      * Retrieves all distinct event tags available in the system.
      *
@@ -440,6 +465,9 @@ public class EventService {
         boolean isBooked = userId != null &&
                 event.getParticipants().stream()
                         .anyMatch(u -> u.getId().equals(userId));
+        boolean isFavorite = userId != null &&
+                event.getFavorites().stream()
+                        .anyMatch(u -> u.getId().equals(userId));
 
         return new EventResponse(
                 event.getId(),
@@ -457,7 +485,10 @@ public class EventService {
                 creatorResponse,
                 event.getParticipants().size(),
                 isBooked,
-                userId != null && creator.getId().equals(userId));
+                userId != null && creator.getId().equals(userId),
+                isFavorite
+            
+            );
     }
 
     public boolean checkIfClosed(boolean toSave, List<Event> events) {

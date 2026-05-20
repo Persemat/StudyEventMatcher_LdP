@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
 import { formatTagLabel } from "./catalogs";
+import { Heart } from "lucide-react";
 
 export default function EventCard({
   event,
   onBook,
   onCancelBooking,
-  onEdit
+  onEdit,
+  onToggleFavorite
 }) {
   const currentParticipants = event.currentParticipants || 0;
   const isFull = event.maxParticipants != null && currentParticipants >= event.maxParticipants;
@@ -47,6 +49,20 @@ export default function EventCard({
                 </span>
               ))}
           </div>
+
+          <button
+            onClick={() => onToggleFavorite(event.id)}
+            className="ml-2"
+            title="Aggiungi ai preferiti"
+          >
+            <Heart
+              className={`w-5 h-5 transition-colors ${
+                event.isFavorite
+                  ? "fill-red-500 text-red-500"
+                  : "text-gray-400 hover:text-red-400"
+              }`}
+            />
+          </button>
         </div>
 
         <p className="text-gray-600 text-sm line-clamp-2">

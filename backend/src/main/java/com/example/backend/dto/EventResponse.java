@@ -17,7 +17,8 @@ public record EventResponse(
         CreatorResponse creator,
         Integer currentParticipants,
         boolean isBooked,
-        boolean isCreatedByMe
+        boolean isCreatedByMe,
+        boolean isFavorite
 ) {
 
     public record CreatorResponse(

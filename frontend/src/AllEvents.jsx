@@ -65,6 +65,8 @@ export default function AllEvents() {
       setLoading(false);
     }
   }, [searchTerm, searchLocation, searchData, selectedTags]);
+
+
   
   useEffect(() => { fetchTags(); }, []);
 
@@ -76,7 +78,7 @@ export default function AllEvents() {
     return () => clearTimeout(delayDebounceFn);
   }, [fetchEvents]);
 
-  const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+  const { handleBook, handleCancelBooking, handleToggleFavorite } = useEventActions(fetchEvents, setEvents);
 
   return (
     <div className="p-6 space-y-6">
@@ -188,6 +190,7 @@ export default function AllEvents() {
                 onCancelBooking={() => handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)}
                 onEdit={editable ? () => setEventToEdit(event) : undefined}
                 canEdit={editable}
+                onToggleFavorite={() => handleToggleFavorite(event.id)}
               />
             );
           })}

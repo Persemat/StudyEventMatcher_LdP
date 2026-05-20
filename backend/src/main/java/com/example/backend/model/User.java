@@ -30,14 +30,9 @@ public class User {
     private Set<Event> bookedEvents = new HashSet<>();
 
     
-    
-    @ManyToMany
-    @JoinTable(
-        name = "event_favorites",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "event_id")
-    )
-    private Set<Event> favorites = new HashSet<>();
+    @ManyToMany(mappedBy = "favorites")
+    private Set<Event> favoriteEvents = new HashSet<>();
+
 
 
     public User() {}
@@ -99,34 +94,21 @@ public class User {
         this.bookedEvents = bookedEvents;
     }
 
-    public void addEvent(Event event) {
-        bookedEvents.add(event);
-        event.getParticipants().add(this);
+    // public void addEvent(Event event) {
+    //     bookedEvents.add(event);
+    //     event.getParticipants().add(this);
+    // }
+
+    // public void removeEvent(Event event) {
+    //     bookedEvents.remove(event);
+    //     event.getParticipants().remove(this);
+    // }
+ 
+    public Set<Event> getFavoriteEvents() {
+    return favoriteEvents;
     }
 
-    public void removeEvent(Event event) {
-        bookedEvents.remove(event);
-        event.getParticipants().remove(this);
-    }
-
-    public Set<Event> getFavorites() {
-    return favorites;
-}
-
-
-    public void setFavorites(Set<Event> favorites) {
-        this.favorites = favorites;
-    }
-
-    public void addFavorite(Event event) {
-        if (favorites.add(event)) {
-            event.getFavoritedBy().add(this);
-        }
-    }
-
-    public void removeFavorite(Event event) {
-        if (favorites.remove(event)) {
-            event.getFavoritedBy().remove(this);
-        }
+    public void setFavoriteEvents(Set<Event> favoritedBy) {
+        this.favoriteEvents = favoritedBy;
     }
 }
