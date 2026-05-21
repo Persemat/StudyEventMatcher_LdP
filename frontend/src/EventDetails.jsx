@@ -41,6 +41,7 @@ export default function EventDetails({ eventId }) {
   if (!event) return null;
 
   const availableSeats = event.maxParticipants - event.currentParticipants;
+  const shouldDeleteEvent = event.isCreatedByMe && event.creatorParticipationRequired;
   const formattedDate = new Date(event.dateTime).toLocaleString('it-IT', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     hour: '2-digit', minute: '2-digit'
@@ -142,9 +143,13 @@ export default function EventDetails({ eventId }) {
               <button
                 disabled={isProcessing}
                 onClick={() => handleCancelBooking(event.id, event.creatorParticipationRequired, event.isCreatedByMe)}
-                className="w-full md:w-auto px-4 py-2 bg-orange-100 text-orange-700 rounded-lg font-bold hover:bg-orange-200 disabled:opacity-50"
+                className={`w-full md:w-auto px-4 py-2 rounded-lg font-bold disabled:opacity-50 ${
+                  shouldDeleteEvent
+                    ? "bg-red-100 text-red-700 hover:bg-red-200"
+                    : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                }`}
               >
-                {isProcessing ? "ELABORAZIONE..." : "CANCELLA PRENOTAZIONE"}
+                {isProcessing ? "ELABORAZIONE..." : (shouldDeleteEvent ? "CANCELLA EVENTO" : "CANCELLA PRENOTAZIONE")}
               </button>
             </div>
           ) : (
