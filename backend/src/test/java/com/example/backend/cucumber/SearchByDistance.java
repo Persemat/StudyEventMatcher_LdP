@@ -51,7 +51,7 @@ public class SearchByDistance {
             "Bergamo", new double[] { 45.6983, 9.6773 },
             "Torino", new double[] { 45.0703, 7.6869 });
 
-    @Given("l'utente è autenticato")
+    @Given("l'utente e autenticato per la ricerca distanza")
     public void utenteAutenticato() throws Exception {
         email = "user_" + UUID.randomUUID() + "@example.com";
         password = "Password123!";

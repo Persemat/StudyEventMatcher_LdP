@@ -1,7 +1,7 @@
 Feature: Ricerca per distanza
 
     Scenario: Filtro eventi per distanza con successo
-    Given l'utente è autenticato
+    Given l'utente e autenticato per la ricerca distanza
     And l'utente ha impostato "Milano" come città nella barra di ricerca
     And esiste un evento "Studio informatica" a Monza, distante 15 km da Milano
     And esiste un evento "Economia" a Bergamo, distante 50 km da Milano
@@ -12,7 +12,7 @@ Feature: Ricerca per distanza
     And il sistema non mostra l'evento "Diritto civile"
 
     Scenario: Modifica del raggio di distanza
-    Given l'utente è autenticato
+    Given l'utente e autenticato per la ricerca distanza
     And l'utente ha impostato "Milano" come città nella barra di ricerca
     And esiste un evento "Diritto privato" a Milano, distante 3 km
     And esiste un evento "Studio informatica" a Monza, distante 15 km da Milano
@@ -24,7 +24,7 @@ Feature: Ricerca per distanza
     And il sistema mostra anche l'evento "Economia"
 
     Scenario: Nessun evento trovato nel raggio selezionato
-    Given l'utente è autenticato
+    Given l'utente e autenticato per la ricerca distanza
     And l'utente ha impostato "Milano" come città nella barra di ricerca
     And esiste un evento "Studio informatica" a Monza, distante 15 km da Milano
     And esiste un evento "Economia" a Bergamo, distante 50 km da Milano

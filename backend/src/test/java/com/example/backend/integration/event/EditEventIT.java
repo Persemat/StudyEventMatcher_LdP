@@ -103,7 +103,7 @@ public class EditEventIT extends BaseEventIT {
 
     Event event = new Event();
     event.setTitle("Progetto Java");
-    event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
+    event.setDateTime(LocalDateTime.of(2026, 6, 20, 15, 0));
     event.setDuration(2.0);
     event.setLocation("Biblioteca");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -121,7 +121,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "Progetto Java",
-          "dateTime": "2026-05-20T15:00:00",
+          "dateTime": "2026-06-20T15:00:00",
           "duration": 2.0,
           "location": "Aula 3",
           "tags": [
