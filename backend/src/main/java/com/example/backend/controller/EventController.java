@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
+import com.example.backend.dto.RecommendationResponse;
 import com.example.backend.model.Event;
 import com.example.backend.service.EventService;
 
@@ -280,5 +281,27 @@ public class EventController {
 
             return ResponseEntity.status(404).body("Errore: " + e.getMessage());
         }
+    }
+
+    /**
+     * Retrieves a personalized list of recommended events for the currently authenticated user.
+     * <p>
+     * This endpoint requires the geographical coordinates of the user's favorite city 
+     * to perform distance-based filtering and scoring.
+     *
+     * @param session the current HTTP session
+     * @param latitude the latitude of the user's preferred city
+     * @param longitude the longitude of the user's preferred city
+     * @return a {@link ResponseEntity} containing a {@link RecommendationResponse} with the events and a status message
+     */
+    @GetMapping("/recommended")
+    public ResponseEntity<RecommendationResponse> getRecommendedEvents(
+        HttpSession session,
+        @RequestParam(required = false) Double latitude,
+        @RequestParam(required = false) Double longitude){
+
+        RecommendationResponse response = eventService.getRecommendedEvents(session, latitude, longitude);
+        return ResponseEntity.ok(response);
+
     }
 }
