@@ -38,6 +38,9 @@ import jakarta.servlet.http.HttpSession;
 public class EventController {
 
     private final EventService eventService;
+    private static final String USER_ID = "userId";
+    private static final String ERROR = "Errore: ";
+    private static final Logger logger = LoggerFactory.getLogger(EventController.class);
 
     /**
      * Constructs the EventController.
@@ -57,10 +60,10 @@ public class EventController {
     @GetMapping
     public ResponseEntity<?> getAllEvents(HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         return ResponseEntity.ok(eventService.getAllEvents(session));
@@ -91,10 +94,9 @@ public class EventController {
             return ResponseEntity.ok("Evento '" + createdEvent.getTitle() + "' creato con successo!");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE SERVICE: " + e.getMessage());
-            e.printStackTrace();
+            logger.error(" ERRORE SERVICE: {}", e.getMessage(), e);
 
-            return ResponseEntity.status(400).body("Errore: " + e.getMessage());
+            return ResponseEntity.status(400).body(ERROR + e.getMessage());
         }
     }
 
@@ -113,8 +115,8 @@ public class EventController {
             return ResponseEntity.ok("Prenotazione completata con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE DI PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            logger.error(" ERRORE DI PRENOTAZIONE: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(ERROR + e.getMessage());
         }
     }
 
@@ -130,10 +132,10 @@ public class EventController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable long id, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         try {
@@ -160,10 +162,10 @@ public class EventController {
                                          @RequestBody EventRequest request,
                                          HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         if (request.title() == null || request.title().isBlank() ||
@@ -179,10 +181,8 @@ public class EventController {
             return ResponseEntity.ok("Evento '" + updatedEvent.getTitle() + "' aggiornato con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE AGGIORNAMENTO EVENTO: " + e.getMessage());
-            e.printStackTrace();
-
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            logger.error(" ERRORE AGGIORNAMENTO EVENTO: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(ERROR + e.getMessage());
         }
     }
 
@@ -196,10 +196,10 @@ public class EventController {
     @DeleteMapping("/{id}/book")
     public ResponseEntity<?> cancelBooking(@PathVariable Long id, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         try {
@@ -207,8 +207,8 @@ public class EventController {
             return ResponseEntity.ok("Prenotazione cancellata con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE CANCELLAZIONE PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            logger.error(" ERRORE CANCELLAZIONE PRENOTAZIONE: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(ERROR + e.getMessage());
         }
     }
 
@@ -235,10 +235,10 @@ public class EventController {
                                       @RequestParam(required = false) Integer distanceKm,
                                       @RequestParam(required = false) Boolean hideOverlapping) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
     return ResponseEntity.ok(
@@ -266,9 +266,9 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getEventDetails(@PathVariable Long id, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         try {
@@ -278,8 +278,8 @@ public class EventController {
             return ResponseEntity.ok(eventDetails);
 
         } catch (RuntimeException e) {
-
-            return ResponseEntity.status(404).body("Errore: " + e.getMessage());
+            logger.error(" ERRORE DETTAGLI EVENTO: {}", e.getMessage(), e);
+            return ResponseEntity.status(404).body(ERROR + e.getMessage());
         }
     }
 

@@ -36,13 +36,16 @@ import jakarta.transaction.Transactional;
  */
 @Service
 public class EventService {
-    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
+    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private static final int MAX_RECOMMENDATION_DISTANCE_KM = 50;
-
+    private static final String USER_ID = "userId";
+    private static final String USER_NOT_FOUND = "Utente non trovato";
+    private static final String EVENT_NOT_FOUND = "Evento non trovato";
+    
     /**
      * Constructs the EventService.
      *
@@ -71,14 +74,14 @@ public class EventService {
      */
     public Event createEvent(EventRequest request, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            throw new RuntimeException("Sessione invalida o scaduta");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         User creator = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
         boolean eventExists = eventRepository
                 .findByCreatorIdAndTitleAndDateTimeAndLocation(
@@ -89,7 +92,7 @@ public class EventService {
                 .isPresent();
 
         if (eventExists) {
-            throw new RuntimeException("Un evento identico esiste gia per questo utente");
+            throw new BusinessRuleException("Un evento identico esiste gia per questo utente");
         }
 
         Event newEvent = new Event();
@@ -134,27 +137,27 @@ public class EventService {
     @Transactional
     public Event editEvent(Long id, EventRequest request, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            throw new RuntimeException("Sessione invalida o scaduta");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND));
 
         if (event.getCreator() == null ||
                 !event.getCreator().getId().equals(userId)) {
-            throw new RuntimeException("Solo il creatore può modificare l'evento");
+            throw new UnauthorizedException("Solo il creatore può modificare l'evento");
         }
 
         if (!event.getDateTime().isAfter(LocalDateTime.now().plusHours(24))) {
-            throw new RuntimeException("L'evento non può essere modificato entro 24 ore dall'inizio");
+            throw new BusinessRuleException("L'evento non può essere modificato entro 24 ore dall'inizio");
         }
 
         if (request.maxParticipants() != null &&
                 request.maxParticipants() < event.getParticipants().size()) {
-            throw new RuntimeException(
+            throw new BusinessRuleException(
                     "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
         }
 
@@ -200,7 +203,7 @@ public class EventService {
      */
     public List<EventResponse> getAllEvents(HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         List<Event> events = eventRepository.findAll();
 
@@ -228,14 +231,14 @@ public class EventService {
      */
     public EventResponse getEventDetails(Long eventId, HttpSession session) {
         
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
         
         if (userId == null) {
-            throw new RuntimeException("Sessione invalida o scaduta");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND));
 
         return toResponse(event, userId);
     }
@@ -259,18 +262,18 @@ public class EventService {
     @Transactional
     public String deleteEvent(long eventId, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            throw new RuntimeException("Sessione invalida o scaduta");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND));
 
         if (event.getCreator() == null ||
                 !event.getCreator().getId().equals(userId)) {
-            throw new RuntimeException("Solo il creatore può cancellare l'evento");
+            throw new UnauthorizedException("Solo il creatore può cancellare l'evento");
         }
 
         User creator = event.getCreator();
@@ -323,33 +326,33 @@ public class EventService {
     @Transactional
     public void bookEvent(Long eventId, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            throw new RuntimeException("Utente non autenticato");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND));
 
         boolean alreadyBooked = event.getParticipants().stream()
                 .anyMatch(p -> p.getId().equals(userId));
 
         if (alreadyBooked) {
-            throw new RuntimeException("Sei già prenotato per questo evento");
+            throw new BusinessRuleException("Sei già prenotato per questo evento");
         }
 
         if (event.getMaxParticipants() != null &&
                 event.getParticipants().size() >= event.getMaxParticipants()) {
-            throw new RuntimeException("L'evento è pieno");
+            throw new BusinessRuleException("L'evento è pieno");
         }
 
         if (event.getStatus() != null &&
                 !"open".equalsIgnoreCase(event.getStatus())) {
-            throw new RuntimeException("Le prenotazioni non sono disponibili per questo evento");
+            throw new BusinessRuleException("Le prenotazioni non sono disponibili per questo evento");
         }
 
         event.addParticipant(user);
@@ -368,23 +371,23 @@ public class EventService {
     @Transactional
     public void cancelBooking(Long eventId, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            throw new RuntimeException("Utente non autenticato");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Evento non trovato"));
+                .orElseThrow(() -> new ResourceNotFoundException(EVENT_NOT_FOUND));
 
         boolean isBooked = event.getParticipants().stream()
                 .anyMatch(p -> p.getId().equals(userId));
 
         if (!isBooked) {
-            throw new RuntimeException("Non ti sei prenotato per questo evento");
+            throw new BusinessRuleException("Non ti sei prenotato per questo evento");
         }
 
         event.removeParticipant(user);
@@ -415,41 +418,36 @@ public class EventService {
      * @param date     date filter in ISO format
      * @return a list of matching open events mapped to response objects
      */
-    public List<EventResponse> searchForEvents(HttpSession session,
-            String search,
-            List<String> tags,
-            String location,
-            String date,
-            Double latitude,
-            Double longitude,
-            Integer distanceKm,
-            Boolean hideOverlapping) {
+    public List<EventResponse> searchForEvents(HttpSession session, EventSearchFilter filter) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
-        String searchParam = (search == null || search.isBlank()) ? null : search;
-        String locationParam = (location == null || location.isBlank()) ? null : location;
+        // Estrazione dati dal DTO Filter
+        String searchParam = (filter.search() == null || filter.search().isBlank()) ? null : filter.search();
+        String locationParam = (filter.location() == null || filter.location().isBlank()) ? null : filter.location();
 
-        List<String> tagsParam = tags == null || tags.contains("All")
+        List<String> tagsParam = filter.tags() == null || filter.tags().contains("All")
                 ? List.of()
-                : tags.stream()
+                : filter.tags().stream()
                         .filter(tag -> tag != null && !tag.isBlank())
                         .toList();
+        
         boolean checkTags = !tagsParam.isEmpty();
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
 
-        if (date != null && !date.trim().isEmpty()) {
+        if (filter.date() != null && !filter.date().trim().isEmpty()) {
             try {
-                LocalDate parsed = LocalDate.parse(date);
+                LocalDate parsed = LocalDate.parse(filter.date());
                 startDate = parsed.atStartOfDay();
                 endDate = parsed.plusDays(1).atStartOfDay();
             } catch (Exception e) {
-                System.out.println("Invalid date format ignored: " + date);
+
+                logger.warn("Invalid date format ignored: {}", filter.date());
             }
         }
 
-        DistanceFilter distanceFilter = createDistanceFilter(locationParam, latitude, longitude, distanceKm);
+        DistanceFilter distanceFilter = createDistanceFilter(locationParam, filter.latitude(), filter.longitude(), filter.distanceKm());
 
         List<Event> events = eventRepository.findByDynamicFilters(
                 searchParam,
@@ -474,12 +472,13 @@ public class EventService {
         if (updated) {
             eventRepository.saveAll(events);
         }
+        
         LocalDateTime now = LocalDateTime.now();
         List<Event> visibleEvents = events.stream()
                 .filter(e -> e.getDateTime().isAfter(now))
                 .toList();
 
-        if (Boolean.TRUE.equals(hideOverlapping)) {
+        if (Boolean.TRUE.equals(filter.hideOverlapping())) {
             List<Event> bookedEvents = eventRepository.findBookedByParticipantId(userId);
             visibleEvents = visibleEvents.stream()
                     .filter(event -> !overlapsWithBookedEvents(event, bookedEvents))
@@ -635,13 +634,13 @@ public class EventService {
      * @throws RuntimeException if the user is not authenticated or not found in the database
      */
     public RecommendationResponse getRecommendedEvents(HttpSession session, Double userLat, Double userLon) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
         if (userId == null) {
-            throw new RuntimeException("Utente non autenticato");
+            throw new UnauthorizedException("Sessione invalida o scaduta");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND));
 
         if (userLat == null || userLon == null) {
             return new RecommendationResponse(List.of(), "MISSING_COORDINATES");
