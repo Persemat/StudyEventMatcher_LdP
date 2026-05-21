@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -8,6 +9,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.example.backend.model.Event;
+import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 
 /**
@@ -155,5 +157,53 @@ public class EmailService {
                 sendEventUpdateEmail(participant.getEmail(), event);
             }
         }
+    }
+
+    /**
+     * Sends a notification for a newly published event matching user interests.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param event the newly published event
+     */
+    public void sendNewRelevantEventEmail(String recipientEmail, Event event) {
+
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy 'alle' HH:mm");
+        String formattedTags = formatEventTags(event);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(recipientEmail);
+        message.setSubject("Nuovo evento per te - StudyTogether");
+        message.setText(
+                "Abbiamo trovato un nuovo evento in linea con i tuoi interessi:\n\n" +
+                "Titolo: " + event.getTitle() + "\n" +
+                "Tag di interesse: " + formattedTags + "\n" +
+                "Luogo: " + event.getLocation() + "\n" +
+                "Data e ora: " + event.getDateTime().format(dateTimeFormatter)
+        );
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Formats event tags for notification emails.
+     *
+     * @param event event containing tags
+     * @return comma-separated tag labels
+     */
+    private String formatEventTags(Event event) {
+        List<EventTag> tags = event.getTags();
+
+        if (tags == null || tags.isEmpty()) {
+            return "Nessun tag specificato";
+        }
+
+        // Show each tag once, using the same readable label used by the UI.
+        return tags.stream()
+                .map(EventTag::toDisplayLabel)
+                .filter(tag -> tag != null && !tag.isBlank())
+                .distinct()
+                .reduce((first, second) -> first + ", " + second)
+                .orElse("Nessun tag specificato");
     }
 }

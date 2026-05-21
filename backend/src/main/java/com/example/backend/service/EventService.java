@@ -41,6 +41,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final CityCoordinateService cityCoordinateService;
     private static final int MAX_RECOMMENDATION_DISTANCE_KM = 50;
 
     /**
@@ -50,10 +51,12 @@ public class EventService {
      * @param userRepository  repository used to retrieve user data
      * @param emailService    service used to send notification emails
      */
-    public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService) {
+    public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService,
+                        CityCoordinateService cityCoordinateService) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.cityCoordinateService = cityCoordinateService;
     }
 
     /**
@@ -112,7 +115,10 @@ public class EventService {
         newEvent.setCreator(creator);
         newEvent.addParticipant(creator);
 
-        return eventRepository.save(newEvent);
+        Event savedEvent = eventRepository.save(newEvent);
+        notifyInterestedUsers(savedEvent);
+
+        return savedEvent;
     }
 
     /**
@@ -760,6 +766,90 @@ public class EventService {
         }
         score += Math.max(0, MAX_RECOMMENDATION_DISTANCE_KM - (int) distance);
         return score;
+    }
+
+    /**
+     * Notifies users whose saved tags and favorite city match a newly published event.
+     *
+     * @param event newly created event
+     */
+    private void notifyInterestedUsers(Event event) {
+        if (!isNewEventEligibleForNotification(event)) {
+            return;
+        }
+
+        // Keep one email per user even when several event tags match.
+        Set<Long> notifiedUserIds = new java.util.HashSet<>();
+
+        for (User user : userRepository.findAll()) {
+            if (!isUserEligibleForNewEventNotification(user, event, notifiedUserIds)) {
+                continue;
+            }
+
+            try {
+                emailService.sendNewRelevantEventEmail(user.getEmail(), event);
+                notifiedUserIds.add(user.getId());
+            } catch (Exception e) {
+                logger.error("Errore mandando la mail di nuovo evento {} all'utente {}",
+                        event.getTitle(), user.getEmail(), e);
+            }
+        }
+    }
+
+    /**
+     * Checks whether an event can trigger new event notifications.
+     *
+     * @param event newly created event
+     * @return true when the event has all data needed for notification matching
+     */
+    private boolean isNewEventEligibleForNotification(Event event) {
+        return event != null
+                && event.getDateTime() != null
+                && event.getDateTime().isAfter(LocalDateTime.now())
+                && "open".equalsIgnoreCase(event.getStatus())
+                && event.getLatitude() != null
+                && event.getLongitude() != null
+                && event.getTags() != null
+                && !event.getTags().isEmpty();
+    }
+
+    /**
+     * Checks whether a user should receive the new event notification.
+     *
+     * @param user user being evaluated
+     * @param event newly created event
+     * @param notifiedUserIds users already notified for this event
+     * @return true when the user matches tag and distance rules
+     */
+    private boolean isUserEligibleForNewEventNotification(User user, Event event, Set<Long> notifiedUserIds) {
+        if (user == null || user.getId() == null || notifiedUserIds.contains(user.getId())) {
+            return false;
+        }
+
+        if (event.getCreator() != null && user.getId().equals(event.getCreator().getId())) {
+            return false;
+        }
+
+        if (event.getParticipants().stream().anyMatch(participant -> user.getId().equals(participant.getId()))) {
+            return false;
+        }
+
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            return false;
+        }
+
+        if (!hasMatchingTag(event, user)) {
+            return false;
+        }
+
+        // Reuse the dashboard distance rule: favorite city must be within 50 km.
+        return cityCoordinateService.findCoordinates(user.getFavouriteCity())
+                .map(coordinates -> calculateDistanceKm(
+                        coordinates.latitude(),
+                        coordinates.longitude(),
+                        event.getLatitude(),
+                        event.getLongitude()) <= MAX_RECOMMENDATION_DISTANCE_KM)
+                .orElse(false);
     }
 
 
