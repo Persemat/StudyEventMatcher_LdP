@@ -295,10 +295,15 @@ public class EventController {
      * @return a {@link ResponseEntity} containing a {@link RecommendationResponse} with the events and a status message
      */
     @GetMapping("/recommended")
-    public ResponseEntity<RecommendationResponse> getRecommendedEvents(
+    public ResponseEntity<?> getRecommendedEvents(
         HttpSession session,
         @RequestParam(required = false) Double latitude,
         @RequestParam(required = false) Double longitude){
+
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+        }
 
         RecommendationResponse response = eventService.getRecommendedEvents(session, latitude, longitude);
         return ResponseEntity.ok(response);
