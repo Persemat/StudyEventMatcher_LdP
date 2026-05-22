@@ -41,7 +41,7 @@ public class EmailService {
      * Sends a password reset email containing a verification code.
      *
      * @param recipientEmail the recipient's email address
-     * @param code the verification code for password reset
+     * @param code           the verification code for password reset
      */
     public void sendPasswordResetCode(String recipientEmail, String code) {
 
@@ -51,9 +51,8 @@ public class EmailService {
         message.setSubject("Password Reset - StudyTogether");
         message.setText(
                 "Hai richiesto il reset della password.\n\n" +
-                "Il tuo codice di verifica è: " + code + "\n\n" +
-                "Questo codice scadrà tra 10 minuti."
-        );
+                        "Il tuo codice di verifica è: " + code + "\n\n" +
+                        "Questo codice scadrà tra 10 minuti.");
 
         mailSender.send(message);
     }
@@ -62,7 +61,7 @@ public class EmailService {
      * Sends an event cancellation email to a single user.
      *
      * @param recipientEmail the recipient's email address
-     * @param event the cancelled event
+     * @param event          the cancelled event
      */
     public void sendEventCancellationEmail(String recipientEmail, Event event) {
 
@@ -75,10 +74,9 @@ public class EmailService {
         message.setSubject("Evento cancellato - StudyTogether");
         message.setText(
                 "Ti informiamo che l'evento '" + event.getTitle() + " programmato il  " +
-                event.getDateTime().format(dateFormatter) + " alle " +
-                event.getDateTime().format(timeFormatter) +
-                " è stato cancellato."
-        );
+                        event.getDateTime().format(dateFormatter) + " alle " +
+                        event.getDateTime().format(timeFormatter) +
+                        " è stato cancellato.");
 
         mailSender.send(message);
     }
@@ -112,7 +110,7 @@ public class EmailService {
      * Sends an event update email to a single user.
      *
      * @param recipientEmail the recipient's email address
-     * @param event the updated event
+     * @param event          the updated event
      */
     public void sendEventUpdateEmail(String recipientEmail, Event event) {
 
@@ -125,10 +123,9 @@ public class EmailService {
         message.setSubject("Evento aggiornato - StudyTogether");
         message.setText(
                 "L'evento " + event.getTitle() + " \u00e8 stato aggiornato.\n\n" +
-                "Data: " + event.getDateTime().format(dateFormatter) + "\n" +
-                "Ora: " + event.getDateTime().format(timeFormatter) + "\n" +
-                "Luogo: " + event.getLocation()
-        );
+                        "Data: " + event.getDateTime().format(dateFormatter) + "\n" +
+                        "Ora: " + event.getDateTime().format(timeFormatter) + "\n" +
+                        "Luogo: " + event.getLocation());
 
         mailSender.send(message);
     }
@@ -155,5 +152,31 @@ public class EmailService {
                 sendEventUpdateEmail(participant.getEmail(), event);
             }
         }
+    }
+
+    /**
+     * Sends a registration verification email to a new user.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param token          the unique verification token
+     */
+    public void sendRegistrationVerificationEmail(String recipientEmail, String token) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(recipientEmail);
+        message.setSubject("Conferma la tua email - StudyTogether");
+
+        // Creiamo il link di conferma (sostituisci localhost:8080 se il frontend gira
+        // altrove)
+        String verificationLink = "http://localhost:8080/user/verify?token=" + token;
+
+        message.setText(
+                "Benvenuto in StudyTogether!\n\n" +
+                        "Per completare la registrazione e attivare il tuo account, clicca sul link seguente:\n" +
+                        verificationLink + "\n\n" +
+                        "Se non hai richiesto tu l'iscrizione, ignora semplicemente questa mail.");
+
+        mailSender.send(message);
     }
 }

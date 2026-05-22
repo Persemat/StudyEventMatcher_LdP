@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.backend.dto.LoginRequest;
 import com.example.backend.dto.UpdateEmailRequest;
@@ -75,7 +76,7 @@ public class UserController {
             UserResponse response = userService.login(request);
             session.setAttribute("userId", response.id());
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -171,5 +172,35 @@ public class UserController {
         }
 
         return ResponseEntity.ok("Nessuna sessione attiva, Utente già disconnesso");
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        try {
+            userService.verifyUserEmail(token);
+
+            // Restituiamo un messaggio semplice. In futuro potrai fare un redirect al
+            // frontend
+            return ResponseEntity
+                    .ok("""
+                            <html>
+                            <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+                                <h2 style="color: #2e7d32;">Email confermata con successo!</h2>
+                                <p>Il tuo account StudyTogether è ora attivo. Puoi tornare all'applicazione ed effettuare il login.</p>
+                            </body>
+                            </html>
+                            """);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("""
+                    <html>
+                    <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+                        <h2 style="color: #c62828;">Errore di verifica</h2>
+                        <p>""" + e.getMessage() + """
+                        </p>
+                    </body>
+                    </html>
+                    """);
+        }
     }
 }
