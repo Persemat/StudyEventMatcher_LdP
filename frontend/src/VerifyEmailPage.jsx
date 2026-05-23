@@ -30,16 +30,13 @@ export default function VerifyEmailPage() {
         method: 'GET'
       });
 
-      const text = await response.text();
+      const data = await response.text();
 
       if (!response.ok) {
-        if (text.includes("Errore di verifica")) {
-          throw new Error("Codice non valido o già utilizzato.");
-        }
-        throw new Error("Impossibile verificare l'account. Riprova.");
-      }
+        throw new Error(data.message || "Impossibile verificare l'account.");
+}
 
-      setSuccess('Email verificata con successo! Verrai reindirizzato al login...');
+      setSuccess(data.message);
       
       setTimeout(() => {
         navigate("/login");

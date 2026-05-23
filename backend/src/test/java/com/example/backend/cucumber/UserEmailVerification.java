@@ -26,6 +26,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
 
 public class UserEmailVerification {
 
@@ -175,7 +177,9 @@ public class UserEmailVerification {
 
     @And("il sistema mostra il messaggio “Email confermata con successo”")
     public void sistemaMostraMessaggioEmailConfermata() throws Exception {
-        result.andExpect(content().string(containsString("Email confermata con successo!")));
+        result.andExpect(status().isOk())
+              .andExpect(jsonPath("$.status").value("success"))
+              .andExpect(jsonPath("$.message").value("'Email verificata con successo! Verrai reindirizzato al login...'"));
     }
 
     // =========================================================================
@@ -203,6 +207,8 @@ public class UserEmailVerification {
 
     @And("il sistema mostra il messaggio d'errore “Codice di conferma non valido o già utilizzato”")
     public void sistemaMostraMessaggioErroreCodiceNonValido() throws Exception {
-        result.andExpect(content().string(containsString("Errore di verifica")));
+        result.andExpect(status().isBadRequest())
+              .andExpect(jsonPath("$.status").value("error"))
+              .andExpect(jsonPath("$.message").value("Token di verifica non valido o scaduto."));
     }
 }

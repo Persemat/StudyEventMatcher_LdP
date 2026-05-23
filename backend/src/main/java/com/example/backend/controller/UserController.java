@@ -175,32 +175,19 @@ public class UserController {
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+    public ResponseEntity<?> verifyEmail(@RequestParam String token) {
         try {
             userService.verifyUserEmail(token);
 
-            // Restituiamo un messaggio semplice. In futuro potrai fare un redirect al
-            // frontend
-            return ResponseEntity
-                    .ok("""
-                            <html>
-                            <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
-                                <h2 style="color: #2e7d32;">Email confermata con successo!</h2>
-                                <p>Il tuo account StudyTogether è ora attivo. Puoi tornare all'applicazione ed effettuare il login.</p>
-                            </body>
-                            </html>
-                            """);
+            return ResponseEntity.ok(java.util.Map.of(
+                    "status", "success",
+                    "message", "'Email verificata con successo! Verrai reindirizzato al login...'"));
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("""
-                    <html>
-                    <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
-                        <h2 style="color: #c62828;">Errore di verifica</h2>
-                        <p>""" + e.getMessage() + """
-                        </p>
-                    </body>
-                    </html>
-                    """);
+
+            return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "status", "error",
+                    "message", e.getMessage()));
         }
     }
 
