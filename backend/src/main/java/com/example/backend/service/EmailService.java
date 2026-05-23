@@ -43,7 +43,7 @@ public class EmailService {
      * Sends a password reset email containing a verification code.
      *
      * @param recipientEmail the recipient's email address
-     * @param code the verification code for password reset
+     * @param code           the verification code for password reset
      */
     public void sendPasswordResetCode(String recipientEmail, String code) {
 
@@ -53,9 +53,8 @@ public class EmailService {
         message.setSubject("Password Reset - StudyTogether");
         message.setText(
                 "Hai richiesto il reset della password.\n\n" +
-                "Il tuo codice di verifica è: " + code + "\n\n" +
-                "Questo codice scadrà tra 10 minuti."
-        );
+                        "Il tuo codice di verifica è: " + code + "\n\n" +
+                        "Questo codice scadrà tra 10 minuti.");
 
         mailSender.send(message);
     }
@@ -64,7 +63,7 @@ public class EmailService {
      * Sends an event cancellation email to a single user.
      *
      * @param recipientEmail the recipient's email address
-     * @param event the cancelled event
+     * @param event          the cancelled event
      */
     public void sendEventCancellationEmail(String recipientEmail, Event event) {
 
@@ -77,10 +76,9 @@ public class EmailService {
         message.setSubject("Evento cancellato - StudyTogether");
         message.setText(
                 "Ti informiamo che l'evento '" + event.getTitle() + " programmato il  " +
-                event.getDateTime().format(dateFormatter) + " alle " +
-                event.getDateTime().format(timeFormatter) +
-                " è stato cancellato."
-        );
+                        event.getDateTime().format(dateFormatter) + " alle " +
+                        event.getDateTime().format(timeFormatter) +
+                        " è stato cancellato.");
 
         mailSender.send(message);
     }
@@ -114,7 +112,7 @@ public class EmailService {
      * Sends an event update email to a single user.
      *
      * @param recipientEmail the recipient's email address
-     * @param event the updated event
+     * @param event          the updated event
      */
     public void sendEventUpdateEmail(String recipientEmail, Event event) {
 
@@ -127,10 +125,9 @@ public class EmailService {
         message.setSubject("Evento aggiornato - StudyTogether");
         message.setText(
                 "L'evento " + event.getTitle() + " \u00e8 stato aggiornato.\n\n" +
-                "Data: " + event.getDateTime().format(dateFormatter) + "\n" +
-                "Ora: " + event.getDateTime().format(timeFormatter) + "\n" +
-                "Luogo: " + event.getLocation()
-        );
+                        "Data: " + event.getDateTime().format(dateFormatter) + "\n" +
+                        "Ora: " + event.getDateTime().format(timeFormatter) + "\n" +
+                        "Luogo: " + event.getLocation());
 
         mailSender.send(message);
     }
@@ -163,7 +160,7 @@ public class EmailService {
      * Sends a notification for a newly published event matching user interests.
      *
      * @param recipientEmail the recipient's email address
-     * @param event the newly published event
+     * @param event          the newly published event
      */
     public void sendNewRelevantEventEmail(String recipientEmail, Event event) {
 
@@ -176,11 +173,33 @@ public class EmailService {
         message.setSubject("Nuovo evento per te - StudyTogether");
         message.setText(
                 "Abbiamo trovato un nuovo evento in linea con i tuoi interessi:\n\n" +
-                "Titolo: " + event.getTitle() + "\n" +
-                "Tag di interesse: " + formattedTags + "\n" +
-                "Luogo: " + event.getLocation() + "\n" +
-                "Data e ora: " + event.getDateTime().format(dateTimeFormatter)
-        );
+                        "Titolo: " + event.getTitle() + "\n" +
+                        "Tag di interesse: " + formattedTags + "\n" +
+                        "Luogo: " + event.getLocation() + "\n" +
+                        "Data e ora: " + event.getDateTime().format(dateTimeFormatter));
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Sends a registration verification email to a new user.
+     *
+     * @param recipientEmail the recipient's email address
+     * @param token          the unique verification token
+     */
+    public void sendRegistrationVerificationEmail(String recipientEmail, String token) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(recipientEmail);
+        message.setSubject("Conferma la tua email - StudyTogether");
+
+        message.setText(
+                "Benvenuto in StudyTogether!\n\n" +
+                        "Per completare la registrazione e attivare il tuo account,inserisci il codice seguente nella pagina di conferma:\n"
+                        +
+                        token + "\n\n" +
+                        "Se non hai richiesto tu l'iscrizione, ignora semplicemente questa mail.");
 
         mailSender.send(message);
     }

@@ -100,7 +100,7 @@ export default function Dashboard({ user }) {
   if (loading) {
     return (
       <div className="p-8 text-center text-gray-500 italic">
-        Il backend sta elaborando le tue raccomandazioni personali...
+        Caricamento in corso...
       </div>
     );
   }

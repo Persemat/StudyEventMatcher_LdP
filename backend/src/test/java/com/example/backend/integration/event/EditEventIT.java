@@ -35,10 +35,12 @@ public class EditEventIT extends BaseEventIT {
 
   @Test
   void editValidEvent_returns200AndUpdatesEvent() throws Exception {
+    LocalDateTime baseDate = LocalDateTime.now().plusMonths(3);
+    LocalDateTime updateDate = baseDate.plusDays(1);
 
     Event event = new Event();
     event.setTitle("Java Project");
-    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDateTime(baseDate);
     event.setDuration(2.5);
     event.setLocation("Milano (MI)-Aula Magna");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -53,7 +55,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "Updated Java Project",
-          "dateTime": "2026-10-16T17:00:00",
+          "dateTime": "%s",
           "duration": 3.0,
           "location": "Milano (MI)-Biblioteca",
           "tags": [
@@ -64,7 +66,7 @@ public class EditEventIT extends BaseEventIT {
           "maxParticipants": 12,
           "creatorParticipationRequired": false
         }
-        """;
+        """.formatted(updateDate.toString());
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -77,7 +79,7 @@ public class EditEventIT extends BaseEventIT {
     Event updatedEvent = eventRepository.findById(event.getId()).orElseThrow();
 
     assertEquals("Updated Java Project", updatedEvent.getTitle());
-    assertEquals(LocalDateTime.of(2026, 10, 16, 17, 0), updatedEvent.getDateTime());
+    assertEquals(updateDate, updatedEvent.getDateTime());
     assertEquals(3.0, updatedEvent.getDuration());
     assertEquals("Milano (MI)-Biblioteca", updatedEvent.getLocation());
     assertTrue(updatedEvent.getTags().contains(
@@ -89,6 +91,7 @@ public class EditEventIT extends BaseEventIT {
 
   @Test
   void editEventWithBookedUser_sendsUpdateEmailOnlyToBookedUsers() throws Exception {
+    LocalDateTime futureDate = LocalDateTime.now().plusMonths(4);
     User creator = userRepository.findById(userId).orElseThrow();
 
     User bookedUser = new User("Anna", "Bianchi", "anna.booked@example.com", "Password123", "Milano",
@@ -103,7 +106,7 @@ public class EditEventIT extends BaseEventIT {
 
     Event event = new Event();
     event.setTitle("Progetto Java");
-    event.setDateTime(LocalDateTime.of(2026, 6, 20, 15, 0));
+    event.setDateTime(futureDate);
     event.setDuration(2.0);
     event.setLocation("Biblioteca");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -121,7 +124,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "Progetto Java",
-          "dateTime": "2026-06-20T15:00:00",
+          "dateTime": "%s",
           "duration": 2.0,
           "location": "Aula 3",
           "tags": [
@@ -131,7 +134,7 @@ public class EditEventIT extends BaseEventIT {
           "maxParticipants": 10,
           "creatorParticipationRequired": true
         }
-        """;
+        """.formatted(futureDate.toString());
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -170,10 +173,12 @@ public class EditEventIT extends BaseEventIT {
 
   @Test
   void editEventWithEmptyTitle_returns400() throws Exception {
+    LocalDateTime baseDate = LocalDateTime.now().plusMonths(3);
+    LocalDateTime updateDate = baseDate.plusDays(1);
 
     Event event = new Event();
     event.setTitle("Java Project");
-    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDateTime(baseDate);
     event.setDuration(2.5);
     event.setLocation("Milano (MI)-Aula Magna");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -188,7 +193,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "",
-          "dateTime": "2026-10-16T17:00:00",
+          "dateTime": "%s",
           "duration": 3.0,
           "location": "Milano (MI)-Biblioteca",
           "tags": [
@@ -198,7 +203,7 @@ public class EditEventIT extends BaseEventIT {
           "maxParticipants": 12,
           "creatorParticipationRequired": false
         }
-        """;
+        """.formatted(updateDate.toString());
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -211,10 +216,12 @@ public class EditEventIT extends BaseEventIT {
 
   @Test
   void editEventWithInvalidSession_returns401() throws Exception {
+    LocalDateTime baseDate = LocalDateTime.now().plusMonths(3);
+    LocalDateTime updateDate = baseDate.plusDays(1);
 
     Event event = new Event();
     event.setTitle("Java Project");
-    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDateTime(baseDate);
     event.setDuration(2.5);
     event.setLocation("Milano (MI)-Aula Magna");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -229,7 +236,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "Updated Java Project",
-          "dateTime": "2026-10-16T17:00:00",
+          "dateTime": "%s",
           "duration": 3.0,
           "location": "Milano (MI)-Biblioteca",
           "tags": [
@@ -239,7 +246,7 @@ public class EditEventIT extends BaseEventIT {
           "maxParticipants": 12,
           "creatorParticipationRequired": false
         }
-        """;
+        """.formatted(updateDate.toString());
 
     mockMvc.perform(put("/events/" + event.getId())
         .contentType(MediaType.APPLICATION_JSON)
@@ -251,6 +258,8 @@ public class EditEventIT extends BaseEventIT {
 
   @Test
   void editEventByNonCreator_returns400() throws Exception {
+    LocalDateTime baseDate = LocalDateTime.now().plusMonths(3);
+    LocalDateTime updateDate = baseDate.plusDays(1);
 
     User otherUser = new User("Luca", "Verdi", "luca_edit_test@example.com", "Password123",
         "Roma", List.of("Tech"), new ArrayList<>());
@@ -258,7 +267,7 @@ public class EditEventIT extends BaseEventIT {
 
     Event event = new Event();
     event.setTitle("Java Project");
-    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDateTime(baseDate);
     event.setDuration(2.5);
     event.setLocation("Milano (MI)-Aula Magna");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -273,7 +282,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "Updated Java Project",
-          "dateTime": "2026-10-16T17:00:00",
+          "dateTime": "%s",
           "duration": 3.0,
           "location": "Milano (MI)-Biblioteca",
           "tags": [
@@ -283,7 +292,7 @@ public class EditEventIT extends BaseEventIT {
           "maxParticipants": 12,
           "creatorParticipationRequired": false
         }
-        """;
+        """.formatted(updateDate.toString());
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
@@ -296,6 +305,8 @@ public class EditEventIT extends BaseEventIT {
 
   @Test
   void editEventWithMaxParticipantsLowerThanCurrent_returns400() throws Exception {
+    LocalDateTime baseDate = LocalDateTime.now().plusMonths(3);
+    LocalDateTime updateDate = baseDate.plusDays(1);
 
     User otherUser = new User("Luca", "Verdi", "luca_participant_test@example.com", "Password123",
         "Roma", List.of("Social"), new ArrayList<>());
@@ -303,7 +314,7 @@ public class EditEventIT extends BaseEventIT {
 
     Event event = new Event();
     event.setTitle("Java Project");
-    event.setDateTime(LocalDateTime.of(2026, 10, 15, 15, 0));
+    event.setDateTime(baseDate);
     event.setDuration(2.5);
     event.setLocation("Milano (MI)-Aula Magna");
     event.setTags(List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -319,7 +330,7 @@ public class EditEventIT extends BaseEventIT {
     String json = """
         {
           "title": "Updated Java Project",
-          "dateTime": "2026-10-16T17:00:00",
+          "dateTime": "%s",
           "duration": 3.0,
           "location": "Milano (MI)-Biblioteca",
           "tags": [
@@ -329,7 +340,7 @@ public class EditEventIT extends BaseEventIT {
           "maxParticipants": 1,
           "creatorParticipationRequired": false
         }
-        """;
+        """.formatted(updateDate.toString());
 
     mockMvc.perform(put("/events/" + event.getId())
         .sessionAttr("userId", userId)
