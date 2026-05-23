@@ -30,7 +30,7 @@ export default function VerifyEmailPage() {
         method: 'GET'
       });
 
-      const data = await response.text();
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || "Impossibile verificare l'account.");
