@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import com.example.backend.model.UserVerification;
+import com.example.backend.repository.UserVerificationRepository;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -22,6 +24,9 @@ public class UpdateUserProfile {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserVerificationRepository userVerificationRepository;
 
     private MockHttpSession session;
     private ResultActions result;
@@ -52,8 +57,15 @@ public class UpdateUserProfile {
                 """;
 
         mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registration))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registration))
+                .andExpect(status().isOk());
+
+        UserVerification verification = userVerificationRepository.findById(email)
+                .orElseThrow(() -> new AssertionError("Record di verifica non trovato"));
+
+        mockMvc.perform(get("/user/verify")
+                .param("token", verification.getToken()))
                 .andExpect(status().isOk());
 
         String login = """
@@ -64,8 +76,8 @@ public class UpdateUserProfile {
                 """;
 
         session = (MockHttpSession) mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(login))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(login))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
@@ -199,8 +211,8 @@ public class UpdateUserProfile {
                 """, newPassword);
 
         mockMvc.perform(post("/user/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginWithNewPassword))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginWithNewPassword))
                 .andExpect(status().isOk());
     }
 

@@ -11,7 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.TestPropertySource;
 
+@TestPropertySource(properties = "app.security.require-email-verification=false")
 public class UpdateUserProfileIT extends BaseUserIT {
 
   @Test

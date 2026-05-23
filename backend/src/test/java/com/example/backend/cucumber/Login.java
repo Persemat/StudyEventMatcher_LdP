@@ -12,6 +12,10 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.UUID;
 
+import com.example.backend.model.UserVerification;
+import com.example.backend.repository.UserVerificationRepository;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,6 +25,9 @@ public class Login {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserVerificationRepository userVerificationRepository;
 
     private String email;
     private String password;
@@ -47,6 +54,13 @@ public class Login {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyRegistration))
                 .andExpect(status().isOk());
+
+        UserVerification verification = userVerificationRepository.findById(email)
+                .orElseThrow(() -> new AssertionError("Record di verifica non trovato"));
+
+        mockMvc.perform(get("/user/verify")
+                .param("token", verification.getToken()))
+                .andExpect(status().isOk());
     }
 
     @Given("l'identificativo o la password non sono corretti")
@@ -66,9 +80,17 @@ public class Login {
                 }
                 """, email, correctPassword);
 
+        // Registrazione
         mockMvc.perform(post("/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyRegistration))
+                .andExpect(status().isOk());
+
+        UserVerification verification = userVerificationRepository.findById(email)
+                .orElseThrow(() -> new AssertionError("Record di verifica non trovato"));
+
+        mockMvc.perform(get("/user/verify")
+                .param("token", verification.getToken()))
                 .andExpect(status().isOk());
 
         password = "WrongPassword";

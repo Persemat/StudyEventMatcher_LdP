@@ -3,6 +3,7 @@ package com.example.backend.integration.user;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("integration")
+@TestPropertySource(properties = "app.security.require-email-verification=false")
 public class RegistrationIT extends BaseUserIT {
 
         @Test
