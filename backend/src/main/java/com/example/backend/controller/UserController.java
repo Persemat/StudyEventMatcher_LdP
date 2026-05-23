@@ -203,4 +203,14 @@ public class UserController {
                     """);
         }
     }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerificationCode(@RequestParam String email) {
+        try {
+            userService.resendVerificationEmail(email);
+            return ResponseEntity.ok("Nuovo codice di verifica inviato con successo.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
+    }
 }

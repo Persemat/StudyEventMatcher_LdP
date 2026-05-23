@@ -180,6 +180,30 @@ export default function AuthPage(props) {
 
       if (!response.ok) {
         const errorText = await response.text();
+        if (isLogin && errorText.includes("Devi confermare la tua email")) {
+          setError(
+            <span>
+              Devi confermare la tua email prima di accedere.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/verify-email", { state: { email } })}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: 'inherit'
+                }}
+              >
+                Clicca qui per confermare la tua email
+              </button>
+            </span>
+          );
+          return;
+        }
         throw new Error(errorText);
       }
 
@@ -195,10 +219,14 @@ export default function AuthPage(props) {
 
       } else {
         setMessage(
-          `Registratione completata per: ${data.name ?? ''} ${data.lastname ?? ''}`
+          `Registrazione completata per: ${data.name ?? ''} ${data.lastname ?? ''}. Reindirizzamento alla verifica...`
         );
 
-        // resetta i campi dopo registrazione
+        // Salviamo l'email nello state della navigazione di react-router-dom
+        // così la pagina di verifica saprà per quale account stiamo inserendo i numeri
+        const registeredEmail = email;
+
+        // Resetta i campi del form
         setName('');
         setLastname('');
         setEmail('');
@@ -209,8 +237,9 @@ export default function AuthPage(props) {
         setMicroTags([]);
 
         setTimeout(() => {
-          setIsLogin(true);
-        }, 2000);
+          // Naviga alla nuova pagina di verifica passando l'email come stato invisibile
+          navigate("/verify-email", { state: { email: registeredEmail } });
+        }, 1500);
       }
 
     } catch (error) {

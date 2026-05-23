@@ -167,14 +167,11 @@ public class EmailService {
         message.setTo(recipientEmail);
         message.setSubject("Conferma la tua email - StudyTogether");
 
-        // Creiamo il link di conferma (sostituisci localhost:8080 se il frontend gira
-        // altrove)
-        String verificationLink = "http://localhost:8080/user/verify?token=" + token;
-
         message.setText(
                 "Benvenuto in StudyTogether!\n\n" +
-                        "Per completare la registrazione e attivare il tuo account, clicca sul link seguente:\n" +
-                        verificationLink + "\n\n" +
+                        "Per completare la registrazione e attivare il tuo account,inserisci il codice seguente nella pagina di conferma:\n"
+                        +
+                        token + "\n\n" +
                         "Se non hai richiesto tu l'iscrizione, ignora semplicemente questa mail.");
 
         mailSender.send(message);

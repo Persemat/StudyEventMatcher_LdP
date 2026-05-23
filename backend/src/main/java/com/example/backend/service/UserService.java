@@ -17,6 +17,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import com.example.backend.model.UserVerification;
 import com.example.backend.repository.UserVerificationRepository;
+import jakarta.transaction.Transactional;
 
 /**
  * Service responsible for user management.
@@ -129,12 +130,11 @@ public class UserService {
         // Email Verification
         if (requireEmailVerification) {
 
-            String token = UUID.randomUUID().toString();
+            String token = String.valueOf((int) (Math.random() * 900000) + 100000);
 
             UserVerification verification = new UserVerification(savedUser.getEmail(), token, false);
             verificationRepository.save(verification);
 
-            // Inviamo l'email reale tramite il servizio
             emailService.sendRegistrationVerificationEmail(savedUser.getEmail(), token);
         }
 
@@ -315,6 +315,27 @@ public class UserService {
         verification.setToken(null);
 
         verificationRepository.save(verification);
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato nel sistema."));
+
+        UserVerification verification = verificationRepository.findById(email)
+                .orElseThrow(() -> new RuntimeException("Nessuna verifica in corso per questo utente."));
+
+        if (verification.isVerified()) {
+            throw new RuntimeException("Questo account è già stato confermato ed è attivo.");
+        }
+
+        String newCode = String.valueOf((int) (Math.random() * 900000) + 100000);
+
+        verification.setToken(newCode);
+        verificationRepository.save(verification);
+
+        // 6. Spediamo la nuova mail tramite il servizio
+        emailService.sendRegistrationVerificationEmail(user.getEmail(), newCode);
     }
 
     private User getUserFromSession(Long userId) {
