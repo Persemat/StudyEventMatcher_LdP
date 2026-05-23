@@ -91,12 +91,89 @@ public class SearchEventsIT extends BaseEventIT {
                 .andExpect(jsonPath("$[?(@.title == 'Macro only study')].tags[0].microTag", hasItems(nullValue())));
     }
 
+    @Test
+    void searchEvents_byDistance_shouldReturnOnlyEventsWithinRadius() throws Exception {
+        User creator = userRepository.findById(userId).orElseThrow();
+
+        createEvent("Milano event", List.of(new EventTag("Informatica e Tecnologie", "SQL")),
+                creator, "Milano (MI)-Aula Test", 45.4642, 9.1900);
+
+        createEvent("Monza event", List.of(new EventTag("Informatica e Tecnologie", "SQL")),
+                creator, "Monza (MB)-Aula Test", 45.5845, 9.2744);
+
+        createEvent("Roma event", List.of(new EventTag("Informatica e Tecnologie", "SQL")),
+                creator, "Roma (RM)-Aula Test", 41.9028, 12.4964);
+
+        mockMvc.perform(get("/events/search")
+                .queryParam("location", "Milano (MI)")
+                .queryParam("latitude", "45.4642")
+                .queryParam("longitude", "9.1900")
+                .queryParam("distanceKm", "50")
+                .sessionAttr("userId", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].title", hasItems("Milano event", "Monza event")))
+                .andExpect(content().string(not(containsString("Roma event"))));
+    }
+
+    @Test
+    void searchEvents_byDistance_shouldReturnEmptyListWhenNoEventsAreWithinRadius() throws Exception {
+        User creator = userRepository.findById(userId).orElseThrow();
+
+        createEvent("Roma event", List.of(new EventTag("Informatica e Tecnologie", "SQL")),
+                creator, "Roma (RM)-Aula Test", 41.9028, 12.4964);
+
+        mockMvc.perform(get("/events/search")
+                .queryParam("location", "Milano (MI)")
+                .queryParam("latitude", "45.4642")
+                .queryParam("longitude", "9.1900")
+                .queryParam("distanceKm", "5")
+                .sessionAttr("userId", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void searchEvents_byDistance_shouldIgnoreEventsWithoutCoordinates() throws Exception {
+        User creator = userRepository.findById(userId).orElseThrow();
+
+        createEvent("Evento senza coordinate", List.of(new EventTag("Informatica e Tecnologie", "SQL")),
+                creator, "Milano (MI)-Aula Test", null, null);
+
+        createEvent("Milano event", List.of(new EventTag("Informatica e Tecnologie", "SQL")),
+                creator, "Milano (MI)-Aula Test", 45.4642, 9.1900);
+
+        mockMvc.perform(get("/events/search")
+                .queryParam("location", "Milano (MI)")
+                .queryParam("latitude", "45.4642")
+                .queryParam("longitude", "9.1900")
+                .queryParam("distanceKm", "50")
+                .sessionAttr("userId", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].title").value("Milano event"))
+                .andExpect(content().string(not(containsString("Evento senza coordinate"))));
+    }
+
     private void createEvent(String title, List<EventTag> tags, User creator) {
+        createEvent(title, tags, creator, "Milano (MI)-Aula Test", 45.4642, 9.1900);
+    }
+
+    private void createEvent(
+            String title,
+            List<EventTag> tags,
+            User creator,
+            String location,
+            Double latitude,
+            Double longitude
+    ) {
         Event event = new Event();
         event.setTitle(title);
         event.setDateTime(LocalDateTime.now().plusDays(5));
         event.setDuration(2.0);
-        event.setLocation("Milano (MI)-Aula Test");
+        event.setLocation(location);
+        event.setLatitude(latitude);
+        event.setLongitude(longitude);
         event.setTags(tags);
         event.setDescription("Descrizione test");
         event.setMaxParticipants(10);

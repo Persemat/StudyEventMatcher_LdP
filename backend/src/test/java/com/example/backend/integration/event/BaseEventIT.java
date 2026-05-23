@@ -10,6 +10,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+import java.util.ArrayList;
+
 //@Tag("integration")
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,11 +37,14 @@ public abstract class BaseEventIT {
         userRepository.deleteAll();
         userRepository.flush();
 
-        User user = new User();
-        user.setName("Luca");
-        user.setLastname("Rossi");
-        user.setEmail("luca@example.com");
-        user.setPassword("Pass123");
+        User user = new User(
+                "Luca",
+                "Rossi",
+                "luca@example.com",
+                "Pass123",
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
 
         user = userRepository.saveAndFlush(user);
         this.userId = user.getId();

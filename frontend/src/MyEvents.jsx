@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Calendar, Plus } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { AlertTriangle, Calendar, Plus } from "lucide-react";
 import { useEventActions } from "./hooks/useEventActions";
 
 import EventCard from "./EventCard"; 
 import EventFormModal from "./EventFormModal";
+import EventDetails from "./EventDetails";
 
 export default function MyEvents() {
   const [events, setEvents] = useState([]);
@@ -12,12 +13,14 @@ export default function MyEvents() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(null);
 
   const now = new Date();
+  const nowTime = now.getTime();
 
   // Splits future and past events relative to the current time.
-  const isFutureEvent = (event) => new Date(event.dateTime) >= now;
-  const isPastEvent = (event) => new Date(event.dateTime) < now;
+  const isFutureEvent = (event) => new Date(event.dateTime).getTime() >= nowTime;
+  const isPastEvent = (event) => new Date(event.dateTime).getTime() < nowTime;
 
   // Shows only future events created by the current user.
   const createdEvents = events.filter(
@@ -34,9 +37,48 @@ export default function MyEvents() {
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
 
+
   const favoriteEvents = events.filter(
     (e) => e.isFavorite
   );
+  const overlappingEvents = useMemo(() => {
+    const userFutureEvents = events
+      .filter((event) => (event.isCreatedByMe || event.isBooked) && new Date(event.dateTime).getTime() >= nowTime)
+      .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+    const overlappingEventIds = new Set();
+    const overlappingEventTitles = [];
+
+    const addOverlappingEvent = (event) => {
+      if (overlappingEventIds.has(event.id)) return;
+      overlappingEventIds.add(event.id);
+      overlappingEventTitles.push(event.title);
+    };
+
+    for (let i = 0; i < userFutureEvents.length; i += 1) {
+      for (let j = i + 1; j < userFutureEvents.length; j += 1) {
+        const first = userFutureEvents[i];
+        const second = userFutureEvents[j];
+        const firstStart = new Date(first.dateTime).getTime();
+        const firstEnd = firstStart + Math.round((first.duration || 0) * 60) * 60 * 1000;
+        const secondStart = new Date(second.dateTime).getTime();
+        const secondEnd = secondStart + Math.round((second.duration || 0) * 60) * 60 * 1000;
+
+        if (firstStart < secondEnd && firstEnd > secondStart) {
+          addOverlappingEvent(first);
+          addOverlappingEvent(second);
+        }
+      }
+    }
+
+    return overlappingEventTitles;
+  }, [events, nowTime]);
+
+  const formatOverlappingEventTitles = (titles) => {
+    if (titles.length <= 2) return titles.join(" e ");
+
+    return `${titles.slice(0, -1).join(", ")} e ${titles[titles.length - 1]}`;
+  };
 
   // Reloads all visible events and refreshes the three sections.
   const fetchEvents = async () => {
@@ -105,6 +147,20 @@ export default function MyEvents() {
         </button>
       </div>
 
+      {overlappingEvents.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-xl px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-semibold">
+              Attenzione: hai {overlappingEvents.length} eventi con orari sovrapposti.
+            </p>
+            <p className="text-sm mt-1">
+              Controlla: {formatOverlappingEventTitles(overlappingEvents) }.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex">
@@ -171,10 +227,10 @@ export default function MyEvents() {
                   event.id,
                   event.creatorParticipationRequired,
                   event.isCreatedByMe
-                )
-              }
+                )}
               onEdit={() => handleEdit(event)}
               onToggleFavorite={() => handleToggleFavorite(event.id)}
+              onShowDetails={() => setSelectedEventId(event.id)}
             />
           ))}
 
@@ -213,6 +269,32 @@ export default function MyEvents() {
             fetchEvents();
           }}
         />
+      )}
+
+      {selectedEventId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedEventId(null)}
+        >
+           
+           <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border-2 border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+           >
+              
+              {/* Close Button */}
+              <button 
+                 onClick={() => setSelectedEventId(null)}
+                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors font-bold text-xl z-10 bg-white rounded-full p-1 shadow-sm"
+              >
+                 ✕
+              </button>
+  
+              {/* Render the details component */}
+              <EventDetails eventId={selectedEventId} />
+  
+           </div>
+        </div>
       )}
 
     </div>

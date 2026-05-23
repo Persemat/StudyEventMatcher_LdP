@@ -17,3 +17,11 @@ Feature: Creazione di un nuovo evento
     When l'utente tenta di creare un evento senza compilare i campi obbligatori
     Then il sistema impedisce la creazione dell'evento
     And il sistema mostra l'errore "Campi obbligatori mancanti"
+
+    Scenario: Tentativo di creazione di un evento duplicato
+    Given l'utente si trova nella pagina di creazione evento
+    And l'utente ha gia' creato un evento nel sistema
+    When l'utente compila i campi con gli stessi dati esatti dell'evento esistente
+    And conferma la creazione
+    Then il sistema impedisce la creazione dell'evento
+    And il sistema mostra l'errore "Un evento identico esiste gia"

@@ -48,4 +48,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("SELECT DISTINCT e FROM Event e JOIN e.participants p WHERE p.id = :userId")
+    List<Event> findBookedByParticipantId(@Param("userId") Long userId);
 }

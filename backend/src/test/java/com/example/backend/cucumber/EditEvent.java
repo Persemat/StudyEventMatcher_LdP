@@ -17,6 +17,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -46,11 +47,8 @@ public class EditEvent {
         userRepository.deleteAll();
         eventRepository.deleteAll();
 
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario@example.com");
-        user.setPassword("Password123");
+        user = new User("Mario", "Rossi", "mario@example.com", "Password123",
+                "Milano", List.of("Tech"), new ArrayList<>());
         user = userRepository.save(user);
 
         session = new MockHttpSession();
@@ -153,11 +151,8 @@ public class EditEvent {
 
     @And("esiste un evento {string} creato da un altro utente")
     public void esisteEventoCreatoDaAltroUtente(String title) {
-        otherUser = new User();
-        otherUser.setName("Luca");
-        otherUser.setLastname("Verdi");
-        otherUser.setEmail("luca@example.com");
-        otherUser.setPassword("Password123");
+        otherUser = new User("Luca", "Verdi", "luca@example.com", "Password123",
+                "Roma", List.of("Social"), new ArrayList<>());
         otherUser = userRepository.save(otherUser);
 
         event = new Event();

@@ -146,4 +146,63 @@ class NotificationDeleteEventTest {
         SimpleMailMessage message = captor.getValue();
         assertEquals("valid@example.com", message.getTo()[0]);
     }
+
+    @Test
+    void sendEventUpdateEmail_sendsCorrectMessage() {
+        Event event = new Event();
+        event.setTitle("Progetto Java");
+        event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
+        event.setLocation("Aula 3");
+
+        emailService.sendEventUpdateEmail("anna@example.com", event);
+
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender, times(1)).send(captor.capture());
+
+        SimpleMailMessage message = captor.getValue();
+
+        assertEquals("noreply@test.com", message.getFrom());
+        assertEquals("anna@example.com", message.getTo()[0]);
+        assertEquals("Evento aggiornato - StudyTogether", message.getSubject());
+
+        String text = message.getText();
+        assertTrue(text.contains("L'evento Progetto Java è stato aggiornato"));
+        assertTrue(text.contains("20/05/2026"));
+        assertTrue(text.contains("15:00"));
+        assertTrue(text.contains("Aula 3"));
+    }
+
+    @Test
+    void sendEventUpdateEmailToParticipants_sendsToBookedParticipantsOnly() {
+        User creator = new User();
+        creator.setId(1L);
+        creator.setEmail("creator@example.com");
+
+        User participant = new User();
+        participant.setId(2L);
+        participant.setEmail("anna@example.com");
+
+        User participantWithoutEmail = new User();
+        participantWithoutEmail.setId(3L);
+        participantWithoutEmail.setEmail(" ");
+
+        Event event = new Event();
+        event.setTitle("Progetto Java");
+        event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
+        event.setLocation("Aula 3");
+        event.setCreator(creator);
+        event.setParticipants(new HashSet<>());
+
+        event.addParticipant(creator);
+        event.addParticipant(participant);
+        event.addParticipant(participantWithoutEmail);
+
+        emailService.sendEventUpdateEmailToParticipants(event);
+
+        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender, times(1)).send(captor.capture());
+
+        SimpleMailMessage message = captor.getValue();
+        assertEquals("anna@example.com", message.getTo()[0]);
+    }
 }

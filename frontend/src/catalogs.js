@@ -49,6 +49,8 @@ export function loadCityOptions() {
           name: city.denominazione_ita,
           province: city.sigla_provincia,
           label: `${city.denominazione_ita} (${city.sigla_provincia})`,
+          latitude: Number(city.lat),
+          longitude: Number(city.lon),
         }))
       );
   }

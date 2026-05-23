@@ -1,12 +1,22 @@
 package com.example.backend.model;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name= "users")
+@Table(name = "users")
 public class User {
 
     @Id
@@ -25,7 +35,19 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // 🔥 MANY TO MANY RELATION
+    @Column(nullable = false)
+    private String favouriteCity;
+
+    @ElementCollection
+    @CollectionTable(name = "user_macro_tags", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "macro_tag", nullable = false)
+    private List<String> macroTags;
+
+    @ElementCollection
+    @CollectionTable(name = "user_micro_tags", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "micro_tag")
+    private List<String> microTags;
+
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
@@ -37,14 +59,17 @@ public class User {
 
     public User() {}
 
-    public User(String name, String lastname, String email, String password) {
+    public User(String name, String lastname, String email, String password, String favouriteCity,
+            List<String> macroTags, List<String> microTags) {
         this.name = name;
         this.lastname = lastname;
         this.email = email;
         this.password = password;
+        this.favouriteCity = favouriteCity;
+        this.macroTags = macroTags;
+        this.microTags = microTags;
     }
 
-    // GETTERS & SETTERS
     public Long getId() {
         return id;
     }
@@ -85,7 +110,30 @@ public class User {
         this.password = password;
     }
 
-    // 🔹 RELATION GETTERS/SETTERS
+    public String getFavouriteCity() {
+        return favouriteCity;
+    }
+
+    public void setFavouriteCity(String favouriteCity) {
+        this.favouriteCity = favouriteCity;
+    }
+
+    public List<String> getMacroTags() {
+        return macroTags;
+    }
+
+    public void setMacroTags(List<String> macroTags) {
+        this.macroTags = macroTags;
+    }
+
+    public List<String> getMicroTags() {
+        return microTags;
+    }
+
+    public void setMicroTags(List<String> microTags) {
+        this.microTags = microTags;
+    }
+
     public Set<Event> getBookedEvents() {
         return bookedEvents;
     }
