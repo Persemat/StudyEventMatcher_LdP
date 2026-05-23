@@ -34,6 +34,10 @@ export default function MyEvents() {
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
 
+  const favoriteEvents = events.filter(
+    (e) => e.isFavorite
+  );
+
   // Reloads all visible events and refreshes the three sections.
   const fetchEvents = async () => {
     setLoading(true);
@@ -64,7 +68,7 @@ export default function MyEvents() {
     fetchEvents();
   }, []);
 
-  const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+  const { handleBook, handleCancelBooking, handleToggleFavorite } = useEventActions(fetchEvents, setEvents);
 
   // Opens the modal in edit mode with the selected event data.
   const handleEdit = (event) => {
@@ -72,12 +76,14 @@ export default function MyEvents() {
   };
 
   // Chooses which event list to render based on the active tab.
-  const displayedEvents =
-    activeTab === "created"
-      ? createdEvents
-      : activeTab === "booked"
-      ? bookedEvents
-      : historyEvents;
+ const displayedEvents =
+  activeTab === "created"
+    ? createdEvents
+    : activeTab === "favorites"
+    ? favoriteEvents
+    : activeTab === "booked"
+    ? bookedEvents
+    : historyEvents;
 
   return (
     <div className="p-6 space-y-6">
@@ -113,6 +119,18 @@ export default function MyEvents() {
           >
             Creati da me ({createdEvents.length})
           </button>
+
+          <button
+            onClick={() => setActiveTab("favorites")}
+            className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
+              activeTab === "favorites"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            I miei preferiti ({favoriteEvents.length})
+          </button>
+
 
           <button
             onClick={() => setActiveTab("booked")}
@@ -156,6 +174,7 @@ export default function MyEvents() {
                 )
               }
               onEdit={() => handleEdit(event)}
+              onToggleFavorite={() => handleToggleFavorite(event.id)}
             />
           ))}
 
