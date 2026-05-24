@@ -24,6 +24,7 @@ public record EventResponse(
         Integer currentParticipants,
         boolean isBooked,
         boolean isCreatedByMe,
+        boolean isFavorite,
         List<ParticipantResponse> participants
 ) {
 /**

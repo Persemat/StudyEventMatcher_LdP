@@ -145,6 +145,24 @@ public class EventController {
         }
     }
 
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<?> toggleFavorite(@PathVariable Long id, HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+        }
+
+        try {
+            eventService.toggleFavorite(id, session);
+            return ResponseEntity.ok("Operazione sui preferiti completata");
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
+    }
+       
     /**
      * Updates an existing event.
      *

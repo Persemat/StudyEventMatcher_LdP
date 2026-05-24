@@ -37,6 +37,10 @@ export default function MyEvents() {
     (e) => (e.isCreatedByMe || e.isBooked) && isPastEvent(e)
   );
 
+
+  const favoriteEvents = events.filter(
+    (e) => e.isFavorite
+  );
   const overlappingEvents = useMemo(() => {
     const userFutureEvents = events
       .filter((event) => (event.isCreatedByMe || event.isBooked) && new Date(event.dateTime).getTime() >= nowTime)
@@ -106,7 +110,7 @@ export default function MyEvents() {
     fetchEvents();
   }, []);
 
-  const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+  const { handleBook, handleCancelBooking, handleToggleFavorite } = useEventActions(fetchEvents, setEvents);
 
   // Opens the modal in edit mode with the selected event data.
   const handleEdit = (event) => {
@@ -114,12 +118,14 @@ export default function MyEvents() {
   };
 
   // Chooses which event list to render based on the active tab.
-  const displayedEvents =
-    activeTab === "created"
-      ? createdEvents
-      : activeTab === "booked"
-      ? bookedEvents
-      : historyEvents;
+ const displayedEvents =
+  activeTab === "created"
+    ? createdEvents
+    : activeTab === "favorites"
+    ? favoriteEvents
+    : activeTab === "booked"
+    ? bookedEvents
+    : historyEvents;
 
   return (
     <div className="p-6 space-y-6">
@@ -171,6 +177,18 @@ export default function MyEvents() {
           </button>
 
           <button
+            onClick={() => setActiveTab("favorites")}
+            className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
+              activeTab === "favorites"
+                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            I miei preferiti ({favoriteEvents.length})
+          </button>
+
+
+          <button
             onClick={() => setActiveTab("booked")}
             className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
               activeTab === "booked"
@@ -211,6 +229,7 @@ export default function MyEvents() {
                   event.isCreatedByMe
                 )}
               onEdit={() => handleEdit(event)}
+              onToggleFavorite={() => handleToggleFavorite(event.id)}
               onShowDetails={() => setSelectedEventId(event.id)}
             />
           ))}

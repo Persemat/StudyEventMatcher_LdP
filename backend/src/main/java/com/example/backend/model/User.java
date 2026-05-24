@@ -51,8 +51,13 @@ public class User {
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
-    public User() {
-    }
+    
+    @ManyToMany(mappedBy = "favorites")
+    private Set<Event> favoriteEvents = new HashSet<>();
+
+
+
+    public User() {}
 
     public User(String name, String lastname, String email, String password, String favouriteCity,
             List<String> macroTags, List<String> microTags) {
@@ -137,13 +142,21 @@ public class User {
         this.bookedEvents = bookedEvents;
     }
 
-    public void addEvent(Event event) {
-        bookedEvents.add(event);
-        event.getParticipants().add(this);
+    // public void addEvent(Event event) {
+    //     bookedEvents.add(event);
+    //     event.getParticipants().add(this);
+    // }
+
+    // public void removeEvent(Event event) {
+    //     bookedEvents.remove(event);
+    //     event.getParticipants().remove(this);
+    // }
+ 
+    public Set<Event> getFavoriteEvents() {
+    return favoriteEvents;
     }
 
-    public void removeEvent(Event event) {
-        bookedEvents.remove(event);
-        event.getParticipants().remove(this);
+    public void setFavoriteEvents(Set<Event> favoritedBy) {
+        this.favoriteEvents = favoritedBy;
     }
 }
