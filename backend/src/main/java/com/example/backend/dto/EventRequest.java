@@ -14,4 +14,5 @@ public record EventRequest(
         String description,
         Integer maxParticipants,
         boolean creatorParticipationRequired
-)
+) {
+}
