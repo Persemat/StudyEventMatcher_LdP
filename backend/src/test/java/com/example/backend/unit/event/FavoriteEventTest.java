@@ -20,6 +20,7 @@ public class FavoriteEventTest extends BaseEventTest {
         User user = new User();
         user.setId(1L);
         user.setName("Mario");
+        user.setFavouriteCity("Milano");
 
         Event event = new Event();
         event.setId(10L);
@@ -45,6 +46,7 @@ public class FavoriteEventTest extends BaseEventTest {
         User user = new User();
         user.setId(1L);
         user.setName("Mario");
+        user.setFavouriteCity("Milano");
 
         Event event = new Event();
         event.setId(10L);

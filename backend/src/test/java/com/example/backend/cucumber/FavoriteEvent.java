@@ -60,7 +60,7 @@ public class FavoriteEvent {
 
     /* ---------------- GIVEN ---------------- */
 
-    @Given("l’utente sta visualizzando i dettagli di un evento")
+    @Given("l'utente sta visualizzando i dettagli di un evento")
     public void utenteVisualizzaDettagliEvento() {
 
         user = new User();
@@ -68,6 +68,7 @@ public class FavoriteEvent {
         user.setLastname("Rossi");
         user.setEmail("fav@example.com");
         user.setPassword("Password123!");
+        user.setFavouriteCity("Milano");
         user = userRepository.save(user);
 
         session.setAttribute("userId", user.getId());
@@ -77,6 +78,7 @@ public class FavoriteEvent {
         creator.setLastname("Bianchi");
         creator.setEmail("creator@example.com");
         creator.setPassword("Password123!");
+        creator.setFavouriteCity("Milano");
         creator = userRepository.save(creator);
 
         event = new Event();
@@ -95,20 +97,37 @@ public class FavoriteEvent {
         event = eventRepository.save(event);
     }
 
-    @Given("l’utente si trova nella sezione {string}")
+    @Given("l'utente si trova nella sezione {string}")
     public void utenteSiTrovaNellaSezione(String section) {
+        if(user == null){
+            utenteVisualizzaDettagliEvento();
+        }
         session.setAttribute("userId", user.getId());
     }
 
-    @Given("l’evento {string} è presente nell’elenco dei preferiti")
+    @Given("l'evento {string} è presente nell'elenco dei preferiti")
     public void eventoPresenteNeiPreferiti(String title) {
+        if(user == null){
+            utenteVisualizzaDettagliEvento();
+        }
         event.setTitle(title);
         event = eventRepository.save(event);
+
+        try {
+            mockMvc.perform(
+                    post("/events/{id}/favorite", event.getId())
+                            .session(session)
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Given("l’utente ha salvato nell’elenco degli eventi preferiti l’evento {string}")
+    @Given("l'utente ha salvato nell'elenco degli eventi preferiti l'evento {string}")
     public void utenteHaGiaSalvatoPreferito(String title) throws Exception {
-
+        if(user == null || event == null){
+            utenteVisualizzaDettagliEvento();
+        }
         event.setTitle(title);
         event = eventRepository.save(event);
 
@@ -123,7 +142,7 @@ public class FavoriteEvent {
 
     /* ---------------- WHEN ---------------- */
 
-    @When("l’utente clicca il pulsante {string}")
+    @When("l'utente clicca il pulsante {string}")
     public void utenteCliccaPulsante(String button) throws Exception {
 
         if (button.equals("Aggiungi ai preferiti") ||
@@ -136,14 +155,20 @@ public class FavoriteEvent {
         }
     }
 
-    @When("il creatore dell’evento {string} cancella l’evento dalla piattaforma")
+    @When("il creatore dell'evento {string} cancella l'evento dalla piattaforma")
     public void creatoreCancellaEvento(String title) throws Exception {
-        eventRepository.delete(event);
+        MockHttpSession creatorSession = new MockHttpSession();
+        creatorSession.setAttribute("userId", creator.getId());
+
+        result = mockMvc.perform(
+                delete("/events/{id}", event.getId())
+                        .session(creatorSession)
+        );
     }
 
     /* ---------------- THEN ---------------- */
 
-    @Then("il sistema inserisce l’evento nella sezione personale {string}")
+    @Then("il sistema inserisce l'evento nella sezione personale {string}")
     public void sistemaInseriscePreferito(String section) throws Exception {
 
         result.andExpect(status().isOk())
@@ -155,7 +180,7 @@ public class FavoriteEvent {
                  .andExpect(jsonPath("$[0].isFavorite").value(true));
     }
 
-    @Then("l’evento scompare immediatamente dall’elenco")
+    @Then("l'evento scompare immediatamente dall'elenco")
     public void eventoScompareDallElenco() throws Exception {
 
         result.andExpect(status().isOk());
@@ -172,6 +197,6 @@ public class FavoriteEvent {
         resultGet = mockMvc.perform(get(EVENTI_URL).session(session));
 
         resultGet.andExpect(status().isOk())
-                 .andExpect(jsonPath("$[0].isFavorite").value(false));
+                 .andExpect(jsonPath("$").isEmpty());
     }
 }

@@ -107,7 +107,7 @@ public class CreateBookingIT extends BaseEventIT {
                 post("/events/{id}/book", event.getId())
                         .session(session))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Errore: Utente non autenticato"));
+                .andExpect(content().string("Errore: Sessione invalida o scaduta"));
     }
 
     @Test
