@@ -38,6 +38,7 @@ public class FavoriteEventIT extends BaseEventIT {
         user.setLastname("Rossi");
         user.setEmail("mario.favorite@example.com");
         user.setPassword("Password123!");
+        user.setFavouriteCity("Milano");
         user = userRepository.save(user);
 
         creator = new User();
@@ -45,6 +46,7 @@ public class FavoriteEventIT extends BaseEventIT {
         creator.setLastname("Bianchi");
         creator.setEmail("luca.creator@example.com");
         creator.setPassword("Password123!");
+        creator.setFavouriteCity("Milano");
         creator = userRepository.save(creator);
 
         event = new Event();

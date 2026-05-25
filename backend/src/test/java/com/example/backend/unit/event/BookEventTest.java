@@ -52,7 +52,7 @@ public class BookEventTest extends BaseEventTest {
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> eventService.bookEvent(10L, session));
 
-        assertEquals("Utente non autenticato", ex.getMessage());
+        assertEquals("Sessione invalida o scaduta", ex.getMessage());
 
         verify(eventRepository, never()).findById(any());
         verify(eventRepository, never()).save(any());
