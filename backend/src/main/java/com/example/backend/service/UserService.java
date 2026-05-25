@@ -10,6 +10,8 @@ import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.model.UserSettings;
+import com.example.backend.repository.UserSettingsRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserVerificationRepository verificationRepository;
     private final EmailService emailService;
+    private final UserSettingsRepository settingsRepository;
 
     private boolean requireEmailVerification;
 
@@ -52,13 +55,15 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             UserVerificationRepository verificationRepository,
             EmailService emailService,
-            @Value("${app.security.require-email-verification:false}") boolean requireEmailVerification) {
+            @Value("${app.security.require-email-verification:false}") boolean requireEmailVerification,
+            UserSettingsRepository settingsRepository) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.verificationRepository = verificationRepository;
         this.emailService = emailService;
         this.requireEmailVerification = requireEmailVerification;
+        this.settingsRepository = settingsRepository;
     }
 
     /**
@@ -126,6 +131,9 @@ public class UserService {
         user.setMicroTags(microTags != null ? microTags : new ArrayList<>());
 
         User savedUser = userRepository.save(user);
+
+        UserSettings notificationSettings = new UserSettings(savedUser.getEmail(), true, true, true);
+        settingsRepository.save(notificationSettings);
 
         // Email Verification
         if (requireEmailVerification) {

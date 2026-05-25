@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import com.example.backend.model.Event;
 import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
+import com.example.backend.model.UserSettings;
+import com.example.backend.repository.UserSettingsRepository;
 
 /**
  * Service responsible for sending application emails.
@@ -26,6 +28,9 @@ import com.example.backend.model.User;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+
+    @Autowired
+    private UserSettingsRepository userSettingsRepository;
 
     @Value("${app.mail.from}")
     private String fromEmail;
@@ -95,15 +100,19 @@ public class EmailService {
 
         for (User participant : event.getParticipants()) {
 
-            // Skip creator
             if (creator != null &&
                     participant.getId() != null &&
                     participant.getId().equals(creator.getId())) {
                 continue;
             }
 
-            if (participant.getEmail() != null && !participant.getEmail().isBlank()) {
-                sendEventCancellationEmail(participant.getEmail(), event);
+            String participantEmail = participant.getEmail();
+
+            UserSettings userSettings = userSettingsRepository.findById(participantEmail)
+                    .orElseGet(() -> new UserSettings(participantEmail, true, true, true));
+
+            if (userSettings.isDeleteEventEmailActivated()) {
+                sendEventCancellationEmail(participantEmail, event);
             }
         }
     }
