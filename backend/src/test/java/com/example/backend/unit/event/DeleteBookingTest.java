@@ -59,7 +59,7 @@ public class DeleteBookingTest extends BaseEventTest {
             eventService.cancelBooking(10L, session);
         });
 
-        assertEquals("Utente non autenticato", ex.getMessage());
+        assertEquals("Sessione invalida o scaduta", ex.getMessage());
 
         // Ensure DB is never accessed
         verify(eventRepository, never()).findById(any());

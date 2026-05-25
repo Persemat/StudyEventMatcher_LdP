@@ -54,9 +54,12 @@ export default function EventCard({
           </div>
 
           <button
-            onClick={() => onToggleFavorite(event.id)}
-            className="ml-2"
-            title="Aggiungi ai preferiti"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(event.id);
+            }}
+            className="p-2 rounded-full hover:bg-gray-50 transition-colors ml-auto"
+            title={event.isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
           >
             <Heart
               className={`w-5 h-5 transition-colors ${

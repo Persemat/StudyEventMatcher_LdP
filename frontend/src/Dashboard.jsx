@@ -37,8 +37,6 @@ export default function Dashboard({ user }) {
       return;
     }
 
-    // 2. Cerchiamo la città nel JSON per ottenere le coordinate
-
     const comuneTrovato = comuniData.find(
       (c) => c.denominazione_ita.toLowerCase() === userCityCleaned
     );
@@ -57,17 +55,17 @@ export default function Dashboard({ user }) {
 
       const res = await fetch(`/api/events/recommended?latitude=${lat}&longitude=${lon}`, {
         method: "GET",
-        credentials: "include", // Fondamentale per far leggere la sessione a Spring Boot
+        credentials: "include", 
       });
 
       if (!res.ok) throw new Error("Errore dal server durante il fetch");
 
       const data = await res.json();
 
-      // 4. Gestione degli scenari di Accettazione tramite il messageCode
+      
       if (data.messageCode === "SUCCESS") {
         setEvents(data.recommendedEvents);
-        setStatusMessage(""); // Nessun errore, mostriamo le card
+        setStatusMessage(""); 
       } else if (data.messageCode === "NO_TAG_MATCH") {
         setEvents([]);
         setStatusMessage("Nessun evento corrispondente ai tuoi interessi, prova a modificarli o usa la funzione di ricerca generale.");
@@ -85,13 +83,13 @@ export default function Dashboard({ user }) {
     } finally {
       setLoading(false);
     }
-  }, [user]); // Dipendenza aggiornata: si ricarica se cambia l'utente
+  }, [user]); 
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
-  const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+  const { handleBook, handleCancelBooking, handleToggleFavorite } = useEventActions(fetchEvents, setEvents);
 
   const handleEdit = (event) => {
     console.log("Aprendo modale di modifica eventi:", event.id);
@@ -148,6 +146,7 @@ export default function Dashboard({ user }) {
                     event.creatorParticipationRequired
                   )
                 }
+                onToggleFavorite={() => handleToggleFavorite(event.id)}
                 onEdit={() => handleEdit(event)}
               />
             ))}

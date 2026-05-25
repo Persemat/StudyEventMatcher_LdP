@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, MapPin, Users, Info, Tag } from 'lucide-react';
+import { Calendar, MapPin, Users, Info, Tag, Heart } from 'lucide-react';
 import { useEventActions } from './hooks/useEventActions';
 
 export default function EventDetails({ eventId }) {
@@ -7,6 +7,7 @@ export default function EventDetails({ eventId }) {
   const [event, setEvent] = useState(null); 
   const [loading, setLoading] = useState(true); 
   const [error, setError] = useState(""); 
+  
 
     
     const fetchEventDetails = useCallback(async () => {
@@ -29,8 +30,16 @@ export default function EventDetails({ eventId }) {
     }
   }, [eventId]);
 
-  
-  const { handleBook, handleCancelBooking, isProcessing } = useEventActions(fetchEventDetails);
+  const mockSetEvents = (updaterFunction) => {
+    setEvent(prevEvent => {
+      if (!prevEvent) return prevEvent;
+      // Trasformiamo l'oggetto singolo in un array con un solo elemento [prevEvent]
+      const fintoArray = updaterFunction([prevEvent]);
+      // Ci riprendiamo l'oggetto modificato (che è il primo elemento dell'array)
+      return fintoArray[0];
+    });
+  };
+  const { handleBook, handleCancelBooking, handleToggleFavorite, isProcessing } = useEventActions(fetchEventDetails, mockSetEvents);
 
   useEffect(() => {
     if (eventId) fetchEventDetails();
@@ -52,11 +61,34 @@ export default function EventDetails({ eventId }) {
       {/* Title and Status */}
       <div className="border-b pb-4">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">{event.title}</h2>
-        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-          event.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {event.status === 'open' ? 'Aperto' : 'Chiuso'}
-        </span>
+        <div classname="flex items-center justify-between">
+
+
+          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+            event.status === 'open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {event.status === 'open' ? 'Aperto' : 'Chiuso'}
+          </span>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleFavorite(event.id);
+            }}
+              className="p-2 rounded-full hover:bg-gray-50 transition-colors ml-auto"
+              title={event.isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+          >
+            <Heart
+              className={`w-5 h-5 transition-colors ${
+                event.isFavorite
+                  ? "fill-red-500 text-red-500"
+                  : "text-gray-400 hover:text-red-400"
+              }`}
+            />
+          </button>
+
+          </div>
+
       </div>
 
       {/* Grid with main information */}

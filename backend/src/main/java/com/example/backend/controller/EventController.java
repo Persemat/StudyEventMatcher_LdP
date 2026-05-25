@@ -2,9 +2,12 @@ package com.example.backend.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
+import com.example.backend.dto.EventSearchFilter;
 import com.example.backend.dto.RecommendationResponse;
 import com.example.backend.model.Event;
 import com.example.backend.service.EventService;
@@ -38,6 +43,10 @@ import jakarta.servlet.http.HttpSession;
 public class EventController {
 
     private final EventService eventService;
+    private static final String USER_ID = "userId";
+    private static final String ERROR = "Errore: ";
+    private static final String INVALID_SESSION = "Sessione invalida o scaduta";
+    private static final Logger logger = LoggerFactory.getLogger(EventController.class);
 
     /**
      * Constructs the EventController.
@@ -57,10 +66,10 @@ public class EventController {
     @GetMapping
     public ResponseEntity<?> getAllEvents(HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         return ResponseEntity.ok(eventService.getAllEvents(session));
@@ -91,10 +100,8 @@ public class EventController {
             return ResponseEntity.ok("Evento '" + createdEvent.getTitle() + "' creato con successo!");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE SERVICE: " + e.getMessage());
-            e.printStackTrace();
-
-            return ResponseEntity.status(400).body("Errore: " + e.getMessage());
+            logger.error(" ERRORE SERVICE: {}", e.getMessage(), e);
+            return ResponseEntity.status(400).body(ERROR + e.getMessage());
         }
     }
 
@@ -113,8 +120,8 @@ public class EventController {
             return ResponseEntity.ok("Prenotazione completata con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE DI PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            logger.error(" ERRORE DI PRENOTAZIONE: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(ERROR + e.getMessage());
         }
     }
 
@@ -130,10 +137,10 @@ public class EventController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable long id, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         try {
@@ -178,10 +185,10 @@ public class EventController {
                                          @RequestBody EventRequest request,
                                          HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         if (request.title() == null || request.title().isBlank() ||
@@ -197,10 +204,8 @@ public class EventController {
             return ResponseEntity.ok("Evento '" + updatedEvent.getTitle() + "' aggiornato con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE AGGIORNAMENTO EVENTO: " + e.getMessage());
-            e.printStackTrace();
-
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            logger.error(" ERRORE AGGIORNAMENTO EVENTO: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(ERROR + e.getMessage());
         }
     }
 
@@ -214,10 +219,10 @@ public class EventController {
     @DeleteMapping("/{id}/book")
     public ResponseEntity<?> cancelBooking(@PathVariable Long id, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         try {
@@ -225,44 +230,32 @@ public class EventController {
             return ResponseEntity.ok("Prenotazione cancellata con successo");
 
         } catch (RuntimeException e) {
-            System.out.println("⚠️ ERRORE CANCELLAZIONE PRENOTAZIONE: " + e.getMessage());
-            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+            logger.error(" ERRORE CANCELLAZIONE PRENOTAZIONE: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(ERROR + e.getMessage());
         }
     }
 
     /**
-     * Searches for events using optional filters.
+     * Searches for events using optional filters encapsulated in {@link EventSearchFilter}.
      *
-     * Supported filters include free-text search, tags, location, and date.
+     * Supported filters include free-text search, tags, location, date, coordinates, and distance.
+     * Spring automatically binds the query parameters from the request URL to the filter object.
      *
      * @param session the current HTTP session
-     * @param search optional free-text search term
-     * @param tags optional list of tags
-     * @param location optional location filter
-     * @param date optional date filter
+     * @param filter  an object containing all optional search parameters provided by the client
      * @return a list of matching events, or 401 if the session is invalid
      */
     @GetMapping("/search")
-    public ResponseEntity<?> searchEvents(HttpSession session,
-                                         @RequestParam(required = false) String search,
-                                      @RequestParam(required = false) List<String> tags,
-                                      @RequestParam(required = false) String location,
-                                      @RequestParam(required = false) String date,
-                                      @RequestParam(required = false) Double latitude,
-                                      @RequestParam(required = false) Double longitude,
-                                      @RequestParam(required = false) Integer distanceKm,
-                                      @RequestParam(required = false) Boolean hideOverlapping) {
+    public ResponseEntity<?> searchEvents(HttpSession session, @ModelAttribute EventSearchFilter filter) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
 
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
-    return ResponseEntity.ok(
-            eventService.searchForEvents(session, search, tags, location, date, latitude, longitude, distanceKm, hideOverlapping)
-    );
-}
+        return ResponseEntity.ok(eventService.searchForEvents(session, filter));
+    }
 
     /**
      * Retrieves all distinct event tags available in the system.
@@ -284,20 +277,20 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getEventDetails(@PathVariable Long id, HttpSession session) {
 
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = (Long) session.getAttribute(USER_ID);
         if (userId == null) {
-            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+            return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
         try {
-    
+
             EventResponse eventDetails = eventService.getEventDetails(id, session);
-            
+
             return ResponseEntity.ok(eventDetails);
 
         } catch (RuntimeException e) {
-
-            return ResponseEntity.status(404).body("Errore: " + e.getMessage());
+            logger.error(" ERRORE DETTAGLI EVENTO: {}", e.getMessage(), e);
+            return ResponseEntity.status(404).body(ERROR + e.getMessage());
         }
     }
 
