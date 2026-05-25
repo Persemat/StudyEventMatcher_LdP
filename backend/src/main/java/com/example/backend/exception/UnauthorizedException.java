@@ -1,4 +1,4 @@
-package com.example.backend.exceptions;
+package com.example.backend.exception;
 
 public class UnauthorizedException extends RuntimeException {
     public UnauthorizedException(String message) {

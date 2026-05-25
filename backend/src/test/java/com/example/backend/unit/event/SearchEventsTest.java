@@ -19,6 +19,7 @@ import com.example.backend.dto.EventResponse;
 import com.example.backend.model.Event;
 import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
+import com.example.backend.dto.EventSearchFilter;
 
 public class SearchEventsTest extends BaseEventTest {
 
@@ -46,8 +47,7 @@ public class SearchEventsTest extends BaseEventTest {
 
     @Test
     void testSearchForEvents_FullFilters_Success() {
-        // Arrange
-        String search = "Party";
+       String search = "Party";
         List<String> tags = List.of("Informatica e Tecnologie > SQL", "Scienze Matematiche Fisiche e Naturali > Fisica");
         String location = "Roma (RM)";
         String date = "2026-05-20";
@@ -63,10 +63,9 @@ public class SearchEventsTest extends BaseEventTest {
         when(eventRepository.findByDynamicFilters(
                 eq("Party"), eq(true), eq(tags), eq("Roma (RM)"), any(), any())).thenReturn(events);
 
-        // Act
-        List<EventResponse> results = eventService.searchForEvents(session, search, tags, location, date, null, null, null, false);
+        EventSearchFilter filter = new EventSearchFilter(search, tags, location, date, null, null, null, false);
+        List<EventResponse> results = eventService.searchForEvents(session, filter);
 
-        // Assert
         assertEquals(1, results.size());
         assertEquals("Informatica e Tecnologie", results.get(0).tags().get(0).macroTag());
         assertEquals("SQL", results.get(0).tags().get(0).microTag());
@@ -83,10 +82,10 @@ public class SearchEventsTest extends BaseEventTest {
         when(eventRepository.findByDynamicFilters(
                 any(), eq(false), any(), any(), any(), any())).thenReturn(new ArrayList<>());
 
-        eventService.searchForEvents(session, null, tags, null, null, null, null, null, false);
+        EventSearchFilter filter = new EventSearchFilter(null, tags, null, null, null, null, null, false);
+        eventService.searchForEvents(session, filter);
 
-        verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull());
-    }
+        verify(eventRepository).findByDynamicFilters(isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull());}
 
     @Test
     void testSearchForEvents_FilterPastEvents_Success() {
@@ -101,12 +100,10 @@ public class SearchEventsTest extends BaseEventTest {
         when(eventRepository.findByDynamicFilters(any(), anyBoolean(), any(),
                 any(), any(), any())).thenReturn(List.of(pastEvent, futureEvent));
 
-        // Act
-        List<EventResponse> results = eventService.searchForEvents(session, null, null, null, null, null, null, null, false);
-
-        // Assert
+        EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, false);
+        List<EventResponse> results = eventService.searchForEvents(session, filter);
+        
         assertEquals(1, results.size());
-
         assertEquals(2L, results.get(0).id());
     }
 
@@ -121,8 +118,8 @@ public class SearchEventsTest extends BaseEventTest {
                 isNull(), anyBoolean(), any(), isNull(), any(), any()))
                 .thenReturn(new ArrayList<>());
 
-        // Act
-        eventService.searchForEvents(session, search, null, location, null, null, null, null, false);
+        EventSearchFilter filter = new EventSearchFilter(search, null, location, null, null, null, null, false);
+        List<EventResponse> results = eventService.searchForEvents(session, filter);
 
         // Assert
         verify(eventRepository).findByDynamicFilters(isNull(), anyBoolean(),
@@ -150,17 +147,8 @@ void testSearchForEvents_DistanceFilter_ShouldIncludeEventsWithinRadius() {
             isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
     )).thenReturn(List.of(milanEvent, monzaEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            milanLat,
-            milanLon,
-            distanceKm,
-            false
-    );
+    EventSearchFilter filter = new EventSearchFilter(null, null, location, null, null, null, null, false);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(2, results.size());
 }
@@ -182,17 +170,8 @@ void testSearchForEvents_DistanceFilter_ShouldExcludeEventsOutsideRadius() {
             isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
     )).thenReturn(List.of(romeEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            milanLat,
-            milanLon,
-            distanceKm,
-            false
-    );
+    EventSearchFilter filter = new EventSearchFilter(null, null, location, null, milanLat, milanLon, distanceKm, false);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(0, results.size());
 }
@@ -218,29 +197,11 @@ void testSearchForEvents_DistanceFilter_ShouldUpdateResultsWhenRadiusChanges() {
             isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
     )).thenReturn(List.of(milanEvent, bergamoEvent));
 
-    List<EventResponse> results20Km = eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            milanLat,
-            milanLon,
-            20,
-            false
-    );
+    EventSearchFilter filter20Km = new EventSearchFilter(null, null, location, null, milanLat, milanLon, 20, false);
+    List<EventResponse> results20Km = eventService.searchForEvents(session, filter20Km);
 
-    List<EventResponse> results100Km = eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            milanLat,
-            milanLon,
-            100,
-            false
-    );
+    EventSearchFilter filter100Km = new EventSearchFilter(null, null, location, null, milanLat, milanLon, 100, false);
+List<EventResponse> results100Km = eventService.searchForEvents(session, filter100Km);
 
     assertEquals(1, results20Km.size());
     assertEquals(2, results100Km.size());
@@ -263,17 +224,8 @@ void testSearchForEvents_DistanceFilter_ShouldExcludeEventsWithoutCoordinates() 
             isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
     )).thenReturn(List.of(eventWithoutCoordinates));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            milanLat,
-            milanLon,
-            distanceKm,
-            false
-    );
+    EventSearchFilter filter = new EventSearchFilter(null, null, location, null, milanLat, milanLon, distanceKm, false);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(0, results.size());
 }
@@ -287,17 +239,8 @@ void testSearchForEvents_DistanceFilter_ShouldUseTextLocationWhenCoordinatesAreM
             isNull(), eq(false), eq(List.of()), eq(location), isNull(), isNull()
     )).thenReturn(List.of());
 
-    eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            null,
-            null,
-            50,
-            false
-    );
+    EventSearchFilter filter = new EventSearchFilter(null, null, location, null, null, null, 50, false);
+    eventService.searchForEvents(session, filter);
 
     verify(eventRepository).findByDynamicFilters(
             isNull(),
@@ -320,17 +263,8 @@ void testSearchForEvents_DistanceFilter_ShouldSkipTextLocationFilterWhenCoordina
             isNull(), eq(false), eq(List.of()), isNull(), isNull(), isNull()
     )).thenReturn(List.of());
 
-    eventService.searchForEvents(
-            session,
-            null,
-            null,
-            location,
-            null,
-            milanLat,
-            milanLon,
-            50,
-            false
-    );
+    EventSearchFilter filter = new EventSearchFilter(null, null, location, null, milanLat, milanLon, 50, false);
+    eventService.searchForEvents(session, filter);
 
     verify(eventRepository).findByDynamicFilters(
             isNull(),
@@ -354,8 +288,8 @@ void testSearchForEvents_HideOverlapping_ShouldExcludeOverlappingEvents() {
             .thenReturn(List.of(overlappingEvent, compatibleEvent));
     when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session, null, null, null, null, null, null, null, true);
+   EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, true);
+        List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(1, results.size());
     assertEquals("Programmazione Java", results.get(0).title());
@@ -373,8 +307,8 @@ void testSearchForEvents_HideOverlapping_ShouldKeepNonOverlappingEvents() {
             .thenReturn(List.of(firstCompatibleEvent, secondCompatibleEvent));
     when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session, null, null, null, null, null, null, null, true);
+    EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, true);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(2, results.size());
     assertEquals("Basi di Dati", results.get(0).title());
@@ -392,8 +326,8 @@ void testSearchForEvents_HideOverlapping_ShouldKeepAllEventsWhenUserHasNoBooking
             .thenReturn(List.of(firstEvent, secondEvent));
     when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of());
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session, null, null, null, null, null, null, null, true);
+    EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, true);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(2, results.size());
 }
@@ -410,8 +344,8 @@ void testSearchForEvents_HideOverlapping_ShouldReturnEmptyWhenAllEventsOverlap()
             .thenReturn(List.of(firstOverlappingEvent, secondOverlappingEvent));
     when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session, null, null, null, null, null, null, null, true);
+    EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, true);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(0, results.size());
 }
@@ -427,8 +361,8 @@ void testSearchForEvents_HideOverlapping_ShouldKeepAdjacentEvents() {
             .thenReturn(List.of(adjacentEvent));
     when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(bookedEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session, null, null, null, null, null, null, null, true);
+    EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, true);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(1, results.size());
     assertEquals("Basi di Dati", results.get(0).title());
@@ -445,8 +379,8 @@ void testSearchForEvents_HideOverlapping_ShouldKeepOverlappingBookedEvents() {
             .thenReturn(List.of(myEvent, otherBookedEvent));
     when(eventRepository.findBookedByParticipantId(1L)).thenReturn(List.of(myEvent, otherBookedEvent));
 
-    List<EventResponse> results = eventService.searchForEvents(
-            session, null, null, null, null, null, null, null, true);
+    EventSearchFilter filter = new EventSearchFilter(null, null, null, null, null, null, null, true);
+    List<EventResponse> results = eventService.searchForEvents(session, filter);
 
     assertEquals(2, results.size());
     assertEquals("Evento creato da me", results.get(0).title());

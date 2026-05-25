@@ -2,9 +2,12 @@ package com.example.backend.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -13,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
+import com.example.backend.dto.EventSearchFilter;
 import com.example.backend.dto.RecommendationResponse;
 import com.example.backend.model.Event;
 import com.example.backend.service.EventService;
@@ -40,6 +45,7 @@ public class EventController {
     private final EventService eventService;
     private static final String USER_ID = "userId";
     private static final String ERROR = "Errore: ";
+    private static final String INVALID_SESSION = "Sessione invalida o scaduta";
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
 
     /**
@@ -95,7 +101,6 @@ public class EventController {
 
         } catch (RuntimeException e) {
             logger.error(" ERRORE SERVICE: {}", e.getMessage(), e);
-
             return ResponseEntity.status(400).body(ERROR + e.getMessage());
         }
     }
@@ -213,27 +218,17 @@ public class EventController {
     }
 
     /**
-     * Searches for events using optional filters.
+     * Searches for events using optional filters encapsulated in {@link EventSearchFilter}.
      *
-     * Supported filters include free-text search, tags, location, and date.
+     * Supported filters include free-text search, tags, location, date, coordinates, and distance.
+     * Spring automatically binds the query parameters from the request URL to the filter object.
      *
      * @param session the current HTTP session
-     * @param search optional free-text search term
-     * @param tags optional list of tags
-     * @param location optional location filter
-     * @param date optional date filter
+     * @param filter  an object containing all optional search parameters provided by the client
      * @return a list of matching events, or 401 if the session is invalid
      */
     @GetMapping("/search")
-    public ResponseEntity<?> searchEvents(HttpSession session,
-                                         @RequestParam(required = false) String search,
-                                      @RequestParam(required = false) List<String> tags,
-                                      @RequestParam(required = false) String location,
-                                      @RequestParam(required = false) String date,
-                                      @RequestParam(required = false) Double latitude,
-                                      @RequestParam(required = false) Double longitude,
-                                      @RequestParam(required = false) Integer distanceKm,
-                                      @RequestParam(required = false) Boolean hideOverlapping) {
+    public ResponseEntity<?> searchEvents(HttpSession session, @ModelAttribute EventSearchFilter filter) {
 
         Long userId = (Long) session.getAttribute(USER_ID);
 
@@ -241,10 +236,8 @@ public class EventController {
             return ResponseEntity.status(401).body(INVALID_SESSION);
         }
 
-    return ResponseEntity.ok(
-            eventService.searchForEvents(session, search, tags, location, date, latitude, longitude, distanceKm, hideOverlapping)
-    );
-}
+        return ResponseEntity.ok(eventService.searchForEvents(session, filter));
+    }
 
     /**
      * Retrieves all distinct event tags available in the system.
@@ -272,9 +265,9 @@ public class EventController {
         }
 
         try {
-    
+
             EventResponse eventDetails = eventService.getEventDetails(id, session);
-            
+
             return ResponseEntity.ok(eventDetails);
 
         } catch (RuntimeException e) {

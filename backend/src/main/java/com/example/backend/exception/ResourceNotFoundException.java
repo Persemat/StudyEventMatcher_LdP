@@ -1,4 +1,4 @@
-package com.example.backend.exceptions;
+package com.example.backend.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

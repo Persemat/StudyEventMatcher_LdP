@@ -9,7 +9,10 @@ import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
-
+import com.example.backend.exception.UnauthorizedException;
+import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.exception.BusinessRuleException;
+import com.example.backend.dto.EventSearchFilter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
