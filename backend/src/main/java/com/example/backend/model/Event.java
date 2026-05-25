@@ -193,6 +193,16 @@ public class Event {
     )
     private Set<User> participants = new HashSet<>();
 
+
+    @ManyToMany
+    @JoinTable(
+        name = "event_favorites",
+        joinColumns = @JoinColumn(name = "event_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> favorites = new HashSet<>();
+
+
     public Set<User> getParticipants() {
         return participants;
     }
@@ -211,5 +221,25 @@ public class Event {
 
     public int getCurrentParticipants() {
         return participants != null ? participants.size() : 0;
+    }
+
+    public Set<User> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Set<User> favorites) {
+        this.favorites = favorites;
+    }
+
+    public void addFavorite(User user) {
+        if (favorites.add(user)) {
+            user.getFavoriteEvents().add(this);
+        }
+    }
+
+    public void removeFavorite(User user) {
+        if (favorites.remove(user)) {
+            user.getFavoriteEvents().remove(this);
+        }
     }
 }

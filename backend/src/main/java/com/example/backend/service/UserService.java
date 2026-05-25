@@ -13,6 +13,11 @@ import com.example.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import com.example.backend.model.UserVerification;
+import com.example.backend.repository.UserVerificationRepository;
+import jakarta.transaction.Transactional;
 
 /**
  * Service responsible for user management.
@@ -27,16 +32,33 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserVerificationRepository verificationRepository;
+    private final EmailService emailService;
+
+    private boolean requireEmailVerification;
 
     /**
      * Constructs the UserService.
      *
-     * @param userRepository  repository used to access user data
-     * @param passwordEncoder encoder used to securely hash passwords
+     * @param userRepository         repository used to access user data
+     * @param passwordEncoder        encoder used to securely hash passwords
+     * @param verificationRepository repository used to access email verification
+     *                               data
+     * @param emailService           service responsible for sending application
+     *                               emails
      */
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            UserVerificationRepository verificationRepository,
+            EmailService emailService,
+            @Value("${app.security.require-email-verification:false}") boolean requireEmailVerification) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.verificationRepository = verificationRepository;
+        this.emailService = emailService;
+        this.requireEmailVerification = requireEmailVerification;
     }
 
     /**
@@ -103,7 +125,20 @@ public class UserService {
         user.setMacroTags(macroTags);
         user.setMicroTags(microTags != null ? microTags : new ArrayList<>());
 
-        return toResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        // Email Verification
+        if (requireEmailVerification) {
+
+            String token = String.valueOf((int) (Math.random() * 900000) + 100000);
+
+            UserVerification verification = new UserVerification(savedUser.getEmail(), token, false);
+            verificationRepository.save(verification);
+
+            emailService.sendRegistrationVerificationEmail(savedUser.getEmail(), token);
+        }
+
+        return toResponse(savedUser);
     }
 
     /**
@@ -131,6 +166,12 @@ public class UserService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("Credenziali invalide");
         }
+
+        verificationRepository.findById(email).ifPresent(verification -> {
+            if (!verification.isVerified()) {
+                throw new IllegalStateException("Devi confermare la tua email prima di poter accedere.");
+            }
+        });
 
         return toResponse(user);
     }
@@ -258,6 +299,43 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         return toResponse(userRepository.save(user));
+    }
+
+    /**
+     * Verifies a user's email using the provided token.
+     *
+     * @param token the unique verification token
+     * @throws IllegalArgumentException if the token is invalid
+     */
+    public void verifyUserEmail(String token) {
+        UserVerification verification = verificationRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Token di verifica non valido o scaduto."));
+
+        verification.setVerified(true);
+        verification.setToken(null);
+
+        verificationRepository.save(verification);
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato nel sistema."));
+
+        UserVerification verification = verificationRepository.findById(email)
+                .orElseThrow(() -> new RuntimeException("Nessuna verifica in corso per questo utente."));
+
+        if (verification.isVerified()) {
+            throw new RuntimeException("Questo account è già stato confermato ed è attivo.");
+        }
+
+        String newCode = String.valueOf((int) (Math.random() * 900000) + 100000);
+
+        verification.setToken(newCode);
+        verificationRepository.save(verification);
+
+        // 6. Spediamo la nuova mail tramite il servizio
+        emailService.sendRegistrationVerificationEmail(user.getEmail(), newCode);
     }
 
     private User getUserFromSession(Long userId) {

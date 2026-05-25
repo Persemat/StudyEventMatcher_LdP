@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
@@ -37,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class EventUpdateNotification {
 
     @Autowired
-    private MockMvc mockMvc;
+    private org.springframework.test.web.servlet.MockMvc mockMvc;
 
     @Autowired
     private EventRepository eventRepository;
@@ -66,9 +65,17 @@ public class EventUpdateNotification {
                 "Milano", List.of("Informatica e Tecnologie"), new ArrayList<>());
         creator = userRepository.saveAndFlush(creator);
 
+        // CORREZIONE DINAMICA DELLA DATA:
+        // Se arriva la data fissa del feature che è passata, la spostiamo a 3 mesi nel
+        // futuro
+        LocalDateTime eventDateTime = LocalDateTime.parse(dateTime);
+        if (eventDateTime.isBefore(LocalDateTime.now().plusHours(24))) {
+            eventDateTime = LocalDateTime.now().plusMonths(3);
+        }
+
         event = new Event();
         event.setTitle(title);
-        event.setDateTime(LocalDateTime.parse(dateTime));
+        event.setDateTime(eventDateTime); // <--- Ora è sempre garantita nel futuro
         event.setDuration(2.0);
         event.setLocation(location);
         event.setTags(List.of(new EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -115,7 +122,7 @@ public class EventUpdateNotification {
                 }
                 """,
                 event.getTitle(),
-                event.getDateTime(),
+                event.getDateTime().toString(), // <--- Usa la data corretta memorizzata nell'oggetto
                 event.getDuration(),
                 newLocation,
                 event.getDescription(),

@@ -31,6 +31,7 @@ public class GetRecommendedEventsIT extends BaseEventIT {
         creator.setLastname("Verdi");
         creator.setEmail("luigi.creator@example.com");
         creator.setPassword("Pass123!");
+        creator.setFavouriteCity("Roma");
         creator = userRepository.save(creator);
 
         Event event = new Event();
@@ -48,8 +49,8 @@ public class GetRecommendedEventsIT extends BaseEventIT {
 
         mockMvc.perform(get("/events/recommended") 
                 .sessionAttr("userId", userId)
-                .param("latitude", "45.0")
-                .param("longitude", "9.0")
+                .param("latitude", "45.4642")
+                .param("longitude", "9.1900")
                 .contentType(MediaType.APPLICATION_JSON))
                 
                 .andExpect(status().isOk())
@@ -75,6 +76,6 @@ public class GetRecommendedEventsIT extends BaseEventIT {
                 .param("latitude", "45.0")
                 .param("longitude", "9.0")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is5xxServerError()); 
+                .andExpect(status().isUnauthorized()); 
     }
 }

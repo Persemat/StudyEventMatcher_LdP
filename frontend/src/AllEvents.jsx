@@ -171,6 +171,7 @@ export default function AllEvents({ user }) {
     } finally {
       setLoading(false);
     }
+
   }, [searchTerm, searchLocation, searchData, selectedTags, distanceKm, selectedSearchCity, hideOverlapping]);
 
   useEffect(() => {
@@ -186,7 +187,7 @@ export default function AllEvents({ user }) {
     return () => clearTimeout(delayDebounceFn);
   }, [fetchEvents]);
 
-  const { handleBook, handleCancelBooking } = useEventActions(fetchEvents);
+  const { handleBook, handleCancelBooking, handleToggleFavorite } = useEventActions(fetchEvents, setEvents);
 
   return (
     <div className="p-6 space-y-6">
@@ -412,7 +413,9 @@ export default function AllEvents({ user }) {
                 }
                 onEdit={editable ? () => setEventToEdit(event) : undefined}
                 canEdit={editable}
+                onToggleFavorite={() => handleToggleFavorite(event.id)}
                 onShowDetails={() => setSelectedEventId(event.id)}
+
               />
             );
           })}

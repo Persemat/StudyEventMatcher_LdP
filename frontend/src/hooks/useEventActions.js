@@ -1,7 +1,7 @@
 //useEventActions.js
 import { useState } from 'react';
 
-export const useEventActions = (refreshCallback) => {
+export const useEventActions = (refreshCallback, setEvents) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Action: BOOK
@@ -77,9 +77,33 @@ export const useEventActions = (refreshCallback) => {
     }
   };
 
+  const handleToggleFavorite = async (eventId) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}/favorite`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Errore toggle favorite");
+ // ✅ aggiorna SOLO UI locale
+      setEvents(prev =>
+        prev.map(ev =>
+          ev.id === eventId
+            ? { ...ev, isFavorite: !ev.isFavorite }
+            : ev
+        )
+      );
+      // ✅ usa la callback già passata al hook
+      //refreshCallback?.();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return {
     handleBook,
     handleCancelBooking,
-    isProcessing
+    isProcessing,
+    handleToggleFavorite
   };
 };

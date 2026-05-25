@@ -10,6 +10,8 @@ import Profile from './Profile'
 import './index.css'
 import MyEvents from './MyEvents'
 import ForgotPasswordPage from './ForgotPasswordPage'
+// 1. IMPORTA IL NUOVO COMPONENTE (sistema il path se lo hai salvato altrove)
+import VerifyEmailPage from './VerifyEmailPage' 
 
 // ===================== PROTECTED ROUTE =====================
 const ProtectedRoute = ({ user, children }) => {
@@ -65,6 +67,10 @@ const App = () => {
 
         <Route 
           path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        {/* 2. NUOVA ROTTA PUBBLICA PER IL CODICE A 6 CIFRE */}
+        <Route 
+          path="/verify-email" element={<VerifyEmailPage />} />
 
         {/* protected layout */}
         <Route

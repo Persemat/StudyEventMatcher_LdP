@@ -152,6 +152,24 @@ public class EventController {
         }
     }
 
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<?> toggleFavorite(@PathVariable Long id, HttpSession session) {
+
+        Long userId = (Long) session.getAttribute("userId");
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+        }
+
+        try {
+            eventService.toggleFavorite(id, session);
+            return ResponseEntity.ok("Operazione sui preferiti completata");
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
+    }
+       
     /**
      * Updates an existing event.
      *
@@ -288,10 +306,15 @@ public class EventController {
      * @return a {@link ResponseEntity} containing a {@link RecommendationResponse} with the events and a status message
      */
     @GetMapping("/recommended")
-    public ResponseEntity<RecommendationResponse> getRecommendedEvents(
+    public ResponseEntity<?> getRecommendedEvents(
         HttpSession session,
         @RequestParam(required = false) Double latitude,
         @RequestParam(required = false) Double longitude){
+
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(401).body("Sessione invalida o scaduta");
+        }
 
         RecommendationResponse response = eventService.getRecommendedEvents(session, latitude, longitude);
         return ResponseEntity.ok(response);
