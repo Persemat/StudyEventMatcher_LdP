@@ -16,6 +16,8 @@ import com.example.backend.dto.UpdatePersonalDataRequest;
 import com.example.backend.dto.UpdatePreferencesRequest;
 import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
+import com.example.backend.dto.NotificationSettingsRequest;
+import com.example.backend.dto.NotificationSettingsResponse;
 import com.example.backend.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -100,6 +102,19 @@ public class UserController {
         }
     }
 
+    @GetMapping("/me/settings")
+    public ResponseEntity<?> getNotificationSettings(HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            NotificationSettingsResponse settingResponse = userService.showNotificationSettings(userId);
+            return ResponseEntity.ok(settingResponse);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+
     @PutMapping("/me/personal-data")
     public ResponseEntity<?> updatePersonalData(@RequestBody UpdatePersonalDataRequest request, HttpSession session) {
         try {
@@ -145,6 +160,20 @@ public class UserController {
             Long userId = (Long) session.getAttribute("userId");
             UserResponse response = userService.updatePreferences(userId, request);
             return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/me/settings")
+    public ResponseEntity<?> updateNotificationSettings(@RequestBody NotificationSettingsRequest request,
+            HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            NotificationSettingsResponse settingResponse = userService.modifySettings(request, userId);
+            return ResponseEntity.ok(settingResponse);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(401).body(e.getMessage());
         } catch (IllegalArgumentException e) {

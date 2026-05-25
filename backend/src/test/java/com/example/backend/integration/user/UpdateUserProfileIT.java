@@ -253,6 +253,26 @@ public class UpdateUserProfileIT extends BaseUserIT {
             content().string(containsString("Si possono indicare al massimo 5 argomenti di interesse specifici")));
   }
 
+  @Test
+  void updateNotificationSettings_shouldReturnUpdatedSettings_whenValid() throws Exception {
+    MockHttpSession session = registerAndLogin("mario@example.com", "Password123");
+
+    mockMvc.perform(put("/user/me/settings")
+        .session(session)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+            {
+              "editEventEmailActivated": false,
+              "deleteEventEmailActivated": false,
+              "recomendedEventEmailActivated": true
+            }
+            """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.editEventEmailActivated").value(false))
+        .andExpect(jsonPath("$.deleteEventEmailActivated").value(false))
+        .andExpect(jsonPath("$.recomendedEventEmailActivated").value(true));
+  }
+
   private MockHttpSession registerAndLogin(String email, String password) throws Exception {
     register(email, password);
     MockHttpSession session = (MockHttpSession) login(email, password)

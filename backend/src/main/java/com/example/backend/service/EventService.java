@@ -7,8 +7,10 @@ import com.example.backend.dto.EventTagDto;
 import com.example.backend.model.Event;
 import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
+import com.example.backend.model.UserSettings;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.UserSettingsRepository;
 import com.example.backend.exception.UnauthorizedException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.BusinessRuleException;
@@ -44,6 +46,7 @@ public class EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final UserSettingsRepository settingsRepository;
     private final EmailService emailService;
     private final CityCoordinateService cityCoordinateService;
     private static final int MAX_RECOMMENDATION_DISTANCE_KM = 50;
@@ -59,11 +62,12 @@ public class EventService {
      * @param emailService    service used to send notification emails
      */
     public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService,
-            CityCoordinateService cityCoordinateService) {
+            CityCoordinateService cityCoordinateService, UserSettingsRepository settingsRepository) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.cityCoordinateService = cityCoordinateService;
+        this.settingsRepository = settingsRepository;
     }
 
     /**
@@ -437,20 +441,32 @@ public class EventService {
     }
 
     /**
-     * Searches for events by applying optional filters such as search text,
-     * tags, location, and date.
+     * Searches for events by applying dynamic and advanced filters wrapped inside
+     * the filter DTO.
+     * <p>
+     * The method extracts pagination/filtering parameters such as free-text terms,
+     * tag lists,
+     * geographical constraints (distance in Km from specific coordinates), and
+     * specific ISO dates.
+     * Events found to be in the past are automatically updated and marked as closed
+     * in the database.
+     * </p>
+     * <p>
+     * If requested, it can also filter out events that overlap in time with the
+     * ones
+     * already booked by the authenticated user. Only upcoming, visible events are
+     * returned.
+     * </p>
      *
-     * Events found in the past are automatically marked as closed.
-     * Only open events are returned in the final response.
-     *
-     * @param session  the current HTTP session containing the authenticated user
-     *                 ID, if available
-     * @param search   free-text search term
-     * @param tags     list of tags to filter by
-     * @param location location filter
-     * @param date     date filter in ISO format
-     * @return a list of matching open events mapped to response objects
+     * @param session the current HTTP session containing the authenticated user ID,
+     *                if available
+     * @param filter  the DTO containing all optional search parameters (search
+     *                text, tags,
+     *                location, latitude, longitude, max distance, and overlapping
+     *                flags)
+     * @return a list of matching upcoming events mapped to response objects
      */
+
     public List<EventResponse> searchForEvents(HttpSession session, EventSearchFilter filter) {
 
         Long userId = (Long) session.getAttribute(USER_ID);
@@ -771,11 +787,10 @@ public class EventService {
                 : List.of();
 
         for (EventTag eTag : event.getTags()) {
-            // Facciamo lo stesso per i tag dell'evento
+
             String eventMacro = eTag.getMacroTag() != null ? eTag.getMacroTag().toLowerCase().trim() : "";
             String eventMicro = eTag.getMicroTag() != null ? eTag.getMicroTag().toLowerCase().trim() : "";
 
-            // Controlliamo se c'è almeno un match
             if (userMacro.contains(eventMacro) || (!eventMicro.isEmpty() && userMicro.contains(eventMicro))) {
                 return true;
             }
@@ -889,6 +904,13 @@ public class EventService {
         }
 
         if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            return false;
+        }
+
+        UserSettings notificationSettings = settingsRepository.findById(user.getEmail())
+                .orElseGet(() -> new UserSettings(user.getEmail(), true, true, false));
+
+        if (!(notificationSettings.isRecomendedEventEmailActivated())) {
             return false;
         }
 

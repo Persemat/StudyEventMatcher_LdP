@@ -8,12 +8,15 @@ import com.example.backend.dto.UpdatePersonalDataRequest;
 import com.example.backend.dto.UpdatePreferencesRequest;
 import com.example.backend.dto.UserRequest;
 import com.example.backend.dto.UserResponse;
+import com.example.backend.dto.NotificationSettingsRequest;
+import com.example.backend.dto.NotificationSettingsResponse;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.model.UserSettings;
 import com.example.backend.repository.UserSettingsRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
+import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -132,7 +135,7 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        UserSettings notificationSettings = new UserSettings(savedUser.getEmail(), true, true, true);
+        UserSettings notificationSettings = new UserSettings(savedUser.getEmail(), true, true, false);
         settingsRepository.save(notificationSettings);
 
         // Email Verification
@@ -307,6 +310,37 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         return toResponse(userRepository.save(user));
+    }
+
+    public NotificationSettingsResponse showNotificationSettings(Long userId) {
+        User loggedUser = getUserFromSession(userId);
+        String userEmail = loggedUser.getEmail();
+
+        UserSettings notificationSettings = settingsRepository.findById(userEmail)
+                .orElseGet(() -> new UserSettings(userEmail, true, true, false));
+
+        return (new NotificationSettingsResponse(notificationSettings.isEditEventEmailActivated(),
+                notificationSettings.isDeleteEventEmailActivated(),
+                notificationSettings.isRecomendedEventEmailActivated()));
+
+    }
+
+    public NotificationSettingsResponse modifySettings(NotificationSettingsRequest request, Long userId) {
+        User loggedUser = getUserFromSession(userId);
+        String userEmail = loggedUser.getEmail();
+
+        UserSettings notificationSettings = settingsRepository.findById(userEmail)
+                .orElseGet(() -> new UserSettings(userEmail, true, true, false));
+
+        notificationSettings.setDeleteEventEmailActivated(request.deleteEventEmailActivated());
+        notificationSettings.setEditEventEmailActivated(request.editEventEmailActivated());
+        notificationSettings.setRecomendedEventEmailActivated(request.recomendedEventEmailActivated());
+
+        UserSettings savedNotificationSettings = settingsRepository.save(notificationSettings);
+
+        return (new NotificationSettingsResponse(savedNotificationSettings.isEditEventEmailActivated(),
+                savedNotificationSettings.isDeleteEventEmailActivated(),
+                savedNotificationSettings.isRecomendedEventEmailActivated()));
     }
 
     /**

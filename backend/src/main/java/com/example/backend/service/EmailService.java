@@ -28,9 +28,7 @@ import com.example.backend.repository.UserSettingsRepository;
 public class EmailService {
 
     private final JavaMailSender mailSender;
-
-    @Autowired
-    private UserSettingsRepository userSettingsRepository;
+    private final UserSettingsRepository userSettingsRepository;
 
     @Value("${app.mail.from}")
     private String fromEmail;
@@ -40,8 +38,9 @@ public class EmailService {
      *
      * @param mailSender Spring component used to send emails
      */
-    public EmailService(JavaMailSender mailSender) {
+    public EmailService(JavaMailSender mailSender, UserSettingsRepository userSettingsRepository) {
         this.mailSender = mailSender;
+        this.userSettingsRepository = userSettingsRepository;
     }
 
     /**
@@ -159,7 +158,12 @@ public class EmailService {
                 continue;
             }
 
-            if (participant.getEmail() != null && !participant.getEmail().isBlank()) {
+            String participantEmail = participant.getEmail();
+
+            UserSettings userSettings = userSettingsRepository.findById(participantEmail)
+                    .orElseGet(() -> new UserSettings(participantEmail, true, true, true));
+
+            if (userSettings.isEditEventEmailActivated()) {
                 sendEventUpdateEmail(participant.getEmail(), event);
             }
         }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import com.example.backend.repository.UserSettingsRepository;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,9 @@ public class NewRelevantEventEmailTest {
     @Test
     void sendNewRelevantEventEmail_shouldUseReadableEventDetails() {
         JavaMailSender mailSender = mock(JavaMailSender.class);
-        EmailService emailService = new EmailService(mailSender);
+        UserSettingsRepository settingsRepository = mock(UserSettingsRepository.class);
+
+        EmailService emailService = new EmailService(mailSender, settingsRepository);
         ReflectionTestUtils.setField(emailService, "fromEmail", "test@example.com");
 
         Event event = new Event();
@@ -41,7 +44,8 @@ public class NewRelevantEventEmailTest {
         String text = captor.getValue().getText();
         assertNotNull(text);
         assertTrue(text.contains("Titolo: prova notifica"));
-        assertTrue(text.contains("Tag di interesse: Informatica > Machine Learning, Informatica > Sicurezza Informatica"));
+        assertTrue(
+                text.contains("Tag di interesse: Informatica > Machine Learning, Informatica > Sicurezza Informatica"));
         assertTrue(text.contains("Luogo: Milano (MI)-Aula 1"));
         assertTrue(text.contains("Data e ora: 22/05/2026 alle 15:00"));
     }

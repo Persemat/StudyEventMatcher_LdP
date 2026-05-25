@@ -2,6 +2,8 @@ package com.example.backend.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
+
 
 @Entity
 public class UserSettings {
