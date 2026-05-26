@@ -1,4 +1,4 @@
-//ForgotPasswordPage
+// Password recovery page.
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  // Countdown for requesting a new code
+  // Countdown before requesting another code.
   const [remainingSeconds, setRemainingSeconds] = useState(0)
 
   function resetMessages() {
@@ -402,7 +402,7 @@ const styles = {
   color: '#667eea',
   fontSize: '14px',
   fontWeight: '600',
-  //textDecoration: 'underline',
+  // textDecoration: 'underline',
   cursor: 'pointer',
   textAlign: 'left',
 },

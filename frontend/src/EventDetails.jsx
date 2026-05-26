@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, MapPin, Users, Info, Tag, Heart } from 'lucide-react';
 import { useEventActions } from './hooks/useEventActions';
 
-export default function EventDetails({ eventId }) {
+export default function EventDetails({ eventId, disableCancelActions = false }) {
   
   const [event, setEvent] = useState(null); 
   const [loading, setLoading] = useState(true); 
@@ -33,9 +33,9 @@ export default function EventDetails({ eventId }) {
   const mockSetEvents = (updaterFunction) => {
     setEvent(prevEvent => {
       if (!prevEvent) return prevEvent;
-      // Trasformiamo l'oggetto singolo in un array con un solo elemento [prevEvent]
+      // Reuse the shared action helper by wrapping the detail event in an array.
       const fintoArray = updaterFunction([prevEvent]);
-      // Ci riprendiamo l'oggetto modificato (che è il primo elemento dell'array)
+      // The updated event is the first item returned by the helper.
       return fintoArray[0];
     });
   };
@@ -169,7 +169,17 @@ export default function EventDetails({ eventId }) {
         </div>
 
         <div className="w-full md:w-auto">
-          {event.isBooked ? (
+          {disableCancelActions ? (
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-gray-500 font-bold">Evento nello storico</p>
+              <button
+                disabled
+                className="w-full md:w-auto px-4 py-2 rounded-lg font-bold bg-gray-100 text-gray-400 cursor-not-allowed"
+              >
+                AZIONI NON DISPONIBILI
+              </button>
+            </div>
+          ) : event.isBooked ? (
             <div className="flex flex-col items-end gap-2">
               <p className="text-green-600 font-bold">✅ Sei prenotato</p>
               <button

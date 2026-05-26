@@ -1,4 +1,4 @@
-// AuthPage.jsx
+// Authentication page.
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Link } from "react-router-dom";
 
@@ -11,23 +11,23 @@ export default function AuthPage(props) {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
-  // Campi standard
+  // Shared form fields.
   const [name, setName] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Campi specifici per la registrazione
+  // Registration-only fields.
   const [city, setCity] = useState('');
   const [macroTags, setMacroTags] = useState([]);
   const [microTags, setMicroTags] = useState([]);
 
-  // Dati dai cataloghi
+  // Catalog data.
   const [cityOptions, setCityOptions] = useState([]);
   const [tagOptions, setTagOptions] = useState([]);
 
-  // Gestione UI (Focus e Input testuale)
+  // UI state for focused autocomplete fields.
   const [isCityInputFocused, setIsCityInputFocused] = useState(false);
   
   const [macroInput, setMacroInput] = useState('');
@@ -42,10 +42,10 @@ export default function AuthPage(props) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Riferimenti per i focus
+  // Input refs used to restore focus.
   const cityInputRef = useRef(null);
 
-  // Caricamento Cataloghi all'avvio (solo se non siamo in modalità login)
+  // Loads catalogs when the registration form is active.
   useEffect(() => {
     let active = true;
     if (!isLogin) {
@@ -60,7 +60,7 @@ export default function AuthPage(props) {
     return () => { active = false; };
   }, [isLogin]);
 
-  // --- Logica Suggerimenti Città ---
+  // City autocomplete suggestions.
   const citySuggestions = useMemo(() => {
     const query = city.trim().toLowerCase();
     if (!query) return [];
@@ -74,22 +74,22 @@ export default function AuthPage(props) {
     [cityOptions]
   );
 
-  // --- Logica Suggerimenti Macro Tag ---
+  // Macro tag autocomplete suggestions.
   const macroSuggestions = useMemo(() => {
     const query = macroInput.trim().toLowerCase();
     return tagOptions
-      .filter(option => option.isMacro) // Prendi solo i macro
-      .filter(option => !macroTags.includes(option.macroTag)) // Escludi quelli già selezionati
-      .filter(option => !query || option.macroTag.toLowerCase().includes(query)); // Filtra per testo
+      .filter(option => option.isMacro) // Keep macro tags only.
+      .filter(option => !macroTags.includes(option.macroTag)) // Exclude selected tags.
+      .filter(option => !query || option.macroTag.toLowerCase().includes(query)); // Match typed text.
   }, [macroInput, tagOptions, macroTags]);
 
-  // --- Logica Suggerimenti Micro Tag ---
+  // Micro tag autocomplete suggestions.
   const microSuggestions = useMemo(() => {
     const query = microInput.trim().toLowerCase();
     return tagOptions
-      .filter(option => !option.isMacro) // Prendi solo i micro
-      .filter(option => !microTags.includes(option.microTag)) // Escludi quelli già selezionati
-      .filter(option => !query || option.microTag.toLowerCase().includes(query)); // Filtra per testo
+      .filter(option => !option.isMacro) // Keep micro tags only.
+      .filter(option => !microTags.includes(option.microTag)) // Exclude selected tags.
+      .filter(option => !query || option.microTag.toLowerCase().includes(query)); // Match typed text.
   }, [microInput, tagOptions, microTags]);
 
 
@@ -98,9 +98,9 @@ export default function AuthPage(props) {
     setError('');
   }
 
-  // --- Helper Aggiunta/Rimozione Tag ---
+  // Tag add/remove helpers.
   const addMacro = (macroValue) => {
-    if (macroTags.length >= MAX_MACRO_TAGS) return; // Blocco di sicurezza
+    if (macroTags.length >= MAX_MACRO_TAGS) return; // Safety limit.
     if (!macroTags.includes(macroValue)) {
       setMacroTags([...macroTags, macroValue]);
     }
@@ -113,7 +113,7 @@ export default function AuthPage(props) {
   };
 
   const addMicro = (microValue) => {
-    if (microTags.length >= MAX_MICRO_TAGS) return; // Blocco di sicurezza
+    if (microTags.length >= MAX_MICRO_TAGS) return; // Safety limit.
     if (!microTags.includes(microValue)) {
       setMicroTags([...microTags, microValue]);
     }
@@ -130,7 +130,7 @@ export default function AuthPage(props) {
     event.preventDefault();
     resetMessages();
 
-    // Validazioni solo per la registrazione
+    // Registration-only validation.
     if (!isLogin) {
       if (password !== confirmPassword) {
         setError('Le password non corrispondono');
@@ -143,7 +143,7 @@ export default function AuthPage(props) {
         return;
       }
 
-      // Validazione della città contro il catalogo per evitare inserimenti errati
+      // Validates the city against the catalog to avoid invalid values.
       if (!validCityLabels.has(city.trim())) {
         setError("Seleziona una città valida dall'elenco suggerito.");
         cityInputRef.current?.focus();
@@ -170,7 +170,7 @@ export default function AuthPage(props) {
                 lastname, 
                 email, 
                 password,
-                favouriteCity: city.trim(), // Estrai solo il nome se necessario nel backend, qui mando l'etichetta completa
+                favouriteCity: city.trim(), // Send the selected city label to the backend.
                 macroTags: macroTags,
                 microTags: microTags 
               }
@@ -222,11 +222,10 @@ export default function AuthPage(props) {
           `Registrazione completata per: ${data.name ?? ''} ${data.lastname ?? ''}. Reindirizzamento alla verifica...`
         );
 
-        // Salviamo l'email nello state della navigazione di react-router-dom
-        // così la pagina di verifica saprà per quale account stiamo inserendo i numeri
+        // Pass the email through router state for the verification page.
         const registeredEmail = email;
 
-        // Resetta i campi del form
+        // Reset form fields.
         setName('');
         setLastname('');
         setEmail('');
@@ -237,7 +236,7 @@ export default function AuthPage(props) {
         setMicroTags([]);
 
         setTimeout(() => {
-          // Naviga alla nuova pagina di verifica passando l'email come stato invisibile
+          // Navigate to verification while keeping the email out of the URL.
           navigate("/verify-email", { state: { email: registeredEmail } });
         }, 1500);
       }
@@ -313,7 +312,7 @@ export default function AuthPage(props) {
                   </div>
                 </div>
 
-                {/* --- SEZIONE CITTÀ --- */}
+                {/* City section */}
                 <div style={styles.field} className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1" style={styles.label}>
                     Città preferita
@@ -348,7 +347,7 @@ export default function AuthPage(props) {
                   )}
                 </div>
 
-                {/* --- SEZIONE MACRO TAGS --- */}
+                {/* Macro tags section */}
                 <div style={styles.field}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={styles.label}>Inserisci almeno un'area di interesse</label>
@@ -408,7 +407,7 @@ export default function AuthPage(props) {
                   </div>
                 </div>
 
-                {/* --- SEZIONE MICRO TAGS --- */}
+                {/* Micro tags section */}
                 <div style={styles.field}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={styles.label}>Scegli fino a 5 argomenti di interesse specifico</label>
@@ -639,7 +638,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-    position: 'relative', // Importante per i dropdown assoluti
+    position: 'relative', // Anchors absolute dropdowns.
   },
   label: {
     fontWeight: '700',
@@ -713,7 +712,7 @@ const styles = {
     display: 'block',
     cursor: 'pointer',
   },
-  // --- Stili Tags & Dropdown ---
+  // Tag and dropdown styles.
   tagsContainer: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -728,7 +727,7 @@ const styles = {
     transition: 'background-color 0.2s ease'
   },
   tagPill: {
-    backgroundColor: '#2563eb', // Blu per i Macro
+    backgroundColor: '#2563eb', // Macro tag color.
     color: 'white',
     padding: '4px 12px',
     borderRadius: '20px',
@@ -738,7 +737,7 @@ const styles = {
     gap: '6px'
   },
   tagPillMicro: {
-    backgroundColor: '#10b981', // Verde per i Micro
+    backgroundColor: '#10b981', // Micro tag color.
     color: 'white',
     padding: '4px 12px',
     borderRadius: '20px',

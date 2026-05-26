@@ -5,7 +5,9 @@ import com.example.backend.model.User;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -116,5 +118,27 @@ public class FavoriteEventTest extends BaseEventTest {
         assertEquals("Utente non trovato", ex.getMessage());
 
         verify(eventRepository, never()).save(any());
+    }
+
+    @Test
+    void checkIfClosed_shouldRemoveFavoritesWhenEventHasStarted() {
+
+        User user = new User();
+        user.setId(1L);
+
+        Event event = new Event();
+        event.setId(10L);
+        event.setTitle("Started event");
+        event.setDateTime(LocalDateTime.now().minusMinutes(1));
+        event.setStatus("open");
+        event.setFavorites(new HashSet<>());
+        event.addFavorite(user);
+
+        boolean changed = eventService.checkIfClosed(false, List.of(event));
+
+        assertTrue(changed);
+        assertEquals("closed", event.getStatus());
+        assertTrue(event.getFavorites().isEmpty());
+        assertFalse(user.getFavoriteEvents().contains(event));
     }
 }

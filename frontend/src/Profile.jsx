@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Assicurati che il percorso di importazione sia corretto in base alla tua alberatura
+// Shared catalog loaders.
 import { loadCityOptions, loadTagOptions } from "./catalogs"; 
 
 export default function Profile({ user, onLogout, onUserUpdated }) {
@@ -27,21 +27,21 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     confirmPassword: "",
   });
 
-  // Stato globale per le preferenze (verrà inviato tutto insieme)
+  // Profile preferences sent together to the backend.
   const [preferencesForm, setPreferencesForm] = useState({
     favouriteCity: "",
     macroTags: [],
     microTags: []
   });
 
-  // NUOVO STATO: Preferenze notifiche (tabella UserSettings separata)
+  // Notification preferences stored in UserSettings.
   const [notificationsForm, setNotificationsForm] = useState({
     editEventEmailActivated: true,
     deleteEventEmailActivated: true,
     recomendedEventEmailActivated: true,
   });
 
-  // Stati per i cataloghi
+  // Catalog state.
   const [cityOptions, setCityOptions] = useState([]);
   const [tagOptions, setTagOptions] = useState([]);
 
@@ -56,7 +56,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
   const [activeEditArea, setActiveEditArea] = useState("");
   const [isCityFocused, setIsCityFocused] = useState(false);
 
-  // Caricamento dei cataloghi al mount
+  // Load catalogs on mount.
   useEffect(() => {
     loadCityOptions().then(setCityOptions).catch(console.error);
     loadTagOptions().then(setTagOptions).catch(console.error);
@@ -71,7 +71,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     });
     setEmailForm({ email: user.email ?? "" });
     
-    // Popola i dati delle preferenze appena l'utente viene caricato/aggiornato
+    // Populate preferences when the user is loaded or updated.
     setPreferencesForm({
       favouriteCity: user.favouriteCity ?? "",
       macroTags: user.macroTags ?? [],
@@ -98,10 +98,10 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
 
   const filteredCities = useMemo(() => {
     const query = preferencesForm.favouriteCity.trim().toLowerCase();
-    if (!query || query.length < 2) return []; // Mostra suggerimenti solo dopo 2 caratteri
+    if (!query || query.length < 2) return []; // Show suggestions after two characters.
     return cityOptions
       .filter((option) => option.label.toLowerCase().includes(query))
-      .slice(0, 10); // Limita a 10 risultati per non coprire tutto lo schermo
+      .slice(0, 10); // Keep the dropdown compact.
   }, [preferencesForm.favouriteCity, cityOptions]);
 
   const handleLogoutClick = async () => {
@@ -275,14 +275,14 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     }
   };
 
-  // Funzione unica per gestire il salvataggio delle preferenze (Città, Macro e Micro)
+  // Saves city, macro tags, and micro tags together.
   const savePreferences = async (event, area) => {
     event.preventDefault();
     resetCardState(area);
 
     const errors = {};
     
-    // Validazione specifica in base all'area attiva
+    // Validate only the active preference area.
     if (area === "city") {
       const currentCity = preferencesForm.favouriteCity.trim();
       
@@ -310,7 +310,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     setLoading(area);
 
     try {
-      // Endpoint unico: mando sempre il pacchetto completo per non far scattare validazioni nulle backend
+      // Send the full preference payload to avoid partial backend validation issues.
       const response = await fetch("/api/user/me/preferences", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -345,7 +345,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     }
   };
 
-  // NUOVA FUNZIONE: Salvataggio notifiche tramite Service
+  // Saves notification settings through the user service.
   const saveNotifications = async (event) => {
     event.preventDefault();
     setMessages((prev) => ({ ...prev, notifications: "" }));
@@ -417,7 +417,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
         <div className="border-b border-gray-200 px-4 py-3 sm:px-8">
           <div className="flex flex-col gap-2 md:flex-row">
             
-            {/* Tasto Modifica Preferenze Sbloccato */}
+            {/* Edit preferences action */}
             <button
               type="button"
               onClick={() => {
@@ -483,7 +483,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
 
         <div className="p-6 sm:p-8">
           
-          {/* SEZIONE: MODIFICA DATI (Rimasta invariata per i campi Name, Email, Password) */}
+          {/* Account data form */}
           {activeSection === "data" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -576,7 +576,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
             </div>
           )}
 
-          {/* SEZIONE: MODIFICA PREFERENZE DIVISA IN TRE FORM */}
+          {/* Preference forms */}
           {activeSection === "preferences" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -600,7 +600,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                 />
               </div>
 
-              {/* FORM 1: CITTÀ PREFERITA */}
+              {/* Favorite city form */}
               {activeEditArea === "city" && (
                 <form onSubmit={(e) => savePreferences(e, "city")} className="rounded-lg border border-gray-200 p-5">
                   <div className="relative">
@@ -610,14 +610,13 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                       value={preferencesForm.favouriteCity}
                       onChange={(e) => setPreferencesForm(p => ({ ...p, favouriteCity: e.target.value }))}
                       onFocus={() => setIsCityFocused(true)}
-                      // Il timeout serve a far registrare il click sulla lista prima che sparisca
+                      // Let dropdown clicks register before hiding suggestions.
                       onBlur={() => {
-                        // Aspettiamo che il click sul dropdown venga registrato
+                        // Wait for the dropdown click to complete.
                         setTimeout(() => {
                           setIsCityFocused(false);
                           
-                          // LOGICA EXTRA: Se l'utente esce e quello che ha scritto non è valido, 
-                          // potresti voler resettare il campo al valore originale (quello di user.favouriteCity)
+                          // Restore the saved city when the typed value is not valid.
                           const isValid = cityOptions.some(city => city.label === preferencesForm.favouriteCity);
                           if (!isValid && preferencesForm.favouriteCity !== "") {
                               setPreferencesForm(p => ({ ...p, favouriteCity: user.favouriteCity }));
@@ -629,7 +628,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                       className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                     />
                     
-                    {/* Dropdown Personalizzato */}
+                    {/* Custom dropdown */}
                     {isCityFocused && filteredCities.length > 0 && (
                       <ul className="absolute z-20 w-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl list-none p-0 m-0">
                         {filteredCities.map(c => (
@@ -651,7 +650,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                 </form>
               )}
 
-              {/* FORM 2: MACRO AREE */}
+              {/* Macro areas form */}
               {activeEditArea === "macro" && (
                 <form onSubmit={(e) => savePreferences(e, "macro")} className="rounded-lg border border-gray-200 p-5">
                   <div className="mb-5 flex items-center gap-3">
@@ -676,7 +675,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                     onRemove={(tag) => {
                        setPreferencesForm(prev => {
                          const newMacros = prev.macroTags.filter(t => t !== tag);
-                         // Pulizia a cascata: se elimino un macro, elimino anche i micro tag associati a lui
+                         // Removing a macro also removes its related micro tags.
                          const microTagsToRemove = tagOptions.filter(t => !t.isMacro && t.macroTag === tag).map(t => t.microTag);
                          const newMicros = prev.microTags.filter(t => !microTagsToRemove.includes(t));
                          return { ...prev, macroTags: newMacros, microTags: newMicros };
@@ -698,7 +697,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                 </form>
               )}
 
-              {/* FORM 3: MICRO AREE */}
+              {/* Micro areas form */}
               {activeEditArea === "micro" && (
                 <form onSubmit={(e) => savePreferences(e, "micro")} className="rounded-lg border border-gray-200 p-5">
                   <div className="mb-5 flex items-center gap-3">
@@ -746,7 +745,7 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
           )}
 
 
-          {/* SEZIONE: IMPOSTAZIONI NOTIFICHE */}
+          {/* Notification settings */}
           {activeSection === "notifications" && (
             <form onSubmit={saveNotifications} className="rounded-lg border border-gray-200 p-6 space-y-6">
               <div className="flex items-center gap-3 mb-4">
@@ -818,11 +817,9 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
   );
 }
 
-// ---------------------------
-// COMPONENTI DI SUPPORTO UI
-// ---------------------------
+// UI helpers.
 
-// NUOVO COMPONENTE: Ricrea l'interfaccia a Pills in base agli screenshot forniti
+// Pill-based autocomplete control.
 function TagSelectBox({ title, limit, selectedTags, availableTags, isMacro, colorScheme, placeholder, error, onAdd, onRemove }) {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -849,7 +846,7 @@ function TagSelectBox({ title, limit, selectedTags, availableTags, isMacro, colo
     }
   };
 
-  // Filtriamo i suggerimenti in base a ciò che l'utente digita
+  // Filter suggestions by the typed query.
   const suggestions = availableTags.filter(t => {
     const isAlreadySelected = selectedTags.includes(isMacro ? t.macroTag : t.microTag);
     if (isAlreadySelected) return false;
@@ -869,13 +866,13 @@ function TagSelectBox({ title, limit, selectedTags, availableTags, isMacro, colo
         </span>
       </div>
       
-      {/* Contenitore principale Tags + Input */}
+      {/* Tags and input container */}
       <div className={`flex flex-wrap items-center gap-2 rounded-lg border p-3 min-h-[52px] transition-colors ${
           error ? 'border-red-500 bg-red-50' : 
           isFull ? 'border-gray-300 bg-gray-200/50' : 'border-gray-300 bg-gray-50'
         }`}
       >
-        {/* Renderizza i "Pills" */}
+        {/* Selected pills */}
         {selectedTags.map(tag => (
           <span key={tag} className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium shadow-sm ${isBlue ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'}`}>
             {tag}
@@ -889,7 +886,7 @@ function TagSelectBox({ title, limit, selectedTags, availableTags, isMacro, colo
           </span>
         ))}
 
-        {/* Input Textuale */}
+        {/* Text input */}
         <div className="relative flex-1 min-w-[150px]">
           <input
             type="text"
@@ -906,7 +903,7 @@ function TagSelectBox({ title, limit, selectedTags, availableTags, isMacro, colo
             className={`w-full bg-transparent outline-none text-sm text-gray-900 placeholder-gray-400 ${isFull ? 'cursor-not-allowed' : ''}`}
           />
           
-          {/* Dropdown in stile AuthPage */}
+          {/* AuthPage-style dropdown */}
           {isFocused && !isFull && suggestions.length > 0 && (
             <ul className="absolute z-10 w-full mt-2 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg p-0 m-0 list-none">
               {suggestions.map(option => (
@@ -919,7 +916,7 @@ function TagSelectBox({ title, limit, selectedTags, availableTags, isMacro, colo
                   }}
                   className="px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-50 last:border-0"
                 >
-                  {/* Aggiungi questo blocco per i Micro Tag */}
+                  {/* Extra context for micro tags */}
                   {!isMacro && (
                     <div className="text-[10px] text-gray-400 uppercase font-bold mb-0.5">
                       {option.macroTag}

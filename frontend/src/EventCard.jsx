@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
-import { formatTagLabel } from "./catalogs";
 import { Heart } from "lucide-react";
 
 export default function EventCard({
@@ -9,7 +8,8 @@ export default function EventCard({
   onCancelBooking,
   onEdit,
   onToggleFavorite,
-  onShowDetails
+  onShowDetails,
+  disableCancelActions = false
 }) {
   const currentParticipants = event.currentParticipants || 0;
   const isFull = event.maxParticipants != null && currentParticipants >= event.maxParticipants;
@@ -38,37 +38,42 @@ export default function EventCard({
     >
       {/* Title and Tags */}
       <div>
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-bold text-lg text-gray-900">{event.title}</h3>
+        <div className="mb-2 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="min-w-0 flex-1 font-bold text-lg leading-snug text-gray-900 break-words">
+              {event.title}
+            </h3>
 
-          <div className="flex gap-1 flex-wrap justify-end">
-            {event.tags &&
-              event.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                >
-                  {formatTagLabel(tag)}
-                </span>
-              ))}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(event.id);
+              }}
+              className="p-2 -mt-2 rounded-full hover:bg-gray-50 transition-colors shrink-0"
+              title={event.isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+            >
+              <Heart
+                className={`w-5 h-5 transition-colors ${
+                  event.isFavorite
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-400 hover:text-red-400"
+                }`}
+              />
+            </button>
           </div>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite(event.id);
-            }}
-            className="p-2 rounded-full hover:bg-gray-50 transition-colors ml-auto"
-            title={event.isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-          >
-            <Heart
-              className={`w-5 h-5 transition-colors ${
-                event.isFavorite
-                  ? "fill-red-500 text-red-500"
-                  : "text-gray-400 hover:text-red-400"
-              }`}
-            />
-          </button>
+          {event.tags && event.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {event.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="max-w-full bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-semibold leading-4"
+                >
+                  {formatCardTagLabel(tag)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="text-gray-600 text-sm line-clamp-2">
@@ -139,16 +144,17 @@ export default function EventCard({
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
-        {event.isCreatedByMe ? (
+        {disableCancelActions ? (
+          <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold flex items-center justify-center cursor-not-allowed">
+            AZIONI NON DISPONIBILI
+          </span>
+        ) : event.isCreatedByMe ? (
           <div className="flex-1 flex gap-2">
             {/* Edit button */}
             <button
               disabled={!canEdit}
               onClick={(e) => {
-                /**
-                 * Stop event propagation to prevent the card's onClick from firing.
-                 * Then, execute the edit action.
-                 */
+                // Keep the card details click from firing.
                 e.stopPropagation();
                 onEdit(event.id);
               }}
@@ -211,4 +217,15 @@ export default function EventCard({
       </div>
     </div>
   );
+}
+
+function formatCardTagLabel(tag) {
+  if (!tag) return "";
+
+  if (typeof tag === "string") {
+    const parts = tag.split(/\s*>\s*/, 2);
+    return parts[1] || parts[0];
+  }
+
+  return tag.microTag || tag.macroTag || "";
 }

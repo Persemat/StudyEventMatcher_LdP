@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { AlertTriangle, Calendar, Plus } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { useEventActions } from "./hooks/useEventActions";
 
 import EventCard from "./EventCard"; 
@@ -7,13 +8,18 @@ import EventFormModal from "./EventFormModal";
 import EventDetails from "./EventDetails";
 
 export default function MyEvents() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = ["created", "favorites", "booked", "history"].includes(searchParams.get("tab"))
+    ? searchParams.get("tab")
+    : "created";
   const [events, setEvents] = useState([]);
-  const [activeTab, setActiveTab] = useState("created");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
   const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEventFromHistory, setSelectedEventFromHistory] = useState(false);
 
   const now = new Date();
   const nowTime = now.getTime();
@@ -39,7 +45,7 @@ export default function MyEvents() {
 
 
   const favoriteEvents = events.filter(
-    (e) => e.isFavorite
+    (e) => e.isFavorite && isFutureEvent(e)
   );
   const overlappingEvents = useMemo(() => {
     const userFutureEvents = events
@@ -110,6 +116,18 @@ export default function MyEvents() {
     fetchEvents();
   }, []);
 
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (["created", "favorites", "booked", "history"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const changeTab = (tab) => {
+    setActiveTab(tab);
+    setSearchParams(tab === "created" ? {} : { tab });
+  };
+
   const { handleBook, handleCancelBooking, handleToggleFavorite } = useEventActions(fetchEvents, setEvents);
 
   // Opens the modal in edit mode with the selected event data.
@@ -166,7 +184,7 @@ export default function MyEvents() {
         <div className="flex">
 
           <button
-            onClick={() => setActiveTab("created")}
+            onClick={() => changeTab("created")}
             className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
               activeTab === "created"
                 ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
@@ -177,7 +195,7 @@ export default function MyEvents() {
           </button>
 
           <button
-            onClick={() => setActiveTab("favorites")}
+            onClick={() => changeTab("favorites")}
             className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
               activeTab === "favorites"
                 ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
@@ -189,7 +207,7 @@ export default function MyEvents() {
 
 
           <button
-            onClick={() => setActiveTab("booked")}
+            onClick={() => changeTab("booked")}
             className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
               activeTab === "booked"
                 ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
@@ -200,7 +218,7 @@ export default function MyEvents() {
           </button>
 
           <button
-            onClick={() => setActiveTab("history")}
+            onClick={() => changeTab("history")}
             className={`flex-1 px-6 py-4 font-bold text-sm transition-all ${
               activeTab === "history"
                 ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/30"
@@ -230,7 +248,11 @@ export default function MyEvents() {
                 )}
               onEdit={() => handleEdit(event)}
               onToggleFavorite={() => handleToggleFavorite(event.id)}
-              onShowDetails={() => setSelectedEventId(event.id)}
+              onShowDetails={() => {
+                setSelectedEventId(event.id);
+                setSelectedEventFromHistory(activeTab === "history");
+              }}
+              disableCancelActions={activeTab === "history"}
             />
           ))}
 
@@ -274,7 +296,10 @@ export default function MyEvents() {
       {selectedEventId && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedEventId(null)}
+          onClick={() => {
+            setSelectedEventId(null);
+            setSelectedEventFromHistory(false);
+          }}
         >
            
            <div
@@ -284,14 +309,17 @@ export default function MyEvents() {
               
               {/* Close Button */}
               <button 
-                 onClick={() => setSelectedEventId(null)}
+                 onClick={() => {
+                   setSelectedEventId(null);
+                   setSelectedEventFromHistory(false);
+                 }}
                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors font-bold text-xl z-10 bg-white rounded-full p-1 shadow-sm"
               >
                  ✕
               </button>
   
               {/* Render the details component */}
-              <EventDetails eventId={selectedEventId} />
+              <EventDetails eventId={selectedEventId} disableCancelActions={selectedEventFromHistory} />
   
            </div>
         </div>

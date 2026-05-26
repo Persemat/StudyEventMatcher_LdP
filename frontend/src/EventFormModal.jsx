@@ -35,6 +35,8 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
   const tagInputRef = useRef(null);
   const cityInputRef = useRef(null);
   const MAX_TAGS = 3;
+  const today = getLocalDate();
+  const minTime = date === today ? getLocalTime() : undefined;
 
   // Loads catalogs for tag and city autocomplete; reuses parent-provided tags when available.
   useEffect(() => {
@@ -165,10 +167,15 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
       return;
     }
 
+    const dateTimeFormatted = `${date}T${time}:00`;
+    if (new Date(dateTimeFormatted).getTime() <= Date.now()) {
+      setFormError("Data e ora devono essere future.");
+      return;
+    }
+
     setIsLoading(true);
     setMessage("");
 
-    const dateTimeFormatted = `${date}T${time}:00`;
     const finalLocation = address.trim()
       ? `${city.trim()}-${address.trim()}`
       : city.trim();
@@ -286,11 +293,11 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Edificio / Aula <span className="text-gray-400">(Opzionale)</span>
+                  Indirizzo <span className="text-gray-400">(Opzionale)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="es: Edificio U4 - Biblioteca"
+                  placeholder="es: Via Roma 10, Biblioteca"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -378,6 +385,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  min={today}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 />
@@ -389,6 +397,7 @@ export default function EventFormModal({ mode, event, onClose, onSuccess, availa
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
+                  min={minTime}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 />
@@ -476,4 +485,17 @@ function normalizeTag(tag) {
     return { macroTag: parts[0], microTag: parts[1] || null };
   }
   return { macroTag: tag.macroTag, microTag: tag.microTag || null };
+}
+
+function getLocalDate(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getLocalTime(date = new Date()) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
