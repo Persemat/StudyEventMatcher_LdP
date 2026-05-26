@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Search, MapPin, Calendar, X } from "lucide-react";
+import { Search, MapPin, Calendar, X, ChevronDown, ChevronRight } from "lucide-react";
 import EventCard from "./EventCard";
 import EventDetails from "./EventDetails";
 import { useEventActions } from "./hooks/useEventActions";
@@ -8,7 +8,7 @@ import { loadCityOptions, loadTagOptions } from "./catalogs";
 
 export default function AllEvents({ user }) {
   const [events, setEvents] = useState([]);
-  const [availableTags, setAvailableTags] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]); // Original flat tag list.
   const [cityOptions, setCityOptions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
@@ -16,6 +16,7 @@ export default function AllEvents({ user }) {
   const [selectedTags, setSelectedTags] = useState([]);
   const [tagSearchTerm, setTagSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [expandedTags, setExpandedTags] = useState([]); // Expanded macro tag groups.
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,12 +34,92 @@ export default function AllEvents({ user }) {
   const cityInputRef = useRef(null);
   const now = useMemo(() => Date.now(), []);
 
-  // Dynamically filters dropdown tags based on the typed text.
-  const filteredTags = useMemo(() => {
+  // Builds the hierarchical tag tree from the flat catalog loaded from disk.
+  const hierarchicalTags = useMemo(() => {
+    const groups = {};
+    availableTags.forEach(tag => {
+      if (!groups[tag.macroTag]) {
+        groups[tag.macroTag] = {
+          label: tag.macroTag,
+          macroTagObj: null,
+          children: []
+        };
+      }
+      if (tag.isMacro) {
+        groups[tag.macroTag].macroTagObj = tag;
+      } else {
+        groups[tag.macroTag].children.push({
+          label: tag.microTag,
+          microTagObj: tag
+        });
+      }
+    });
+    return Object.values(groups).filter(g => g.macroTagObj);
+  }, [availableTags]);
+
+  // Filters the tag tree by the search text typed inside the dropdown.
+  const filteredTagsTree = useMemo(() => {
     const query = tagSearchTerm.trim().toLowerCase();
-    if (!query) return availableTags;
-    return availableTags.filter((tag) => tag.label.toLowerCase().includes(query));
-  }, [availableTags, tagSearchTerm]);
+    if (!query) return hierarchicalTags;
+
+    return hierarchicalTags.map(parent => {
+      const parentMatches = parent.label.toLowerCase().includes(query);
+      const matchingChildren = parent.children.filter(c =>
+        c.label.toLowerCase().includes(query)
+      );
+
+      if (parentMatches || matchingChildren.length > 0) {
+        return {
+          ...parent,
+          // If the macro tag matches, keep all children; otherwise keep matching children only.
+          children: parentMatches ? parent.children : matchingChildren
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  }, [hierarchicalTags, tagSearchTerm]);
+
+  // Toggles a macro tag and all of its children at once.
+  const handleMacroToggle = (parentGroup) => {
+    setSelectedTags((prev) => {
+      const allRelatedTags = [parentGroup.macroTagObj, ...parentGroup.children.map(c => c.microTagObj)];
+      const isFullySelected = allRelatedTags.every(t => prev.some(pt => pt.label === t.label));
+
+      if (isFullySelected) {
+        // Remove the macro tag and every child tag.
+        return prev.filter(pt => !allRelatedTags.some(rt => rt.label === pt.label));
+      } else {
+        // Add the macro tag and any missing child tags.
+        const nextTags = [...prev];
+        allRelatedTags.forEach(t => {
+          if (!nextTags.some(pt => pt.label === t.label)) {
+            nextTags.push(t);
+          }
+        });
+        return nextTags;
+      }
+    });
+  };
+
+  // Toggles one micro tag without changing the rest of its group.
+  const handleMicroToggle = (childObj) => {
+    setSelectedTags((prev) => {
+      const isSelected = prev.some((t) => t.label === childObj.label);
+      if (isSelected) {
+        return prev.filter((t) => t.label !== childObj.label);
+      } else {
+        return [...prev, childObj];
+      }
+    });
+  };
+
+  const toggleExpand = (tagLabel) => {
+    setExpandedTags(prev => 
+      prev.includes(tagLabel) 
+        ? prev.filter(label => label !== tagLabel)
+        : [...prev, tagLabel]
+    );
+  };
 
   // Suggests matching cities from the shared city catalog while the location filter is typed.
   const locationSuggestions = useMemo(() => {
@@ -49,7 +130,6 @@ export default function AllEvents({ user }) {
       .slice(0, 30);
   }, [cityOptions, searchLocation]);
 
-  // Loads the tag catalog used by both filters and the edit modal.
   const fetchTags = async () => {
     try {
       const data = await loadTagOptions();
@@ -59,7 +139,6 @@ export default function AllEvents({ user }) {
     }
   };
 
-  // Loads the same city catalog used by create/edit event location autocomplete.
   const fetchCities = async () => {
     try {
       const data = await loadCityOptions();
@@ -85,7 +164,6 @@ export default function AllEvents({ user }) {
     [searchLocation, cityOptions]
   );
 
-  // Falls back to the profile city when distance sorting has no search city.
   const favouriteCity = useMemo(
     () => cityOptions.find((option) => option.label === user?.favouriteCity),
     [cityOptions, user?.favouriteCity]
@@ -93,7 +171,6 @@ export default function AllEvents({ user }) {
 
   const distanceSortCity = selectedSearchCity || favouriteCity;
 
-  // Uses the same Haversine formula as the backend distance filter.
   const calculateDistanceKm = useCallback((event) => {
     if (!distanceSortCity || event.latitude == null || event.longitude == null) {
       return Number.POSITIVE_INFINITY;
@@ -116,7 +193,6 @@ export default function AllEvents({ user }) {
     return earthRadiusKm * c;
   }, [distanceSortCity]);
 
-  // Sorts the already filtered results without triggering another API call.
   const sortedEvents = useMemo(() => {
     const orderedEvents = [...events];
 
@@ -129,9 +205,7 @@ export default function AllEvents({ user }) {
     if (sortBy === "distance") {
       return orderedEvents.sort((first, second) => {
         const distanceDifference = calculateDistanceKm(first) - calculateDistanceKm(second);
-
         if (distanceDifference !== 0) return distanceDifference;
-
         return new Date(first.dateTime).getTime() - new Date(second.dateTime).getTime();
       });
     }
@@ -155,6 +229,8 @@ export default function AllEvents({ user }) {
       }
       if (searchData) url.searchParams.append("date", searchData);
       if (hideOverlapping) url.searchParams.append("hideOverlapping", "true");
+      
+      // selectedTags stores the original flat tag objects, so tag.label is the API label.
       if (selectedTags.length > 0) {
         selectedTags.forEach((tag) => url.searchParams.append("tags", tag.label));
       }
@@ -179,7 +255,6 @@ export default function AllEvents({ user }) {
     fetchCities();
   }, []);
 
-  // Adds a small debounce to avoid one API call per keystroke.
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchEvents();
@@ -349,6 +424,7 @@ export default function AllEvents({ user }) {
           />
         </div>
 
+        {/* Hierarchical tag dropdown */}
         <div className="relative md:w-48" ref={dropdownRef}>
           <button
             type="button"
@@ -358,10 +434,13 @@ export default function AllEvents({ user }) {
             <span className="text-sm font-medium text-gray-700 truncate">
               {selectedTags.length === 0 ? "Tutti i tag" : `${selectedTags.length} tag`}
             </span>
-            <span className="text-gray-400 text-xs shrink-0">▼</span>
+            <span className="text-gray-400 text-xs shrink-0">
+              <ChevronDown size={14} />
+            </span>
           </button>
+          
           {isDropdownOpen && (
-            <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2">
+            <div className="absolute z-20 w-full md:w-72 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2 right-0 md:left-0">
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input
@@ -373,21 +452,69 @@ export default function AllEvents({ user }) {
                 />
               </div>
 
-              <div className="max-h-52 overflow-y-auto">
-                {filteredTags.length > 0 ? (
-                  filteredTags.map((tag) => (
-                    <label key={tag.label} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedTags.some((t) => t.label === tag.label)}
-                        onChange={() => setSelectedTags(prev => prev.some((t) => t.label === tag.label) ? prev.filter(t => t.label !== tag.label) : [...prev, tag])}
-                        className="rounded text-blue-600"
-                      />
-                      <span className="text-sm">{tag.label}</span>
-                    </label>
-                  ))
+              <div className="max-h-64 overflow-y-auto pr-1">
+                {filteredTagsTree.length > 0 ? (
+                  filteredTagsTree.map((parent) => {
+                    const hasChildren = parent.children && parent.children.length > 0;
+                    const isExpanded = expandedTags.includes(parent.label);
+                    
+                    // The macro checkbox is checked only when the macro tag and all children are selected.
+                    const allRelatedLabels = [parent.macroTagObj.label, ...parent.children.map(c => c.microTagObj.label)];
+                    const isParentChecked = allRelatedLabels.every(label => 
+                      selectedTags.some(st => st.label === label)
+                    );
+
+                    return (
+                      <div key={parent.label} className="mb-1">
+                        {/* Macro tag row */}
+                        <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded">
+                          <input
+                            type="checkbox"
+                            checked={isParentChecked}
+                            onChange={() => handleMacroToggle(parent)}
+                            className="rounded text-blue-600 w-4 h-4 cursor-pointer focus:ring-blue-500"
+                          />
+                          <span 
+                            className="text-sm font-semibold text-gray-800 flex-1 cursor-pointer select-none truncate"
+                            onClick={() => hasChildren && toggleExpand(parent.label)}
+                          >
+                            {parent.label}
+                          </span>
+                          {hasChildren && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand(parent.label);
+                              }}
+                              className="p-1 text-gray-400 hover:text-gray-700 rounded-md transition-colors"
+                            >
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Micro tag rows */}
+                        {hasChildren && isExpanded && (
+                          <div className="ml-6 pl-2 border-l-2 border-gray-100 flex flex-col gap-1 mt-1 mb-2">
+                            {parent.children.map((child) => (
+                              <label key={child.label} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTags.some((t) => t.label === child.microTagObj.label)}
+                                  onChange={() => handleMicroToggle(child.microTagObj)}
+                                  className="rounded text-blue-600 w-3.5 h-3.5 cursor-pointer focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-600 select-none truncate">{child.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 ) : (
-                  <p className="px-3 py-2 text-sm text-gray-500">Nessun tag trovato</p>
+                  <p className="px-3 py-4 text-sm text-center text-gray-500">Nessun tag trovato</p>
                 )}
               </div>
             </div>
@@ -399,7 +526,6 @@ export default function AllEvents({ user }) {
       {!loading && sortedEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedEvents.map((event) => {
-            // Allows editing only for the creator and only more than 24 hours before start.
             const eventStart = new Date(event.dateTime).getTime();
             const editable = event.isCreatedByMe && eventStart > now + 24 * 60 * 60 * 1000;
 
@@ -435,7 +561,7 @@ export default function AllEvents({ user }) {
             setEventToEdit(null);
             fetchEvents();
           }}
-          availableTags={availableTags}
+          availableTags={availableTags} // EventForm expects the original flat tag list.
         />
       )}
 
@@ -451,7 +577,7 @@ export default function AllEvents({ user }) {
           
           <button 
              onClick={() => setSelectedEventId(null)}
-             className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 font-bold text-xl"
+             className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 font-bold text-xl z-10"
           >
              ✕
           </button>

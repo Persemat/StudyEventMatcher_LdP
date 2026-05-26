@@ -1,4 +1,4 @@
-//MainLayout
+// Main application layout.
 import { Outlet, Link, useLocation } from "react-router-dom"; 
 import { BookOpen, Calendar, User, Home } from "lucide-react";
 

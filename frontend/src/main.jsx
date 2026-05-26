@@ -10,10 +10,10 @@ import Profile from './Profile'
 import './index.css'
 import MyEvents from './MyEvents'
 import ForgotPasswordPage from './ForgotPasswordPage'
-// 1. IMPORTA IL NUOVO COMPONENTE (sistema il path se lo hai salvato altrove)
+// Email verification page.
 import VerifyEmailPage from './VerifyEmailPage' 
 
-// ===================== PROTECTED ROUTE =====================
+// Protects routes that require an authenticated user.
 const ProtectedRoute = ({ user, children }) => {
   if (user === undefined) {
     return <div>Loading session...</div>;
@@ -26,11 +26,11 @@ const ProtectedRoute = ({ user, children }) => {
   return children;
 };
 
-// ===================== APP =====================
+// Root app router.
 const App = () => {
   const [loggedUser, setLoggedUser] = useState(undefined);
 
-  // CHECK SESSION
+  // Restores the current session on page load.
   useEffect(() => {
     fetch("/api/user/me", {
       credentials: "include"
@@ -40,7 +40,7 @@ const App = () => {
       .catch(() => setLoggedUser(null));
   }, []);
 
-  // LOGOUT
+  // Ends the session and returns the app to the login state.
   const handleLogout = async () => {
     try {
       await fetch("/api/user/logout", {
@@ -56,11 +56,11 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* redirect root */}
+        {/* Root redirect */}
         <Route 
           path="/" element={<Navigate to="/login" replace />} />
 
-        {/* public routes */}
+        {/* Public routes */}
         <Route
           path="/login"
           element={<AuthPage onLoginSuccess={setLoggedUser} />} />
@@ -68,11 +68,11 @@ const App = () => {
         <Route 
           path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* 2. NUOVA ROTTA PUBBLICA PER IL CODICE A 6 CIFRE */}
+        {/* Email verification route */}
         <Route 
           path="/verify-email" element={<VerifyEmailPage />} />
 
-        {/* protected layout */}
+        {/* Protected layout */}
         <Route
           element={
             <ProtectedRoute user={loggedUser}>

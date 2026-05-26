@@ -38,21 +38,11 @@ export default function EventCard({
     >
       {/* Title and Tags */}
       <div>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 mb-2">
-          <h3 className="font-bold text-lg text-gray-900 min-w-0 break-words">{event.title}</h3>
-
-          <div className="flex items-start gap-2 justify-end min-w-0">
-            <div className="flex gap-1 flex-wrap justify-end max-w-[220px]">
-            {event.tags &&
-              event.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap"
-                >
-                  {formatCardTagLabel(tag)}
-                </span>
-              ))}
-            </div>
+        <div className="mb-2 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="min-w-0 flex-1 font-bold text-lg leading-snug text-gray-900 break-words">
+              {event.title}
+            </h3>
 
             <button
               onClick={(e) => {
@@ -71,6 +61,19 @@ export default function EventCard({
               />
             </button>
           </div>
+
+          {event.tags && event.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {event.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="max-w-full bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-semibold leading-4"
+                >
+                  {formatCardTagLabel(tag)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="text-gray-600 text-sm line-clamp-2">
@@ -151,10 +154,7 @@ export default function EventCard({
             <button
               disabled={!canEdit}
               onClick={(e) => {
-                /**
-                 * Stop event propagation to prevent the card's onClick from firing.
-                 * Then, execute the edit action.
-                 */
+                // Keep the card details click from firing.
                 e.stopPropagation();
                 onEdit(event.id);
               }}

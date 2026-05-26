@@ -33,9 +33,9 @@ export default function EventDetails({ eventId, disableCancelActions = false }) 
   const mockSetEvents = (updaterFunction) => {
     setEvent(prevEvent => {
       if (!prevEvent) return prevEvent;
-      // Trasformiamo l'oggetto singolo in un array con un solo elemento [prevEvent]
+      // Reuse the shared action helper by wrapping the detail event in an array.
       const fintoArray = updaterFunction([prevEvent]);
-      // Ci riprendiamo l'oggetto modificato (che è il primo elemento dell'array)
+      // The updated event is the first item returned by the helper.
       return fintoArray[0];
     });
   };
