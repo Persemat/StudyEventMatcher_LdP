@@ -15,7 +15,6 @@ import com.example.backend.exception.UnauthorizedException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.BusinessRuleException;
 import com.example.backend.dto.EventSearchFilter;
-import com.example.backend.model.UserSettings;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

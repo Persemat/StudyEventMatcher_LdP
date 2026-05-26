@@ -8,7 +8,6 @@ import com.example.backend.repository.UserRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 
-import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;

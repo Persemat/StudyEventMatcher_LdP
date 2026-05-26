@@ -13,13 +13,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
-import com.example.backend.model.UserSettings;
 import com.example.backend.service.EmailService;
 import com.example.backend.repository.UserSettingsRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

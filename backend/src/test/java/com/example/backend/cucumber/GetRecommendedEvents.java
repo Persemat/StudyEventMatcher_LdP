@@ -88,7 +88,7 @@ public class GetRecommendedEvents {
     @And("esistono due eventi futuri, evento 1 con solo {string} ed evento 2 con {string} e {string}")
     public void esistonoDueEventiPerDoppioMatch(String micro1, String repMicro1, String micro2) {
         // Stessa identica distanza
-        Event e1 = creaEventoNelDB("Evento 1", "Economia", micro1, 45.1, 9.1);
+        creaEventoNelDB("Evento 1", "Economia", micro1, 45.1, 9.1);
         Event e2 = creaEventoNelDB("Evento 2", "Economia", micro1, 45.1, 9.1);
         e2.getTags().add(new EventTag("Giurisprudenza", micro2));
         eventRepository.save(e2);
