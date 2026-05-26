@@ -14,6 +14,7 @@ import com.example.backend.model.User;
 import com.example.backend.model.UserVerification;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.repository.UserVerificationRepository;
+import com.example.backend.repository.UserSettingsRepository;
 import com.example.backend.service.EmailService;
 import com.example.backend.service.UserService;
 import com.example.backend.dto.UserRequest;
@@ -27,6 +28,7 @@ public class UserEmailVerificationUnitTest {
     private UserVerificationRepository verificationRepository;
     private EmailService emailService;
     private UserService userServiceWithMailActive;
+    private UserSettingsRepository settingsRepository;
 
     @BeforeEach
     void setUp() {
@@ -34,13 +36,15 @@ public class UserEmailVerificationUnitTest {
         passwordEncoder = mock(PasswordEncoder.class);
         verificationRepository = mock(UserVerificationRepository.class);
         emailService = mock(EmailService.class);
+        settingsRepository = mock(UserSettingsRepository.class);
 
         userServiceWithMailActive = new UserService(
                 userRepository,
                 passwordEncoder,
                 verificationRepository,
                 emailService,
-                true);
+                true,
+                settingsRepository);
     }
 
     @Test

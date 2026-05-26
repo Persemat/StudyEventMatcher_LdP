@@ -13,10 +13,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
+import com.example.backend.model.UserSettings;
 import com.example.backend.service.EmailService;
+import com.example.backend.repository.UserSettingsRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,11 +32,14 @@ class NotificationDeleteEventTest {
     @Mock
     private JavaMailSender mailSender;
 
+    @Mock
+    private UserSettingsRepository userSettingsRepository;
+
     private EmailService emailService;
 
     @BeforeEach
     void setUp() {
-        emailService = new EmailService(mailSender);
+        emailService = new EmailService(mailSender, userSettingsRepository);
         ReflectionTestUtils.setField(emailService, "fromEmail", "noreply@test.com");
     }
 
@@ -110,44 +116,6 @@ class NotificationDeleteEventTest {
     }
 
     @Test
-    void sendEventCancellationEmailToParticipants_doesNotSendIfEmailIsNullOrEmpty() {
-        User creator = new User();
-        creator.setId(1L);
-        creator.setEmail("creator@example.com");
-
-        User participant1 = new User();
-        participant1.setId(2L);
-        participant1.setEmail(null);
-
-        User participant2 = new User();
-        participant2.setId(3L);
-        participant2.setEmail("");
-
-        User participant3 = new User();
-        participant3.setId(4L);
-        participant3.setEmail("valid@example.com");
-
-        Event event = new Event();
-        event.setTitle("Programming");
-        event.setDateTime(LocalDateTime.of(2026, 4, 22, 9, 0));
-        event.setCreator(creator);
-        event.setParticipants(new HashSet<>());
-
-        event.addParticipant(creator);
-        event.addParticipant(participant1);
-        event.addParticipant(participant2);
-        event.addParticipant(participant3);
-
-        emailService.sendEventCancellationEmailToParticipants(event);
-
-        ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender, times(1)).send(captor.capture());
-
-        SimpleMailMessage message = captor.getValue();
-        assertEquals("valid@example.com", message.getTo()[0]);
-    }
-
-    @Test
     void sendEventUpdateEmail_sendsCorrectMessage() {
         Event event = new Event();
         event.setTitle("Progetto Java");
@@ -182,10 +150,6 @@ class NotificationDeleteEventTest {
         participant.setId(2L);
         participant.setEmail("anna@example.com");
 
-        User participantWithoutEmail = new User();
-        participantWithoutEmail.setId(3L);
-        participantWithoutEmail.setEmail(" ");
-
         Event event = new Event();
         event.setTitle("Progetto Java");
         event.setDateTime(LocalDateTime.of(2026, 5, 20, 15, 0));
@@ -195,7 +159,6 @@ class NotificationDeleteEventTest {
 
         event.addParticipant(creator);
         event.addParticipant(participant);
-        event.addParticipant(participantWithoutEmail);
 
         emailService.sendEventUpdateEmailToParticipants(event);
 

@@ -2,8 +2,10 @@ package com.example.backend.cucumber;
 
 import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
+import com.example.backend.model.UserSettings;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.UserSettingsRepository;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -39,6 +41,10 @@ public class NewEventNotification {
     @Autowired
     private EventRepository eventRepository;
 
+    // AGGIUNTO: Repository per gestire le impostazioni di notifica
+    @Autowired
+    private UserSettingsRepository settingsRepository;
+
     @Autowired
     private JavaMailSender mailSender;
 
@@ -51,8 +57,11 @@ public class NewEventNotification {
 
     @Given("l'utente ha un indirizzo email valido")
     public void utenteHaIndirizzoEmailValido() {
+        // Pulizia completa del database prima di iniziare
         eventRepository.deleteAll();
         eventRepository.flush();
+        settingsRepository.deleteAll(); // Pulizia delle impostazioni vecchie
+        settingsRepository.flush();
         userRepository.deleteAll();
         userRepository.flush();
         clearInvocations(mailSender);
@@ -62,6 +71,10 @@ public class NewEventNotification {
         interestedUser = new User("Anna", "Bianchi", "anna.notification@example.com", "Password123!",
                 "Milano", new ArrayList<>(), new ArrayList<>());
         interestedUser = userRepository.saveAndFlush(interestedUser);
+
+        // AGGIUNTO: Attiviamo le notifiche per l'utente interessato nel DB
+        UserSettings settings = new UserSettings(interestedUser.getEmail(), true, true, true);
+        settingsRepository.saveAndFlush(settings);
 
         creator = new User("Marco", "Rossi", "marco.notification@example.com", "Password123!",
                 "Roma", new ArrayList<>(), new ArrayList<>());
@@ -151,9 +164,9 @@ public class NewEventNotification {
                 """, eventTitle, eventDateTime, tagsJson);
 
         mockMvc.perform(post("/events")
-                        .sessionAttr("userId", creator.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                .sessionAttr("userId", creator.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
                 .andExpect(status().isOk());
 
         published = true;

@@ -34,6 +34,13 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     microTags: []
   });
 
+  // NUOVO STATO: Preferenze notifiche (tabella UserSettings separata)
+  const [notificationsForm, setNotificationsForm] = useState({
+    editEventEmailActivated: true,
+    deleteEventEmailActivated: true,
+    recomendedEventEmailActivated: true,
+  });
+
   // Stati per i cataloghi
   const [cityOptions, setCityOptions] = useState([]);
   const [tagOptions, setTagOptions] = useState([]);
@@ -70,6 +77,23 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
       macroTags: user.macroTags ?? [],
       microTags: user.microTags ?? []
     });
+
+    const fetchNotificationSettings = async () => {
+      try {
+        const response = await fetch("/api/user/me/settings", { credentials: "include" });
+        if (response.ok) {
+          const settings = await response.json();
+          setNotificationsForm({
+            editEventEmailActivated: settings.editEventEmailActivated,
+            deleteEventEmailActivated: settings.deleteEventEmailActivated,
+            recomendedEventEmailActivated: settings.recomendedEventEmailActivated,
+          });
+        }
+      } catch (err) {
+        console.error("Errore recupero notifiche:", err);
+      }
+    };
+    fetchNotificationSettings();
   }, [user]);
 
   const filteredCities = useMemo(() => {
@@ -321,6 +345,38 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
     }
   };
 
+  // NUOVA FUNZIONE: Salvataggio notifiche tramite Service
+  const saveNotifications = async (event) => {
+    event.preventDefault();
+    setMessages((prev) => ({ ...prev, notifications: "" }));
+    setLoading("notifications");
+
+    try {
+      const response = await fetch("/api/user/me/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(notificationsForm),
+      });
+
+      if (!response.ok) throw new Error(await readError(response));
+
+      setMessages((prev) => ({
+        ...prev,
+        notifications: "Impostazioni notifiche aggiornate con successo",
+      }));
+
+      setTimeout(() => {
+        setMessages((prev) => ({ ...prev, notifications: "" }));
+      }, 2000);
+
+    } catch (error) {
+      setMessages((prev) => ({ ...prev, notifications: error.message }));
+    } finally {
+      setLoading("");
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -406,12 +462,21 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
 
             <button
               type="button"
-              disabled
-              className="flex cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-400"
+              onClick={() => {
+                if (activeSection === "notifications") {
+                  setActiveSection("");
+                  return;
+                }
+                setActiveSection("notifications");
+              }}
+              className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition ${
+                activeSection === "notifications"
+                  ? "bg-blue-600 text-white"
+                  : "border border-gray-200 text-gray-700 hover:bg-gray-50"
+              }`}
             >
               <Bell className="w-4 h-4" />
               Impostazioni notifiche
-              <span className="text-xs font-medium">(Non disponibile)</span>
             </button>
           </div>
         </div>
@@ -678,6 +743,74 @@ export default function Profile({ user, onLogout, onUserUpdated }) {
                 </form>
               )}
             </div>
+          )}
+
+
+          {/* SEZIONE: IMPOSTAZIONI NOTIFICHE */}
+          {activeSection === "notifications" && (
+            <form onSubmit={saveNotifications} className="rounded-lg border border-gray-200 p-6 space-y-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-lg bg-blue-50 p-3">
+                  <Bell className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Notifiche Email</h3>
+                  <p className="text-sm text-gray-500">Scegli quali comunicazioni ricevere</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <input
+                    id="editEventEmailActivated"
+                    type="checkbox"
+                    checked={notificationsForm.editEventEmailActivated}
+                    onChange={(e) => setNotificationsForm(p => ({ ...p, editEventEmailActivated: e.target.checked }))}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="editEventEmailActivated" className="text-sm text-gray-700 font-medium">
+                    Ricevi un'email quando un evento a cui partecipi viene modificato
+                  </label>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <input
+                    id="deleteEventEmailActivated"
+                    type="checkbox"
+                    checked={notificationsForm.deleteEventEmailActivated}
+                    onChange={(e) => setNotificationsForm(p => ({ ...p, deleteEventEmailActivated: e.target.checked }))}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="deleteEventEmailActivated" className="text-sm text-gray-700 font-medium">
+                    Ricevi un'email quando un evento a cui partecipi viene cancellato
+                  </label>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <input
+                    id="recomendedEventEmailActivated"
+                    type="checkbox"
+                    checked={notificationsForm.recomendedEventEmailActivated}
+                    onChange={(e) => setNotificationsForm(p => ({ ...p, recomendedEventEmailActivated: e.target.checked }))}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="recomendedEventEmailActivated" className="text-sm text-gray-700 font-medium">
+                    Ricevi email di raccomandazione per nuovi eventi basati sui tuoi interessi
+                  </label>
+                </div>
+              </div>
+
+              <CardMessage message={messages.notifications} />
+
+              <button
+                type="submit"
+                disabled={loading === "notifications"}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Save className="h-4 w-4" />
+                {loading === "notifications" ? "Salvataggio..." : "Salva impostazioni"}
+              </button>
+            </form>
           )}
         </div>
       </div>

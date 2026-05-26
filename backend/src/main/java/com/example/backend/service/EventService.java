@@ -7,12 +7,15 @@ import com.example.backend.dto.EventTagDto;
 import com.example.backend.model.Event;
 import com.example.backend.model.EventTag;
 import com.example.backend.model.User;
+import com.example.backend.model.UserSettings;
 import com.example.backend.repository.EventRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.UserSettingsRepository;
 import com.example.backend.exception.UnauthorizedException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.exception.BusinessRuleException;
 import com.example.backend.dto.EventSearchFilter;
+import com.example.backend.model.UserSettings;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,13 +46,14 @@ public class EventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final UserSettingsRepository settingsRepository;
     private final EmailService emailService;
     private final CityCoordinateService cityCoordinateService;
     private static final int MAX_RECOMMENDATION_DISTANCE_KM = 50;
     private static final String USER_ID = "userId";
     private static final String USER_NOT_FOUND = "Utente non trovato";
     private static final String EVENT_NOT_FOUND = "Evento non trovato";
-    
+
     /**
      * Constructs the EventService.
      *
@@ -58,11 +62,12 @@ public class EventService {
      * @param emailService    service used to send notification emails
      */
     public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService,
-                        CityCoordinateService cityCoordinateService) {
+            CityCoordinateService cityCoordinateService, UserSettingsRepository settingsRepository) {
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.cityCoordinateService = cityCoordinateService;
+        this.settingsRepository = settingsRepository;
     }
 
     /**
@@ -236,12 +241,13 @@ public class EventService {
      * @param eventId the ID of the event to retrieve
      * @param session the current HTTP session containing the authenticated user ID
      * @return the event details mapped to an EventResponse
-     * @throws RuntimeException if the user is not authenticated or the event does not exist
+     * @throws RuntimeException if the user is not authenticated or the event does
+     *                          not exist
      */
     public EventResponse getEventDetails(Long eventId, HttpSession session) {
-        
+
         Long userId = (Long) session.getAttribute(USER_ID);
-        
+
         if (userId == null) {
             throw new UnauthorizedException("Sessione invalida o scaduta");
         }
@@ -251,8 +257,6 @@ public class EventService {
 
         return toResponse(event, userId);
     }
-
-
 
     /**
      * Deletes an event or reassigns its creator depending on the event settings.
@@ -427,7 +431,6 @@ public class EventService {
         eventRepository.save(event);
     }
 
-
     /**
      * Retrieves all distinct event tags available in the system.
      *
@@ -438,20 +441,32 @@ public class EventService {
     }
 
     /**
-     * Searches for events by applying optional filters such as search text,
-     * tags, location, and date.
+     * Searches for events by applying dynamic and advanced filters wrapped inside
+     * the filter DTO.
+     * <p>
+     * The method extracts pagination/filtering parameters such as free-text terms,
+     * tag lists,
+     * geographical constraints (distance in Km from specific coordinates), and
+     * specific ISO dates.
+     * Events found to be in the past are automatically updated and marked as closed
+     * in the database.
+     * </p>
+     * <p>
+     * If requested, it can also filter out events that overlap in time with the
+     * ones
+     * already booked by the authenticated user. Only upcoming, visible events are
+     * returned.
+     * </p>
      *
-     * Events found in the past are automatically marked as closed.
-     * Only open events are returned in the final response.
-     *
-     * @param session  the current HTTP session containing the authenticated user
-     *                 ID, if available
-     * @param search   free-text search term
-     * @param tags     list of tags to filter by
-     * @param location location filter
-     * @param date     date filter in ISO format
-     * @return a list of matching open events mapped to response objects
+     * @param session the current HTTP session containing the authenticated user ID,
+     *                if available
+     * @param filter  the DTO containing all optional search parameters (search
+     *                text, tags,
+     *                location, latitude, longitude, max distance, and overlapping
+     *                flags)
+     * @return a list of matching upcoming events mapped to response objects
      */
+
     public List<EventResponse> searchForEvents(HttpSession session, EventSearchFilter filter) {
 
         Long userId = (Long) session.getAttribute(USER_ID);
@@ -465,7 +480,7 @@ public class EventService {
                 : filter.tags().stream()
                         .filter(tag -> tag != null && !tag.isBlank())
                         .toList();
-        
+
         boolean checkTags = !tagsParam.isEmpty();
         LocalDateTime startDate = null;
         LocalDateTime endDate = null;
@@ -481,7 +496,8 @@ public class EventService {
             }
         }
 
-        DistanceFilter distanceFilter = createDistanceFilter(locationParam, filter.latitude(), filter.longitude(), filter.distanceKm());
+        DistanceFilter distanceFilter = createDistanceFilter(locationParam, filter.latitude(), filter.longitude(),
+                filter.distanceKm());
 
         List<Event> events = eventRepository.findByDynamicFilters(
                 searchParam,
@@ -506,7 +522,7 @@ public class EventService {
         if (updated) {
             eventRepository.saveAll(events);
         }
-        
+
         LocalDateTime now = LocalDateTime.now();
         List<Event> visibleEvents = events.stream()
                 .filter(e -> e.getDateTime().isAfter(now))
@@ -550,7 +566,8 @@ public class EventService {
         return event.getDateTime().plusMinutes(minutes);
     }
 
-    private DistanceFilter createDistanceFilter(String location, Double latitude, Double longitude, Integer distanceKm) {
+    private DistanceFilter createDistanceFilter(String location, Double latitude, Double longitude,
+            Integer distanceKm) {
         if (location == null || latitude == null || longitude == null || distanceKm == null || distanceKm <= 0) {
             return null;
         }
@@ -583,7 +600,7 @@ public class EventService {
 
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(firstLat) * Math.cos(secondLat)
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return earthRadiusKm * c;
@@ -620,14 +637,12 @@ public class EventService {
                 event.getFavorites().stream()
                         .anyMatch(u -> u.getId().equals(userId));
 
-
         List<EventResponse.ParticipantResponse> participantList = event.getParticipants().stream()
                 .map(user -> new EventResponse.ParticipantResponse(
                         user.getId(),
                         user.getName(),
                         user.getLastname(),
-                        user.getEmail()
-                ))
+                        user.getEmail()))
                 .toList();
 
         return new EventResponse(
@@ -650,28 +665,35 @@ public class EventService {
                 isBooked,
                 userId != null && creator.getId().equals(userId),
                 isFavorite,
-                participantList
-            );
+                participantList);
     }
 
     /**
-     * Retrieves a list of recommended events for the authenticated user based on their 
+     * Retrieves a list of recommended events for the authenticated user based on
+     * their
      * saved tags (macro and micro) and geographical location.
      * <p>
      * The recommendation engine follows a pipeline approach:
      * <ol>
-     * <li>Filters out past events, closed events, and events already joined/created by the user.</li>
-     * <li>Filters out events that do not share any macro or micro tag with the user.</li>
-     * <li>Calculates the distance and discards events beyond the maximum threshold.</li>
-     * <li>Assigns a cumulative score based on distance proximity and tag match accuracy.</li>
+     * <li>Filters out past events, closed events, and events already joined/created
+     * by the user.</li>
+     * <li>Filters out events that do not share any macro or micro tag with the
+     * user.</li>
+     * <li>Calculates the distance and discards events beyond the maximum
+     * threshold.</li>
+     * <li>Assigns a cumulative score based on distance proximity and tag match
+     * accuracy.</li>
      * <li>Sorts the results in descending order by score.</li>
      * </ol>
      *
      * @param session the current HTTP session containing the authenticated user ID
-     * @param userLat the latitude of the user's favorite city (provided by the frontend via geocoding)
+     * @param userLat the latitude of the user's favorite city (provided by the
+     *                frontend via geocoding)
      * @param userLon the longitude of the user's favorite city
-     * @return a {@link RecommendationResponse} containing the sorted events and an outcome code
-     * @throws RuntimeException if the user is not authenticated or not found in the database
+     * @return a {@link RecommendationResponse} containing the sorted events and an
+     *         outcome code
+     * @throws RuntimeException if the user is not authenticated or not found in the
+     *                          database
      */
     public RecommendationResponse getRecommendedEvents(HttpSession session, Double userLat, Double userLon) {
         Long userId = (Long) session.getAttribute(USER_ID);
@@ -708,7 +730,8 @@ public class EventService {
         // Step 3: Distance calculation and scoring
         List<ScoredEvent> scoredEvents = new ArrayList<>();
         for (Event event : eventsWithMatchingTags) {
-            if (event.getLatitude() == null || event.getLongitude() == null) continue;
+            if (event.getLatitude() == null || event.getLongitude() == null)
+                continue;
 
             double distance = calculateDistanceKm(userLat, userLon, event.getLatitude(), event.getLongitude());
 
@@ -732,35 +755,42 @@ public class EventService {
     }
 
     /**
-     * Internal record to temporarily hold an event along with its calculated recommendation score and distance.
+     * Internal record to temporarily hold an event along with its calculated
+     * recommendation score and distance.
      * * @param event the event being evaluated
-     * @param score the total score assigned to the event (higher is better)
-     * @param distance the physical distance in kilometers from the user's preferred city
+     * 
+     * @param score    the total score assigned to the event (higher is better)
+     * @param distance the physical distance in kilometers from the user's preferred
+     *                 city
      */
     private record ScoredEvent(Event event, int score, double distance) {
 
     }
 
     /**
-     * Evaluates if there is at least one overlapping tag between the event and the user.
+     * Evaluates if there is at least one overlapping tag between the event and the
+     * user.
      * * @param event the event to check
+     * 
      * @param user the user whose interests are being matched
      * @return true if at least one macro or micro tag matches; false otherwise
      */
     private boolean hasMatchingTag(Event event, User user) {
-        if (event.getTags() == null || event.getTags().isEmpty()) return false;
+        if (event.getTags() == null || event.getTags().isEmpty())
+            return false;
 
-    List<String> userMacro = user.getMacroTags() != null ? 
-            user.getMacroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
-        List<String> userMicro = user.getMicroTags() != null ? 
-            user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
+        List<String> userMacro = user.getMacroTags() != null
+                ? user.getMacroTags().stream().map(String::toLowerCase).map(String::trim).toList()
+                : List.of();
+        List<String> userMicro = user.getMicroTags() != null
+                ? user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList()
+                : List.of();
 
         for (EventTag eTag : event.getTags()) {
-            // Facciamo lo stesso per i tag dell'evento
+
             String eventMacro = eTag.getMacroTag() != null ? eTag.getMacroTag().toLowerCase().trim() : "";
             String eventMicro = eTag.getMicroTag() != null ? eTag.getMicroTag().toLowerCase().trim() : "";
 
-            // Controlliamo se c'è almeno un match
             if (userMacro.contains(eventMacro) || (!eventMicro.isEmpty() && userMicro.contains(eventMicro))) {
                 return true;
             }
@@ -771,20 +801,25 @@ public class EventService {
     /**
      * Calculates the overall recommendation score for an event.
      * <p>
-     * The scoring logic favors precise matches (micro tags) over generic matches (macro tags),
-     * and assigns a geographical bonus inversely proportional to the physical distance.
+     * The scoring logic favors precise matches (micro tags) over generic matches
+     * (macro tags),
+     * and assigns a geographical bonus inversely proportional to the physical
+     * distance.
      * * @param event the event being scored
-     * @param user the user targeted for the recommendation
+     * 
+     * @param user     the user targeted for the recommendation
      * @param distance the distance in kilometers between the user and the event
      * @return the total calculated integer score
      */
     private int calculateScore(Event event, User user, double distance) {
         int score = 0;
 
-        List<String> userMacro = user.getMacroTags() != null ? 
-            user.getMacroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
-        List<String> userMicro = user.getMicroTags() != null ? 
-            user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList() : List.of();
+        List<String> userMacro = user.getMacroTags() != null
+                ? user.getMacroTags().stream().map(String::toLowerCase).map(String::trim).toList()
+                : List.of();
+        List<String> userMicro = user.getMicroTags() != null
+                ? user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList()
+                : List.of();
 
         // 1. Assegnazione punteggio per i TAG (La vostra regola 1 a 3)
         for (EventTag eTag : event.getTags()) {
@@ -802,7 +837,8 @@ public class EventService {
     }
 
     /**
-     * Notifies users whose saved tags and favorite city match a newly published event.
+     * Notifies users whose saved tags and favorite city match a newly published
+     * event.
      *
      * @param event newly created event
      */
@@ -849,8 +885,8 @@ public class EventService {
     /**
      * Checks whether a user should receive the new event notification.
      *
-     * @param user user being evaluated
-     * @param event newly created event
+     * @param user            user being evaluated
+     * @param event           newly created event
      * @param notifiedUserIds users already notified for this event
      * @return true when the user matches tag and distance rules
      */
@@ -871,6 +907,13 @@ public class EventService {
             return false;
         }
 
+        UserSettings notificationSettings = settingsRepository.findById(user.getEmail())
+                .orElseGet(() -> new UserSettings(user.getEmail(), true, true, false));
+
+        if (!(notificationSettings.isRecomendedEventEmailActivated())) {
+            return false;
+        }
+
         if (!hasMatchingTag(event, user)) {
             return false;
         }
@@ -884,8 +927,6 @@ public class EventService {
                         event.getLongitude()) <= MAX_RECOMMENDATION_DISTANCE_KM)
                 .orElse(false);
     }
-
-
 
     /**
      * Recalculates each event status based on date and participant capacity.
@@ -946,8 +987,8 @@ public class EventService {
     /**
      * Checks whether fields shown to users changed enough to notify participants.
      *
-     * @param event current persisted event before mutation
-     * @param request requested event values
+     * @param event          current persisted event before mutation
+     * @param request        requested event values
      * @param normalizedTags request tags already normalized for fair comparison
      * @return true when participants should receive an update email
      */
