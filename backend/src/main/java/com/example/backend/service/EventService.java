@@ -93,6 +93,8 @@ public class EventService {
         User creator = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
+        ensureFutureDateTime(request.dateTime());
+
         boolean eventExists = eventRepository
                 .findByCreatorIdAndTitleAndDateTimeAndLocation(
                         creator.getId(),
@@ -173,6 +175,8 @@ public class EventService {
             throw new BusinessRuleException(
                     "Il numero massimo di partecipanti non può essere minore dei partecipanti attuali");
         }
+
+        ensureFutureDateTime(request.dateTime());
 
         List<EventTag> normalizedTags = request.tags() == null ? event.getTags() : normalizeTags(request.tags());
         boolean relevantDetailsChanged = hasRelevantEventChanges(event, request, normalizedTags);
@@ -944,12 +948,19 @@ public class EventService {
 
             String newStatus;
 
-            if (event.getDateTime().isBefore(now)) {
+            if (!event.getDateTime().isAfter(now)) {
                 newStatus = "closed";
             } else if (maxParticipants != null && numParticipants >= maxParticipants) {
                 newStatus = "closed";
             } else {
                 newStatus = "open";
+            }
+
+            if ("closed".equalsIgnoreCase(newStatus) && !event.getDateTime().isAfter(now)
+                    && event.getFavorites() != null && !event.getFavorites().isEmpty()) {
+                event.getFavorites().forEach(user -> user.getFavoriteEvents().remove(event));
+                event.getFavorites().clear();
+                toSave = true;
             }
 
             if (!newStatus.equalsIgnoreCase(actualStatus)) {
@@ -959,6 +970,12 @@ public class EventService {
         }
 
         return toSave;
+    }
+
+    private void ensureFutureDateTime(LocalDateTime dateTime) {
+        if (dateTime == null || !dateTime.isAfter(LocalDateTime.now())) {
+            throw new BusinessRuleException("Data e ora devono essere future");
+        }
     }
 
     /**

@@ -14,6 +14,7 @@ export default function MyEvents() {
   const [error, setError] = useState("");
   const [eventToEdit, setEventToEdit] = useState(null);
   const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEventFromHistory, setSelectedEventFromHistory] = useState(false);
 
   const now = new Date();
   const nowTime = now.getTime();
@@ -39,7 +40,7 @@ export default function MyEvents() {
 
 
   const favoriteEvents = events.filter(
-    (e) => e.isFavorite
+    (e) => e.isFavorite && isFutureEvent(e)
   );
   const overlappingEvents = useMemo(() => {
     const userFutureEvents = events
@@ -230,7 +231,11 @@ export default function MyEvents() {
                 )}
               onEdit={() => handleEdit(event)}
               onToggleFavorite={() => handleToggleFavorite(event.id)}
-              onShowDetails={() => setSelectedEventId(event.id)}
+              onShowDetails={() => {
+                setSelectedEventId(event.id);
+                setSelectedEventFromHistory(activeTab === "history");
+              }}
+              disableCancelActions={activeTab === "history"}
             />
           ))}
 
@@ -274,7 +279,10 @@ export default function MyEvents() {
       {selectedEventId && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedEventId(null)}
+          onClick={() => {
+            setSelectedEventId(null);
+            setSelectedEventFromHistory(false);
+          }}
         >
            
            <div
@@ -284,14 +292,17 @@ export default function MyEvents() {
               
               {/* Close Button */}
               <button 
-                 onClick={() => setSelectedEventId(null)}
+                 onClick={() => {
+                   setSelectedEventId(null);
+                   setSelectedEventFromHistory(false);
+                 }}
                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors font-bold text-xl z-10 bg-white rounded-full p-1 shadow-sm"
               >
                  ✕
               </button>
   
               {/* Render the details component */}
-              <EventDetails eventId={selectedEventId} />
+              <EventDetails eventId={selectedEventId} disableCancelActions={selectedEventFromHistory} />
   
            </div>
         </div>
