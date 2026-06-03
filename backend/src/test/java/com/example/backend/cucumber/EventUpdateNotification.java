@@ -65,9 +65,6 @@ public class EventUpdateNotification {
                 "Milano", List.of("Informatica e Tecnologie"), new ArrayList<>());
         creator = userRepository.saveAndFlush(creator);
 
-        // CORREZIONE DINAMICA DELLA DATA:
-        // Se arriva la data fissa del feature che è passata, la spostiamo a 3 mesi nel
-        // futuro
         LocalDateTime eventDateTime = LocalDateTime.parse(dateTime);
         if (eventDateTime.isBefore(LocalDateTime.now().plusHours(24))) {
             eventDateTime = LocalDateTime.now().plusMonths(3);
@@ -75,7 +72,7 @@ public class EventUpdateNotification {
 
         event = new Event();
         event.setTitle(title);
-        event.setDateTime(eventDateTime); // <--- Ora è sempre garantita nel futuro
+        event.setDateTime(eventDateTime);
         event.setDuration(2.0);
         event.setLocation(location);
         event.setTags(List.of(new EventTag("Informatica e Tecnologie", "Programmazione")));
@@ -122,7 +119,7 @@ public class EventUpdateNotification {
                 }
                 """,
                 event.getTitle(),
-                event.getDateTime().toString(), // <--- Usa la data corretta memorizzata nell'oggetto
+                event.getDateTime().toString(),
                 event.getDuration(),
                 newLocation,
                 event.getDescription(),

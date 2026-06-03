@@ -34,8 +34,6 @@ public class editNotificationSettings {
     private User loggedUser;
     private MockHttpSession session;
 
-    // Variabili di stato che rappresentano il payload della richiesta (di default a
-    // true)
     private boolean editActivated;
     private boolean deleteActivated;
     private boolean recommendActivated;
@@ -76,10 +74,6 @@ public class editNotificationSettings {
         recommendActivated = true;
     }
 
-    // ==========================================
-    // SCENARIO 2: Modifica Evento
-    // ==========================================
-
     @Given("le notifiche email per modifica evento sono attivate")
     public void modificaAttivataNelDB() {
         UserSettings settings = settingsRepository.findById(loggedUser.getEmail()).orElseThrow();
@@ -93,10 +87,6 @@ public class editNotificationSettings {
     public void utenteDisattivaModifica() {
         editActivated = false;
     }
-
-    // ==========================================
-    // SCENARIO 3: Cancellazione Evento
-    // ==========================================
 
     @Given("le notifiche email per cancellazione evento sono attivate")
     public void cancellazioneAttivataNelDB() {
@@ -112,13 +102,8 @@ public class editNotificationSettings {
         deleteActivated = false;
     }
 
-    // ==========================================
-    // AZIONI CONDIVISE (Salvataggio e Verifica)
-    // ==========================================
-
     @And("salva le modifiche alle impostazioni notifiche")
     public void salvaLeModifiche() throws Exception {
-        // Costruiamo il JSON in base allo stato attuale delle nostre 3 variabili
         String payload = String.format("""
                 {
                   "editEventEmailActivated": %b,
@@ -127,7 +112,6 @@ public class editNotificationSettings {
                 }
                 """, editActivated, deleteActivated, recommendActivated);
 
-        // Chiamiamo l'API esattamente come fa il Frontend
         mockMvc.perform(put("/user/me/settings")
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -137,11 +121,8 @@ public class editNotificationSettings {
 
     @Then("il sistema aggiorna correttamente la preferenza nel database")
     public void verificaAggiornamentoDatabase() {
-        // Recuperiamo l'entità fresca dal database
         UserSettings savedSettings = settingsRepository.findById(loggedUser.getEmail()).orElseThrow();
 
-        // Verifichiamo che i valori salvati a DB corrispondano alle modifiche che
-        // abbiamo inviato
         assertEquals(editActivated, savedSettings.isEditEventEmailActivated(), "Mismatch su modifica evento");
         assertEquals(deleteActivated, savedSettings.isDeleteEventEmailActivated(), "Mismatch su cancellazione evento");
         assertEquals(recommendActivated, savedSettings.isRecomendedEventEmailActivated(),

@@ -52,10 +52,6 @@ public class EventTagsFilter {
         eventRepository.save(event);
     }
 
-    // ==========================================
-    // GIVEN COMUNI
-    // ==========================================
-
     @Given("sono L'utente")
     public void sono_l_utente() {
         eventRepository.deleteAll();
@@ -66,16 +62,11 @@ public class EventTagsFilter {
                 "Rossi",
                 "mario.test@example.com",
                 "Password123!",
-                "Milano", // favouriteCity
-                List.of("Tech"), // macroTags
-                new ArrayList<>() // microTags
-        );
-        userRepository.save(user); // Salva e genera l'ID
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
+        userRepository.save(user);
     }
-
-    // ==========================================
-    // SCENARIO 1: Singolo Tag
-    // ==========================================
 
     @And("ci sono 3 eventi attivi associati a un tag specifico nel database")
     public void ci_sono_3_eventi_attivi_associati_a_un_tag_specifico_nel_database() {
@@ -84,12 +75,12 @@ public class EventTagsFilter {
         creaEventoHelper("Evento Info 3", List.of(
                 new EventTag("Informatica e Tecnologie", "Informatica"),
                 new EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")));
-        creaEventoHelper("Evento Trappola", List.of(new EventTag("Scienze della Formazione ed Educazione", "Storia della pedagogia")));
+        creaEventoHelper("Evento Trappola",
+                List.of(new EventTag("Scienze della Formazione ed Educazione", "Storia della pedagogia")));
     }
 
     @When("seleziono quel tag dalla lista predefinita per filtrare gli eventi")
     public void seleziono_quel_tag_dalla_lista_predefinita_per_filtrare_gli_eventi() throws Exception {
-        // AGGIUNTO IL SESSION ATTR!
         result = mockMvc.perform(
                 get("/events/search").queryParam("tags", "Informatica e Tecnologie > Informatica")
                         .sessionAttr("userId", user.getId()));
@@ -99,7 +90,8 @@ public class EventTagsFilter {
     public void il_sistema_deve_restituire_un_elenco_contenente_esattamente_quei_3_eventi() throws Exception {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$", Matchers.hasSize(3)))
-                .andExpect(jsonPath("$[*].tags[0].macroTag", Matchers.everyItem(Matchers.equalTo("Informatica e Tecnologie"))))
+                .andExpect(jsonPath("$[*].tags[0].macroTag",
+                        Matchers.everyItem(Matchers.equalTo("Informatica e Tecnologie"))))
                 .andExpect(jsonPath("$[*].tags[0].microTag", Matchers.everyItem(Matchers.equalTo("Informatica"))));
     }
 
@@ -107,10 +99,6 @@ public class EventTagsFilter {
     public void nessun_evento_privo_di_quel_tag_deve_apparire_nei_risultati() throws Exception {
         result.andExpect(content().string(Matchers.not(Matchers.containsString("Evento Trappola"))));
     }
-
-    // ==========================================
-    // SCENARIO 2: Logica AND (Più tag)
-    // ==========================================
 
     @And("esiste 1 evento associato sia al “Tag A” che al “Tag B”")
     public void esiste_1_evento_associato_sia_al_tag_a_che_al_tag_b() {
@@ -129,7 +117,6 @@ public class EventTagsFilter {
 
     @When("seleziono sia il “Tag A” che il “Tag B” dalla lista predefinita")
     public void seleziono_sia_il_tag_a_che_il_tag_b_dalla_lista_predefinita() throws Exception {
-        // AGGIUNTO IL SESSION ATTR!
         result = mockMvc.perform(
                 get("/events/search")
                         .queryParam("tags", "Informatica e Tecnologie > SQL")
@@ -151,10 +138,6 @@ public class EventTagsFilter {
         result.andExpect(content().string(Matchers.containsString("Evento Solo A 1")))
                 .andExpect(content().string(Matchers.containsString("Evento Solo A 2")));
     }
-
-    // ==========================================
-    // SCENARIO 3: Macro Tag
-    // ==========================================
 
     @And("esistono eventi associati a microtag dello stesso macrotag")
     public void esistono_eventi_associati_a_microtag_dello_stesso_macrotag() {
@@ -178,12 +161,9 @@ public class EventTagsFilter {
                 .andExpect(content().string(Matchers.containsString("Evento SQL")))
                 .andExpect(content().string(Matchers.containsString("Evento Frontend")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("Evento Fisica"))))
-                .andExpect(jsonPath("$[*].tags[0].macroTag", Matchers.everyItem(Matchers.equalTo("Informatica e Tecnologie"))));
+                .andExpect(jsonPath("$[*].tags[0].macroTag",
+                        Matchers.everyItem(Matchers.equalTo("Informatica e Tecnologie"))));
     }
-
-    // ==========================================
-    // SCENARIO 4: Risultato Vuoto
-    // ==========================================
 
     @And("seleziono una combinazione di tag dalla lista predefinita")
     public void seleziono_una_combinazione_di_tag_dalla_lista_predefinita() {
@@ -192,8 +172,10 @@ public class EventTagsFilter {
 
     @And("non esistono eventi attivi nel database che possiedano almeno uno dei tag scelti")
     public void non_esistono_eventi_attivi_nel_database_che_possiedano_almeno_uno_dei_tag_scelti() {
-        creaEventoHelper("Evento Solo Fisica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
-        creaEventoHelper("Evento Solo Chimica", List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Chimica")));
+        creaEventoHelper("Evento Solo Fisica",
+                List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Fisica")));
+        creaEventoHelper("Evento Solo Chimica",
+                List.of(new EventTag("Scienze Matematiche Fisiche e Naturali", "Chimica")));
     }
 
     @When("il sistema elabora la richiesta di filtraggio")

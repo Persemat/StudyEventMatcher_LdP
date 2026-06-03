@@ -20,6 +20,11 @@ public class CityCoordinateService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private Map<String, Coordinates> coordinatesByCity;
 
+    /**
+     * Constructs the CityCoordinateService.
+     *
+     * @param resourceLoader the resource loader used to fetch the city catalog file
+     */
     public CityCoordinateService(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
@@ -35,13 +40,17 @@ public class CityCoordinateService {
             return Optional.empty();
         }
 
-        // Lazily load the city catalog only when coordinates are first needed.
         ensureLoaded();
         return Optional.ofNullable(coordinatesByCity.get(normalize(cityName)));
     }
 
     /**
      * Loads the city catalog once and caches it in memory.
+     * <p>
+     * This method is thread-safe and lazily evaluates the resource repository.
+     * If the catalog data file is missing or contains parsing errors, it fails
+     * gracefully
+     * by initializing an empty coordinates map to prevent subsequent failures.
      */
     private synchronized void ensureLoaded() {
         if (coordinatesByCity != null) {
@@ -56,7 +65,6 @@ public class CityCoordinateService {
             return;
         }
 
-        // Index cities by normalized name for fast lookups during notifications/search.
         try (InputStream inputStream = resource.getInputStream()) {
             JsonNode root = objectMapper.readTree(inputStream);
             if (root.isArray()) {
@@ -80,10 +88,12 @@ public class CityCoordinateService {
     }
 
     /**
-     * Normalizes city labels for catalog lookup.
+     * Normalizes city labels for catalog lookup by stripping out province suffixes
+     * and converting the text to lowercase.
      *
-     * @param cityName raw city name or label
-     * @return normalized lookup key
+     * @param cityName raw city name or label containing optional province
+     *                 indicators
+     * @return a trimmed, standardized lowercase string suitable as a lookup map key
      */
     private String normalize(String cityName) {
         String normalized = cityName.trim();
@@ -91,10 +101,15 @@ public class CityCoordinateService {
         if (provinceStart >= 0) {
             normalized = normalized.substring(0, provinceStart);
         }
-        // Accept labels such as "Milano (MI)" and plain names such as "Milano".
         return normalized.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Represents a geographical point with latitude and longitude coordinates.
+     *
+     * @param latitude  the latitude value of the location
+     * @param longitude the longitude value of the location
+     */
     public record Coordinates(double latitude, double longitude) {
     }
 }

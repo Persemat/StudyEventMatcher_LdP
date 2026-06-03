@@ -35,7 +35,6 @@ public class CreateEvent {
 
     private ResultActions result;
 
-    // Variabili di stato
     private String title = "";
     private String description = "";
     private String dateTime = "";
@@ -48,7 +47,6 @@ public class CreateEvent {
 
     @Given("l'utente si trova nella pagina di creazione evento")
     public void utenteNellaPaginaCreazioneEvento() {
-        // Reset stati
         title = "";
         description = "";
         dateTime = "";
@@ -181,12 +179,10 @@ public class CreateEvent {
 
     @And("il sistema imposta lo stato dell'evento come aperto")
     public void sistemaImpostaStatoAperto() {
-        // Gestito dal core
     }
 
     @And("l'evento appare nella lista degli eventi")
     public void eventoAppareNellaLista() {
-        // Gestito lato utente
     }
 
     @When("l'utente tenta di creare un evento senza compilare i campi obbligatori")

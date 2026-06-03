@@ -14,12 +14,10 @@ import org.junit.jupiter.api.Test;
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
 
-
 public class DeleteBookingTest extends BaseEventTest {
 
     @Test
     void testCancelBooking_Success() {
-        // Simulate a user booked for the event
         User user = new User();
         user.setId(1L);
         user.setName("Mario");
@@ -42,17 +40,14 @@ public class DeleteBookingTest extends BaseEventTest {
         when(eventRepository.findById(10L)).thenReturn(Optional.of(event));
         when(eventRepository.save(any(Event.class))).thenAnswer(i -> i.getArgument(0));
 
-        // Execute booking cancellation
         eventService.cancelBooking(10L, session);
 
-        // Verify user has been removed from participants
         assertEquals(1, event.getParticipants().size());
         assertFalse(event.getParticipants().contains(user));
     }
 
     @Test
     void testCancelBooking_UnauthenticatedUser() {
-        // Empty session
         when(session.getAttribute("userId")).thenReturn(null);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
@@ -61,7 +56,6 @@ public class DeleteBookingTest extends BaseEventTest {
 
         assertEquals("Sessione invalida o scaduta", ex.getMessage());
 
-        // Ensure DB is never accessed
         verify(eventRepository, never()).findById(any());
         verify(eventRepository, never()).save(any());
     }
@@ -70,7 +64,6 @@ public class DeleteBookingTest extends BaseEventTest {
     void testCancelBooking_UserNotFound() {
         when(session.getAttribute("userId")).thenReturn(1L);
 
-        // DB does not find user
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
@@ -89,7 +82,6 @@ public class DeleteBookingTest extends BaseEventTest {
         when(session.getAttribute("userId")).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        // DB does not find event
         when(eventRepository.findById(10L)).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
@@ -110,7 +102,6 @@ public class DeleteBookingTest extends BaseEventTest {
         event.setId(10L);
         event.setTitle("Network Study");
         event.setParticipants(new HashSet<>());
-        // IMPORTANT: Mario is NOT booked for this event
 
         when(session.getAttribute("userId")).thenReturn(1L);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -120,10 +111,8 @@ public class DeleteBookingTest extends BaseEventTest {
             eventService.cancelBooking(10L, session);
         });
 
-        // Message required by Cucumber user story
         assertEquals("Non ti sei prenotato per questo evento", ex.getMessage());
 
-        // Event must not be saved due to error
         verify(eventRepository, never()).save(any());
     }
 }

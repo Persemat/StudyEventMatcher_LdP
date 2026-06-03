@@ -35,7 +35,8 @@ public class PasswordResetController {
     }
 
     /**
-     * Handles password reset requests by generating and sending a verification code.
+     * Handles password reset requests by generating and sending a verification
+     * code.
      *
      * @param request contains the user's email
      * @return a success message if the code is sent, or an error response otherwise
@@ -57,7 +58,10 @@ public class PasswordResetController {
      * Resets the user's password using a valid reset code.
      *
      * @param request contains email, verification code, and new password
-     * @return a success message if the password is updated, or an error response otherwise
+     * @return a {@link ResponseEntity} containing a map with a success message if
+     *         the password is updated,
+     *         or a 400 Bad Request status with an error map if validation or code
+     *         verification fails
      */
     @PostMapping("/confirm")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {

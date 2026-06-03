@@ -27,10 +27,11 @@ import jakarta.servlet.http.HttpSession;
  * REST controller responsible for user-related operations.
  *
  * It provides endpoints for:
- * - user registration
- * - user authentication (login)
- * - retrieving the logged user
- * - logout
+ * - user registration and email token verification
+ * - user authentication (login, logout, and session handling)
+ * - retrieving and updating user profile data (personal details, credentials,
+ * and tags)
+ * - retrieving and updating personalized notification settings
  */
 @RestController
 @RequestMapping("/user")
@@ -102,6 +103,14 @@ public class UserController {
         }
     }
 
+    /**
+     * Retrieves the notification settings of the currently authenticated user.
+     *
+     * @param session the current HTTP session
+     * @return a {@link ResponseEntity} containing the user's notification settings,
+     *         a 401 status if the session is invalid, or a 404 status if the user
+     *         is not found
+     */
     @GetMapping("/me/settings")
     public ResponseEntity<?> getNotificationSettings(HttpSession session) {
         try {
@@ -115,6 +124,15 @@ public class UserController {
         }
     }
 
+    /**
+     * Updates the personal data (e.g., name, lastname) of the authenticated user.
+     *
+     * @param request the request object containing the updated personal data fields
+     * @param session the current HTTP session
+     * @return a {@link ResponseEntity} containing the updated user information,
+     *         a 401 status if the session is invalid, or a 400 status if validation
+     *         fails
+     */
     @PutMapping("/me/personal-data")
     public ResponseEntity<?> updatePersonalData(@RequestBody UpdatePersonalDataRequest request, HttpSession session) {
         try {
@@ -128,6 +146,15 @@ public class UserController {
         }
     }
 
+    /**
+     * Updates the email address of the authenticated user.
+     *
+     * @param request the request object containing the new email address
+     * @param session the current HTTP session
+     * @return a {@link ResponseEntity} containing the updated user information,
+     *         a 401 status if the session is invalid, or a 400 status if the email
+     *         is invalid or already exists
+     */
     @PutMapping("/me/email")
     public ResponseEntity<?> updateEmail(@RequestBody UpdateEmailRequest request, HttpSession session) {
         try {
@@ -141,6 +168,16 @@ public class UserController {
         }
     }
 
+    /**
+     * Updates the password of the authenticated user.
+     *
+     * @param request the request object containing the current password, the new
+     *                password, and confirmation
+     * @param session the current HTTP session
+     * @return a {@link ResponseEntity} containing the updated user information,
+     *         a 401 status if the session is invalid, or a 400 status if the
+     *         current password is wrong or the new one is weak
+     */
     @PutMapping("/me/password")
     public ResponseEntity<?> updatePassword(@RequestBody UpdatePasswordRequest request, HttpSession session) {
         try {
@@ -154,6 +191,17 @@ public class UserController {
         }
     }
 
+    /**
+     * Updates the academic or professional preferences (city, macro-tags,
+     * micro-tags) of the authenticated user.
+     *
+     * @param request the request object containing the updated city and interest
+     *                tags
+     * @param session the current HTTP session
+     * @return a {@link ResponseEntity} containing the updated user information,
+     *         a 401 status if the session is invalid, or a 400 status if validation
+     *         rules are violated
+     */
     @PutMapping("/me/preferences")
     public ResponseEntity<?> updatePreferences(@RequestBody UpdatePreferencesRequest request, HttpSession session) {
         try {
@@ -167,6 +215,18 @@ public class UserController {
         }
     }
 
+    /**
+     * Updates the communication and email notification preferences of the
+     * authenticated user.
+     *
+     * @param request the request object containing the updated flags for
+     *                notification preferences
+     * @param session the current HTTP session
+     * @return a {@link ResponseEntity} containing the updated notification
+     *         settings,
+     *         a 401 status if the session is invalid, or a 400 status if updates
+     *         cannot be processed
+     */
     @PutMapping("/me/settings")
     public ResponseEntity<?> updateNotificationSettings(@RequestBody NotificationSettingsRequest request,
             HttpSession session) {
@@ -203,6 +263,13 @@ public class UserController {
         return ResponseEntity.ok("Nessuna sessione attiva, Utente già disconnesso");
     }
 
+    /**
+     * Verifies a user's email address using a unique token sent via email.
+     *
+     * @param token the unique verification token provided in the URL query string
+     * @return a {@link ResponseEntity} containing a success status map,
+     *         or a 400 status map if the token is invalid or expired
+     */
     @GetMapping("/verify")
     public ResponseEntity<?> verifyEmail(@RequestParam String token) {
         try {
@@ -220,6 +287,14 @@ public class UserController {
         }
     }
 
+    /**
+     * Resends a new verification token to the user's email address if the previous
+     * one expired.
+     *
+     * @param email the email address of the user requiring a new verification code
+     * @return a {@link ResponseEntity} indicating whether the operation succeeded,
+     *         or a 400 status with an error message otherwise
+     */
     @PostMapping("/resend-verification")
     public ResponseEntity<String> resendVerificationCode(@RequestParam String email) {
         try {

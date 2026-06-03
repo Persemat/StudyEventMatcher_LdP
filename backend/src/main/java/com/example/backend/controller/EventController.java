@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import com.example.backend.dto.EventRequest;
 import com.example.backend.dto.EventResponse;
 import com.example.backend.dto.EventSearchFilter;
@@ -80,7 +79,8 @@ public class EventController {
      *
      * @param request the event creation request
      * @param session the current HTTP session
-     * @return a success message if the event is created, or an error response otherwise
+     * @return a success message if the event is created, or an error response
+     *         otherwise
      */
     @PostMapping
     public ResponseEntity<?> createEvent(@RequestBody EventRequest request, HttpSession session) {
@@ -106,9 +106,10 @@ public class EventController {
     /**
      * Books the authenticated user into the specified event.
      *
-     * @param id the ID of the event to book
+     * @param id      the ID of the event to book
      * @param session the current HTTP session
-     * @return a success message if the booking is completed, or an error response otherwise
+     * @return a success message if the booking is completed, or an error response
+     *         otherwise
      */
     @PostMapping("/{id}/book")
     public ResponseEntity<?> bookEvent(@PathVariable Long id, HttpSession session) {
@@ -128,9 +129,10 @@ public class EventController {
      *
      * Only the authenticated creator is allowed to delete the event.
      *
-     * @param id the ID of the event to delete
+     * @param id      the ID of the event to delete
      * @param session the current HTTP session
-     * @return a success message if the event is deleted, or an error response otherwise
+     * @return a success message if the event is deleted, or an error response
+     *         otherwise
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable long id, HttpSession session) {
@@ -150,6 +152,17 @@ public class EventController {
         }
     }
 
+    /**
+     * Toggles the favorite status of a specific event for the authenticated user.
+     * <p>
+     * If the event is already marked as a favorite, it will be removed; otherwise,
+     * it will be added to the user's favorites list.
+     *
+     * @param id      the ID of the event to toggle as favorite
+     * @param session the current HTTP session
+     * @return a success message if the operation is completed, an error message
+     *         or a 401 Unauthorized response if the session is invalid
+     */
     @PostMapping("/{id}/favorite")
     public ResponseEntity<?> toggleFavorite(@PathVariable Long id, HttpSession session) {
 
@@ -167,21 +180,22 @@ public class EventController {
             return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
         }
     }
-       
+
     /**
      * Updates an existing event.
      *
      * Validates the required request fields before delegating to the service layer.
      *
-     * @param id the ID of the event to update
+     * @param id      the ID of the event to update
      * @param request the updated event data
      * @param session the current HTTP session
-     * @return a success message if the event is updated, or an error response otherwise
+     * @return a success message if the event is updated, or an error response
+     *         otherwise
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Long id,
-                                         @RequestBody EventRequest request,
-                                         HttpSession session) {
+            @RequestBody EventRequest request,
+            HttpSession session) {
 
         Long userId = (Long) session.getAttribute(USER_ID);
 
@@ -210,9 +224,10 @@ public class EventController {
     /**
      * Cancels the booking of the authenticated user for the specified event.
      *
-     * @param id the ID of the event for which the booking must be cancelled
+     * @param id      the ID of the event for which the booking must be cancelled
      * @param session the current HTTP session
-     * @return a success message if the booking is cancelled, or an error response otherwise
+     * @return a success message if the booking is cancelled, or an error response
+     *         otherwise
      */
     @DeleteMapping("/{id}/book")
     public ResponseEntity<?> cancelBooking(@PathVariable Long id, HttpSession session) {
@@ -234,13 +249,17 @@ public class EventController {
     }
 
     /**
-     * Searches for events using optional filters encapsulated in {@link EventSearchFilter}.
+     * Searches for events using optional filters encapsulated in
+     * {@link EventSearchFilter}.
      *
-     * Supported filters include free-text search, tags, location, date, coordinates, and distance.
-     * Spring automatically binds the query parameters from the request URL to the filter object.
+     * Supported filters include free-text search, tags, location, date,
+     * coordinates, and distance.
+     * Spring automatically binds the query parameters from the request URL to the
+     * filter object.
      *
      * @param session the current HTTP session
-     * @param filter  an object containing all optional search parameters provided by the client
+     * @param filter  an object containing all optional search parameters provided
+     *                by the client
      * @return a list of matching events, or 401 if the session is invalid
      */
     @GetMapping("/search")
@@ -268,9 +287,10 @@ public class EventController {
     /**
      * Retrieves the details of a specific event.
      *
-     * @param id the ID of the event to retrieve
+     * @param id      the ID of the event to retrieve
      * @param session the current HTTP session
-     * @return the event details (EventResponse), 401 if unauthorized, or 404 if not found
+     * @return the event details (EventResponse), 401 if unauthorized, or 404 if not
+     *         found
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getEventDetails(@PathVariable Long id, HttpSession session) {
@@ -293,21 +313,29 @@ public class EventController {
     }
 
     /**
-     * Retrieves a personalized list of recommended events for the currently authenticated user.
+     * Retrieves a personalized list of recommended events for the currently
+     * authenticated user.
      * <p>
-     * This endpoint requires the geographical coordinates of the user's favorite city 
-     * to perform distance-based filtering and scoring.
+     * This endpoint uses the geographical coordinates of the user's favorite city
+     * to perform distance-based filtering and scoring. If the coordinates are
+     * omitted,
+     * the recommendation logic may degrade or fall back to profile-only matching.
      *
-     * @param session the current HTTP session
-     * @param latitude the latitude of the user's preferred city
-     * @param longitude the longitude of the user's preferred city
-     * @return a {@link ResponseEntity} containing a {@link RecommendationResponse} with the events and a status message
+     * @param session   the current HTTP session
+     * @param latitude  the optional latitude of the user's preferred city (can be
+     *                  null)
+     * @param longitude the optional longitude of the user's preferred city (can be
+     *                  null)
+     * @return a {@link ResponseEntity} containing a {@link RecommendationResponse}
+     *         with the events
+     *         and a status message, or a 401 Unauthorized response if the session
+     *         is invalid
      */
     @GetMapping("/recommended")
     public ResponseEntity<?> getRecommendedEvents(
-        HttpSession session,
-        @RequestParam(required = false) Double latitude,
-        @RequestParam(required = false) Double longitude){
+            HttpSession session,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude) {
 
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {

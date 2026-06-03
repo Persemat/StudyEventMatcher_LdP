@@ -18,9 +18,11 @@ import com.example.backend.repository.UserSettingsRepository;
  * Service responsible for sending application emails.
  *
  * It handles:
- * - password reset emails
- * - event cancellation notifications
- * - event update notifications
+ * - account registration verification emails
+ * - password reset verification codes
+ * - event cancellation notifications to participants
+ * - event update notifications to participants
+ * - personalized recommendations for newly published relevant events
  *
  * Uses {@link JavaMailSender} to send messages.
  */
@@ -88,8 +90,13 @@ public class EmailService {
     }
 
     /**
-     * Sends event cancellation emails to all participants,
-     * excluding the event creator.
+     * Sends event cancellation emails to all booked participants, excluding the
+     * event creator.
+     * <p>
+     * It checks each participant's personalized communication settings; the
+     * notification
+     * is dispatched only if the user has explicitly enabled emails for deleted
+     * events.
      *
      * @param event the cancelled event
      */
@@ -230,7 +237,6 @@ public class EmailService {
             return "Nessun tag specificato";
         }
 
-        // Show each tag once, using the same readable label used by the UI.
         return tags.stream()
                 .map(EventTag::toDisplayLabel)
                 .filter(tag -> tag != null && !tag.isBlank())

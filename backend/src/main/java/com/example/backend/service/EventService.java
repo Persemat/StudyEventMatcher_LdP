@@ -56,9 +56,13 @@ public class EventService {
     /**
      * Constructs the EventService.
      *
-     * @param eventRepository repository used to manage event persistence
-     * @param userRepository  repository used to retrieve user data
-     * @param emailService    service used to send notification emails
+     * @param eventRepository       repository used to manage event persistence
+     * @param userRepository        repository used to retrieve user data
+     * @param emailService          service used to send notification emails
+     * @param cityCoordinateService service used to look up geographical coordinates
+     *                              for cities
+     * @param settingsRepository    repository used to retrieve user notification
+     *                              preferences
      */
     public EventService(EventRepository eventRepository, UserRepository userRepository, EmailService emailService,
             CityCoordinateService cityCoordinateService, UserSettingsRepository settingsRepository) {
@@ -71,9 +75,13 @@ public class EventService {
 
     /**
      * Creates a new event for the authenticated user.
-     *
-     * The creator is automatically added as a participant.
-     * Tags are normalized by trimming whitespace and converting them to uppercase.
+     * <p>
+     * The creator is automatically added as a participant. Tags are normalized by
+     * trimming
+     * whitespace and converting them to uppercase. Once saved, the method
+     * automatically triggers
+     * background notification emails to nearby users matching the event's topic
+     * profile.
      *
      * @param request the event creation request data
      * @param session the current HTTP session containing the authenticated user ID
@@ -410,6 +418,17 @@ public class EventService {
         eventRepository.save(event);
     }
 
+    /**
+     * Toggles the favorite status of a specific event for the authenticated user.
+     * <p>
+     * If the event is already in the user's favorites, it is removed;
+     * otherwise, it is added to the user's favorites list.
+     *
+     * @param eventId the ID of the event to toggle as favorite
+     * @param session the current HTTP session containing the user ID
+     * @throws RuntimeException if the user is not authenticated, or if the user or
+     *                          event cannot be found
+     */
     @Transactional
     public void toggleFavorite(Long eventId, HttpSession session) {
 
@@ -474,7 +493,6 @@ public class EventService {
 
         Long userId = (Long) session.getAttribute(USER_ID);
 
-        // Estrazione dati dal DTO Filter
         String searchParam = (filter.search() == null || filter.search().isBlank()) ? null : filter.search();
         String locationParam = (filter.location() == null || filter.location().isBlank()) ? null : filter.location();
 
@@ -543,6 +561,19 @@ public class EventService {
                 .toList();
     }
 
+    /**
+     * Checks if a candidate event overlaps in time with any of the user's already
+     * booked events.
+     * <p>
+     * If the candidate event is already booked by the user, it is not considered an
+     * overlap
+     * (the user is allowed to see events they have already joined).
+     *
+     * @param candidate    the event being evaluated for a potential schedule
+     *                     conflict
+     * @param bookedEvents the list of events the user has already joined
+     * @return true if there is a schedule conflict; false otherwise
+     */
     private boolean overlapsWithBookedEvents(Event candidate, List<Event> bookedEvents) {
         boolean candidateIsBooked = bookedEvents.stream()
                 .anyMatch(bookedEvent -> bookedEvent.getId() == candidate.getId());
@@ -555,6 +586,13 @@ public class EventService {
                 .anyMatch(bookedEvent -> eventsOverlap(candidate, bookedEvent));
     }
 
+    /**
+     * Determines whether two specific events overlap in their time schedules.
+     *
+     * @param first  the first event
+     * @param second the second event
+     * @return true if the time intervals of both events intersect; false otherwise
+     */
     private boolean eventsOverlap(Event first, Event second) {
         LocalDateTime firstStart = first.getDateTime();
         LocalDateTime firstEnd = eventEnd(first);
@@ -564,11 +602,28 @@ public class EventService {
         return firstStart.isBefore(secondEnd) && firstEnd.isAfter(secondStart);
     }
 
+    /**
+     * Calculates the estimated end date and time of an event based on its start
+     * time and duration.
+     *
+     * @param event the event whose end time needs to be computed
+     * @return a {@link LocalDateTime} representing the exact end time of the event
+     */
     private LocalDateTime eventEnd(Event event) {
         long minutes = Math.round(event.getDuration() * 60);
         return event.getDateTime().plusMinutes(minutes);
     }
 
+    /**
+     * Factory method to construct a {@link DistanceFilter} parameter container.
+     *
+     * @param location   the textual representation of the location
+     * @param latitude   the latitude coordinate of the search center
+     * @param longitude  the longitude coordinate of the search center
+     * @param distanceKm the maximum radius distance threshold in kilometers
+     * @return a valid {@link DistanceFilter} instance, or null if any parameters
+     *         are missing or invalid
+     */
     private DistanceFilter createDistanceFilter(String location, Double latitude, Double longitude,
             Integer distanceKm) {
         if (location == null || latitude == null || longitude == null || distanceKm == null || distanceKm <= 0) {
@@ -578,6 +633,17 @@ public class EventService {
         return new DistanceFilter(latitude, longitude, distanceKm);
     }
 
+    /**
+     * Verifies if an event's location is within a given radius from a specific
+     * center point coordinate.
+     *
+     * @param event      the event entity to evaluate
+     * @param latitude   the latitude of the center point
+     * @param longitude  the longitude of the center point
+     * @param distanceKm the maximum distance allowed in kilometers
+     * @return true if the event coordinates are missing or fall within the
+     *         specified distance; false otherwise
+     */
     private boolean isWithinDistance(Event event, double latitude, double longitude, int distanceKm) {
         if (event.getLatitude() == null || event.getLongitude() == null) {
             return false;
@@ -590,6 +656,16 @@ public class EventService {
                 event.getLongitude()) <= distanceKm;
     }
 
+    /**
+     * Computes the great-circle distance between two geographical points using the
+     * Haversine formula.
+     *
+     * @param firstLatitude   the latitude of the starting point
+     * @param firstLongitude  the longitude of the starting point
+     * @param secondLatitude  the latitude of the destination point
+     * @param secondLongitude the longitude of the destination point
+     * @return the calculated physical distance between the two points in kilometers
+     */
     private double calculateDistanceKm(double firstLatitude,
             double firstLongitude,
             double secondLatitude,
@@ -713,7 +789,6 @@ public class EventService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // Step 1: Base filters (future, open, not mine, not booked)
         List<Event> eligibleEvents = eventRepository.findAll().stream()
                 .filter(e -> e.getDateTime().isAfter(now))
                 .filter(e -> "open".equalsIgnoreCase(e.getStatus()))
@@ -721,7 +796,6 @@ public class EventService {
                 .filter(e -> e.getParticipants().stream().noneMatch(p -> p.getId().equals(userId)))
                 .toList();
 
-        // Step 2: Tag matching
         List<Event> eventsWithMatchingTags = eligibleEvents.stream()
                 .filter(e -> hasMatchingTag(e, user))
                 .toList();
@@ -730,7 +804,6 @@ public class EventService {
             return new RecommendationResponse(List.of(), "NO_TAG_MATCH");
         }
 
-        // Step 3: Distance calculation and scoring
         List<ScoredEvent> scoredEvents = new ArrayList<>();
         for (Event event : eventsWithMatchingTags) {
             if (event.getLatitude() == null || event.getLongitude() == null)
@@ -748,7 +821,6 @@ public class EventService {
             return new RecommendationResponse(List.of(), "NO_LOCATION_MATCH");
         }
 
-        // Step 4: Sorting and mapping to DTO
         List<EventResponse> finalRecommendations = scoredEvents.stream()
                 .sorted((s1, s2) -> Integer.compare(s2.score(), s1.score()))
                 .map(se -> toResponse(se.event(), userId))
@@ -824,15 +896,14 @@ public class EventService {
                 ? user.getMicroTags().stream().map(String::toLowerCase).map(String::trim).toList()
                 : List.of();
 
-        // 1. Assegnazione punteggio per i TAG (La vostra regola 1 a 3)
         for (EventTag eTag : event.getTags()) {
             String eventMacro = eTag.getMacroTag() != null ? eTag.getMacroTag().toLowerCase().trim() : "";
             String eventMicro = eTag.getMicroTag() != null ? eTag.getMicroTag().toLowerCase().trim() : "";
 
             if (!eventMicro.isEmpty() && userMicro.contains(eventMicro)) {
-                score += 300; // Match fortissimo (il vostro +3)
+                score += 300;
             } else if (userMacro.contains(eventMacro)) {
-                score += 100; // Match generico (il vostro +1)
+                score += 100;
             }
         }
         score += Math.max(0, MAX_RECOMMENDATION_DISTANCE_KM - (int) distance);
@@ -850,7 +921,6 @@ public class EventService {
             return;
         }
 
-        // Keep one email per user even when several event tags match.
         Set<Long> notifiedUserIds = new java.util.HashSet<>();
 
         for (User user : userRepository.findAll()) {
@@ -921,7 +991,6 @@ public class EventService {
             return false;
         }
 
-        // Reuse the dashboard distance rule: favorite city must be within 50 km.
         return cityCoordinateService.findCoordinates(user.getFavouriteCity())
                 .map(coordinates -> calculateDistanceKm(
                         coordinates.latitude(),
@@ -933,10 +1002,14 @@ public class EventService {
 
     /**
      * Recalculates each event status based on date and participant capacity.
+     * <p>
+     * If an event is closed due to expiration (past time), it also performs data
+     * cleanup
+     * by removing the event from all users' personal favorites lists.
      *
      * @param toSave current dirty flag, preserved if already true
      * @param events events to inspect and update in memory
-     * @return true if at least one event status changed
+     * @return true if at least one event status or its favorites references changed
      */
     public boolean checkIfClosed(boolean toSave, List<Event> events) {
         LocalDateTime now = LocalDateTime.now();
@@ -972,6 +1045,13 @@ public class EventService {
         return toSave;
     }
 
+    /**
+     * Validates that a given date and time value is set in the future.
+     *
+     * @param dateTime the date and time object to validate
+     * @throws BusinessRuleException if the provided date time is null or is in the
+     *                               past
+     */
     private void ensureFutureDateTime(LocalDateTime dateTime) {
         if (dateTime == null || !dateTime.isAfter(LocalDateTime.now())) {
             throw new BusinessRuleException("Data e ora devono essere future");

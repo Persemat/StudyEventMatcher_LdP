@@ -13,10 +13,10 @@ import com.example.backend.repository.UserRepository;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.springframework.mock.web.MockHttpSession; // Per il check validità
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*; // Tutto JUnit 5
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -38,7 +38,6 @@ public class Logout {
 
     @Given("l'utente è autenticato e pronto al logout")
     public void autenticazioneUtentePerLogout() throws Exception {
-        // Pulizia preventiva per evitare conflitti di email duplicata
         userRepository.deleteAll();
 
         User user = new User(
@@ -71,16 +70,12 @@ public class Logout {
     public void controllaSeSessioneAttiva() throws Exception {
 
         assertEquals(200, result.getResponse().getStatus(), "Il login è fallito, non posso proseguire!");
-        // 1. Otteniamo la sessione (senza crearne una nuova)
         activeSession = (MockHttpSession) result.getRequest().getSession(false);
 
-        // 2. Controllo: La sessione deve esistere
         assertNotNull(activeSession, "Errore: La sessione non è stata creata dopo il login!");
 
-        // 3. Controllo: La sessione deve essere valida (non scaduta/invalidata)
         assertFalse((activeSession).isInvalid(), "Errore: La sessione risulta già invalida!");
 
-        // 4. Controllo: Deve contenere lo userId corretto (l'ID di Marco Rossi)
         assertEquals(loggedUserId, activeSession.getAttribute("userId"),
                 "Errore: Lo userId in sessione non corrisponde all'utente loggato!");
 
@@ -98,8 +93,7 @@ public class Logout {
 
     @Then("il sistema termina la sessione")
     public void sistemaTerminaSessione() {
-        // In MockMvc, se la sessione viene invalidata, l'oggetto session esiste ancora
-        // nel request ma risulta non valido
+
         assertTrue(activeSession == null || ((MockHttpSession) activeSession).isInvalid(),
                 "La sessione dovrebbe essere nulla o invalida");
     }

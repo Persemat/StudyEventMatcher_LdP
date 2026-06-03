@@ -31,16 +31,10 @@ public class UpdatePreferences {
     private User loggedUser;
     private ResultActions result;
 
-    // Variabili di stato per simulare ciò che l'utente inserisce nel form React
     private String currentCity = "Milano";
     private List<String> currentMacroTags = new ArrayList<>(List.of("Generico"));
     private List<String> currentMicroTags = new ArrayList<>();
 
-    // =========================================================================
-    // ATTENZIONE: Se hai GIA' definito "@Given("l'utente è autenticato")"
-    // in un'altra classe (es. UserRegistrationSteps), COMMENTA O CANCELLA
-    // il metodo qui sotto per evitare la DuplicateStepDefinitionException!
-    // =========================================================================
     @Given("l'utente è autenticato per la modifica preferenze")
     public void utenteAutenticato() {
         userRepository.deleteAll();
@@ -54,14 +48,11 @@ public class UpdatePreferences {
         loggedUser.setMicroTags(new ArrayList<>());
         loggedUser = userRepository.saveAndFlush(loggedUser);
     }
-    // =========================================================================
 
     @And("l'utente si trova nella pagina Profilo")
     public void paginaProfilo() {
         // Step puramente descrittivo (BDD), non esegue operazioni di backend
     }
-
-    // --- SETUP STATO INIZIALE DB ---
 
     @And("l'utente ha inizialmente il macro tag {string} e il micro tag {string}")
     public void initTags(String macro, String micro) {
@@ -89,8 +80,6 @@ public class UpdatePreferences {
         currentMicroTags = new ArrayList<>();
         updateDbUser();
     }
-
-    // --- AZIONI DELL'UTENTE (WHEN) ---
 
     @When("l'utente sostituisce i macro tag con {string} e i micro tag con {string}")
     public void changeTags(String macro, String micro) {
@@ -123,7 +112,6 @@ public class UpdatePreferences {
 
     @And("salva le modifiche alle preferenze")
     public void salvaModifiche() throws Exception {
-        // Costruiamo il JSON da mandare al Controller
         String json = String.format("""
                 {
                     "favouriteCity": "%s",
@@ -132,14 +120,11 @@ public class UpdatePreferences {
                 }
                 """, currentCity, toJsonArray(currentMacroTags), toJsonArray(currentMicroTags));
 
-        // Facciamo la PUT simulando la sessione attiva
         result = mockMvc.perform(put("/user/me/preferences")
                 .sessionAttr("userId", loggedUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json));
     }
-
-    // --- VERIFICHE (THEN) ---
 
     @Then("il sistema associa correttamente i tag {string} e {string}")
     public void verifyTags(String macro, String micro) {
@@ -176,8 +161,6 @@ public class UpdatePreferences {
                         .string(org.hamcrest.Matchers.containsString(messaggioAtteso)));
     }
 
-    // --- Helper Methods Interni ---
-
     private void updateDbUser() {
         loggedUser.setFavouriteCity(currentCity);
         loggedUser.setMacroTags(new ArrayList<>(currentMacroTags));
@@ -191,11 +174,4 @@ public class UpdatePreferences {
         return "[\"" + String.join("\",\"", list) + "\"]";
     }
 
-    /*
-     * * NOTA BENE SUI MESSAGGI DI ERRORE:
-     * Non c'è il metodo per -> @Then("il sistema mostra l'errore {string}")
-     * perché Cucumber andrà a usare automaticamente quello che hai GIA' scritto
-     * nell'altra classe dei test (UserRegistrationSteps o AddPreferences).
-     * In questo modo abbiamo evitato la DuplicateStepDefinitionException!
-     */
 }

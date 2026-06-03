@@ -51,10 +51,6 @@ public class EventDateFilter {
         eventRepository.save(event);
     }
 
-    // ==========================================
-    // BACKGROUND (Comune a tutti gli scenari)
-    // ==========================================
-
     @Given("L'utente è autenticato nel sistema")
     public void l_utente_e_autenticato_nel_sistema() {
         eventRepository.deleteAll();
@@ -73,7 +69,6 @@ public class EventDateFilter {
 
     @Given("L'utente ha aperto il calendario dei filtri")
     public void l_utente_ha_aperto_il_calendario_dei_filtri() {
-        // Step vuoto per il backend: la UI è pronta, il DB è già pulito dal Background
     }
 
     @Given("L'utente sta scegliendo una data dal calendario dei filtri")
@@ -81,10 +76,6 @@ public class EventDateFilter {
 
         createEventsDataHelper("Evento di Ieri", LocalDateTime.now().minusDays(1).withHour(15));
     }
-
-    // ==========================================
-    // SCENARIO 1: Filtro data con successo
-    // ==========================================
 
     @And("sono presenti eventi in una data futura")
     public void sono_presenti_eventi_in_una_data_futura() {
@@ -109,10 +100,6 @@ public class EventDateFilter {
                 .andExpect(jsonPath("$[0].title", Matchers.is("Evento Domani")));
     }
 
-    // ==========================================
-    // SCENARIO 2: Data senza eventi
-    // ==========================================
-
     @And("non ci sono eventi registrati per una data specifica vuota")
     public void non_ci_sono_eventi_registrati_per_una_data_specifica_vuota() {
         createEventsDataHelper("Evento Altra Data", LocalDateTime.now().plusDays(2));
@@ -132,10 +119,6 @@ public class EventDateFilter {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$", Matchers.hasSize(0)));
     }
-
-    // ==========================================
-    // SCENARIO 3: Selezione di una data passata
-    // ==========================================
 
     @When("prova a selezionare una data passata")
     public void prova_a_selezionare_una_data_passata() throws Exception {
