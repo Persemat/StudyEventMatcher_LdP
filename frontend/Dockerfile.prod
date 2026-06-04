@@ -1,0 +1,15 @@
+# Usa l'immagine ufficiale di Nginx basata su Alpine (Nginx è il server web standard industriale più veloce per servire file statici)
+FROM nginx:alpine
+
+# Rimuove la pagina di benvenuto predefinita di Nginx per evitare conflitti o sporcizia
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copia i file statici compilati da Vite (generati dal job 'package_frontend' nella cartella dist)
+# e li incolla nella cartella da cui Nginx legge i siti web per mostrarli all'utente
+COPY dist /usr/share/nginx/html
+
+# Comunica a Docker che il container risponderà sulla porta 80 standard per il traffico HTTP
+EXPOSE 80
+
+# Avvia Nginx in modalità "foreground" (daemon off) in modo che il container rimanga attivo correttamente
+CMD ["nginx", "-g", "daemon off;"]
