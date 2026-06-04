@@ -10,10 +10,13 @@ import org.springframework.test.web.servlet.ResultActions;
 import com.example.backend.model.User;
 import com.example.backend.repository.UserRepository;
 
-import org.springframework.mock.web.MockHttpSession; // Per il check validità
+import java.util.List;
+import java.util.ArrayList;
+
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*; // Tutto JUnit 5
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -35,14 +38,16 @@ public class Logout {
 
     @Given("l'utente è autenticato e pronto al logout")
     public void autenticazioneUtentePerLogout() throws Exception {
-        // Pulizia preventiva per evitare conflitti di email duplicata
         userRepository.deleteAll();
 
-        User user = new User();
-        user.setName("Marco");
-        user.setLastname("Rossi");
-        user.setEmail("marco@example.com");
-        user.setPassword(passwordEncoder.encode("Password123!"));
+        User user = new User(
+                "Marco",
+                "Rossi",
+                "marco@example.com",
+                passwordEncoder.encode("Password123!"),
+                "Milano",
+                List.of("Tech"),
+                new ArrayList<>());
         userRepository.save(user);
 
         this.loggedUserId = user.getId();
@@ -65,16 +70,12 @@ public class Logout {
     public void controllaSeSessioneAttiva() throws Exception {
 
         assertEquals(200, result.getResponse().getStatus(), "Il login è fallito, non posso proseguire!");
-        // 1. Otteniamo la sessione (senza crearne una nuova)
         activeSession = (MockHttpSession) result.getRequest().getSession(false);
 
-        // 2. Controllo: La sessione deve esistere
         assertNotNull(activeSession, "Errore: La sessione non è stata creata dopo il login!");
 
-        // 3. Controllo: La sessione deve essere valida (non scaduta/invalidata)
         assertFalse((activeSession).isInvalid(), "Errore: La sessione risulta già invalida!");
 
-        // 4. Controllo: Deve contenere lo userId corretto (l'ID di Marco Rossi)
         assertEquals(loggedUserId, activeSession.getAttribute("userId"),
                 "Errore: Lo userId in sessione non corrisponde all'utente loggato!");
 
@@ -92,8 +93,7 @@ public class Logout {
 
     @Then("il sistema termina la sessione")
     public void sistemaTerminaSessione() {
-        // In MockMvc, se la sessione viene invalidata, l'oggetto session esiste ancora
-        // nel request ma risulta non valido
+
         assertTrue(activeSession == null || ((MockHttpSession) activeSession).isInvalid(),
                 "La sessione dovrebbe essere nulla o invalida");
     }
@@ -131,7 +131,8 @@ public class Logout {
     public void sistemaRispondeCon200() throws Exception {
         response.andExpect(status().isOk());
         response.andExpect(
-                content().string(org.hamcrest.Matchers.containsString("Nessuna sessione attiva, Utente già disconnesso")));
+                content().string(
+                        org.hamcrest.Matchers.containsString("Nessuna sessione attiva, Utente già disconnesso")));
     }
 
     @And("il sistema mantiene lo stato di utente anonimo")

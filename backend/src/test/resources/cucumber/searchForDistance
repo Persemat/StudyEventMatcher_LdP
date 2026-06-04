@@ -1,0 +1,33 @@
+Feature: Ricerca per distanza
+
+    Scenario: Filtro eventi per distanza con successo
+    Given l'utente e autenticato per la ricerca distanza
+    And l'utente ha impostato "Milano" come città nella barra di ricerca
+    And esiste un evento "Studio informatica" a Monza, distante 15 km da Milano
+    And esiste un evento "Economia" a Bergamo, distante 50 km da Milano
+    And esiste un evento "Diritto civile" a Torino, distante 140 km da Milano
+    When l'utente seleziona un raggio di distanza di 50 km
+    Then il sistema mostra l'evento "Studio informatica"
+    And il sistema mostra l'evento "Economia"
+    And il sistema non mostra l'evento "Diritto civile"
+
+    Scenario: Modifica del raggio di distanza
+    Given l'utente e autenticato per la ricerca distanza
+    And l'utente ha impostato "Milano" come città nella barra di ricerca
+    And esiste un evento "Diritto privato" a Milano, distante 3 km
+    And esiste un evento "Studio informatica" a Monza, distante 15 km da Milano
+    And esiste un evento "Economia" a Bergamo, distante 50 km da Milano
+    And l'utente ha già effettuato una ricerca con raggio di 20 km
+    And il sistema mostra "Diritto privato" e "Studio informatica"
+    When l'utente modifica il raggio di distanza a 100 km
+    Then il sistema ricalcola gli eventi in base al nuovo raggio
+    And il sistema mostra anche l'evento "Economia"
+
+    Scenario: Nessun evento trovato nel raggio selezionato
+    Given l'utente e autenticato per la ricerca distanza
+    And l'utente ha impostato "Milano" come città nella barra di ricerca
+    And esiste un evento "Studio informatica" a Monza, distante 15 km da Milano
+    And esiste un evento "Economia" a Bergamo, distante 50 km da Milano
+    When l'utente seleziona un raggio di distanza di 5 km
+    Then il sistema non mostra nessun evento
+    And il sistema mostra il messaggio "Nessun evento trovato entro il raggio selezionato" nella pagina

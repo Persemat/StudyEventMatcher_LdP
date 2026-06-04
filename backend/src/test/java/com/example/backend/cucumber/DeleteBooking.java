@@ -1,6 +1,5 @@
 package com.example.backend.cucumber;
 
-
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -20,6 +19,7 @@ import com.example.backend.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -44,11 +44,8 @@ public class DeleteBooking {
     @Given("l'utente è autenticato per la cancellazione")
     public void utenteAutenticatoPerCancellazione() {
         userRepository.deleteAll();
-        User user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario@test.com");
-        user.setPassword("Pass123!");
+        User user = new User("Mario", "Rossi", "mario@test.com", "Pass123!",
+                "Milano", List.of("Tech"), List.of());
         user = userRepository.save(user);
 
         session.setAttribute("userId", user.getId());
@@ -65,7 +62,7 @@ public class DeleteBooking {
         User user = userRepository.findById((Long) session.getAttribute("userId")).get();
 
         Event event = createBaseEvent();
-        event.addParticipant(user); // Prenotazione!
+        event.addParticipant(user);
         event = eventRepository.save(event);
 
         this.currentEventId = event.getId();
@@ -75,7 +72,7 @@ public class DeleteBooking {
     public void utenteNonPrenotato() {
         eventRepository.deleteAll();
         Event event = createBaseEvent();
-        event = eventRepository.save(event); // Viene salvato senza aggiungere l'utente
+        event = eventRepository.save(event);
 
         this.currentEventId = event.getId();
     }
@@ -83,9 +80,8 @@ public class DeleteBooking {
     @Transactional
     @And("l'utente ha una prenotazione per un evento con posti limitati")
     public void utenteHaPrenotazionePostiLimitati() {
-        utenteHaUnaPrenotazione(); // Sfruttiamo il metodo sopra per creare l'iscrizione
+        utenteHaUnaPrenotazione();
 
-        // Segnamoci quanti partecipanti ci sono all'inizio (dovrebbe essere 1)
         Event event = eventRepository.findById(currentEventId).get();
         this.initialPartecipants = event.getParticipants().size();
     }
@@ -107,8 +103,6 @@ public class DeleteBooking {
 
     @When("l'utente prova a cancellare la prenotazione")
     public void provaACancellareUnaPrenotazione() throws Exception {
-        // Se l'evento non è stato creato prima (come nello scenario 3), usiamo un ID
-        // fittizio "1" per far arrivare la richiesta al controller
         Long idToDelete = (currentEventId != null) ? currentEventId : 1L;
 
         result = mockMvc.perform(delete("/events/" + idToDelete + "/book").session(session));
@@ -127,26 +121,21 @@ public class DeleteBooking {
     @Transactional
     @Then("il sistema aumenta il numero di posti disponibili")
     public void ilSistemaAumentaPostiDisponibili() throws Exception {
-        // Grazie al @Transactional qui, possiamo rileggere la lista aggiornata
         Event updatedEvent = eventRepository.findById(currentEventId).get();
         int currentPartecipants = updatedEvent.getParticipants().size();
 
         org.junit.jupiter.api.Assertions.assertTrue(currentPartecipants < initialPartecipants);
     }
 
-    // Metodo Helper (per non ripetere codice)
     private Event createBaseEvent() {
-        User creator = new User();
-        creator.setName("Mario");
-        creator.setLastname("Rossi");
-        creator.setEmail("creatore" + Math.random() + "@test.com"); // Email univoca
-        creator.setPassword("Pass123!");
+        User creator = new User("Mario", "Rossi", "creatore" + Math.random() + "@test.com", "Pass123!",
+                "Roma", List.of("Social"), List.of());
         creator = userRepository.save(creator);
 
         Event event = new Event();
         event.setTitle("Evento di Test");
         event.setDescription("Test Cucumber");
-        event.setLocation("Aula Virtuale");
+        event.setLocation("Milano (MI)-Aula Virtuale");
         event.setDateTime(LocalDateTime.now().plusDays(5));
         event.setDuration(2.0);
         event.setMaxParticipants(10);

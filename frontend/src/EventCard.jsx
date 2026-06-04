@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Calendar, Clock, MapPin, Users, Check, X, ShieldCheck, Pencil } from "lucide-react";
+import { Heart } from "lucide-react";
 
 export default function EventCard({
   event,
   onBook,
   onCancelBooking,
-  onEdit
+  onEdit,
+  onToggleFavorite,
+  onShowDetails,
+  disableCancelActions = false
 }) {
   const currentParticipants = event.currentParticipants || 0;
   const isFull = event.maxParticipants != null && currentParticipants >= event.maxParticipants;
@@ -16,14 +20,16 @@ export default function EventCard({
   const [now] = useState(Date.now);
   const in24Hours = new Date(now + 24 * 60 * 60 * 1000);
 
-  // Blocca solo chi NON è creatore e NON è prenotato.
-  // Così se l'evento è pieno/chiuso, chi è già prenotato può comunque cancellare.
+
   const isInterationBlocked = isClosed && !event.isCreatedByMe && !event.isBooked;
 
   const canEdit = event.isCreatedByMe && eventStart > in24Hours;
 
   return (
     <div
+    
+    onClick={onShowDetails}
+
       className={`bg-white rounded-lg shadow transition-all p-6 space-y-4 border ${
         isClosed ? "border-gray-200 bg-gray-50 opacity-75" : "border-gray-100 hover:shadow-lg"
       } ${
@@ -32,20 +38,42 @@ export default function EventCard({
     >
       {/* Title and Tags */}
       <div>
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-bold text-lg text-gray-900">{event.title}</h3>
+        <div className="mb-2 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="min-w-0 flex-1 font-bold text-lg leading-snug text-gray-900 break-words">
+              {event.title}
+            </h3>
 
-          <div className="flex gap-1 flex-wrap justify-end">
-            {event.tags &&
-              event.tags.map((tag, index) => (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(event.id);
+              }}
+              className="p-2 -mt-2 rounded-full hover:bg-gray-50 transition-colors shrink-0"
+              title={event.isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+            >
+              <Heart
+                className={`w-5 h-5 transition-colors ${
+                  event.isFavorite
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-400 hover:text-red-400"
+                }`}
+              />
+            </button>
+          </div>
+
+          {event.tags && event.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {event.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full uppercase font-semibold"
+                  className="max-w-full bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-semibold leading-4"
                 >
-                  {tag}
+                  {formatCardTagLabel(tag)}
                 </span>
               ))}
-          </div>
+            </div>
+          )}
         </div>
 
         <p className="text-gray-600 text-sm line-clamp-2">
@@ -116,12 +144,20 @@ export default function EventCard({
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
-        {event.isCreatedByMe ? (
+        {disableCancelActions ? (
+          <span className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-bold flex items-center justify-center cursor-not-allowed">
+            AZIONI NON DISPONIBILI
+          </span>
+        ) : event.isCreatedByMe ? (
           <div className="flex-1 flex gap-2">
             {/* Edit button */}
             <button
               disabled={!canEdit}
-              onClick={() => onEdit(event.id)}
+              onClick={(e) => {
+                // Keep the card details click from firing.
+                e.stopPropagation();
+                onEdit(event.id);
+              }}
               className={`flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${
                 !canEdit
                   ? "bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed"
@@ -138,7 +174,10 @@ export default function EventCard({
 
             {/* Cancel/leave for creator */}
             <button
-              onClick={onCancelBooking}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancelBooking();
+              }}
               className="flex-1 py-2 rounded-lg text-sm font-bold border flex items-center justify-center gap-2 transition-colors bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200"
             >
               <X className="w-4 h-4" />
@@ -148,7 +187,10 @@ export default function EventCard({
         ) : event.isBooked ? (
           /* booked user */
           <button
-            onClick={onCancelBooking}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancelBooking();
+            }}
             className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 bg-orange-100 text-orange-700 hover:bg-orange-200"
           >
             <X className="w-4 h-4" />
@@ -162,7 +204,10 @@ export default function EventCard({
         ) : (
           /* book button */
           <button
-            onClick={() => onBook(event.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onBook(event.id);
+            }}
             className="flex-1 py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
           >
             <Check className="w-4 h-4" />
@@ -172,4 +217,15 @@ export default function EventCard({
       </div>
     </div>
   );
+}
+
+function formatCardTagLabel(tag) {
+  if (!tag) return "";
+
+  if (typeof tag === "string") {
+    const parts = tag.split(/\s*>\s*/, 2);
+    return parts[1] || parts[0];
+  }
+
+  return tag.microTag || tag.macroTag || "";
 }

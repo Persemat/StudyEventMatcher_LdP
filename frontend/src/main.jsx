@@ -10,8 +10,10 @@ import Profile from './Profile'
 import './index.css'
 import MyEvents from './MyEvents'
 import ForgotPasswordPage from './ForgotPasswordPage'
+// Email verification page.
+import VerifyEmailPage from './VerifyEmailPage' 
 
-// ===================== PROTECTED ROUTE =====================
+// Protects routes that require an authenticated user.
 const ProtectedRoute = ({ user, children }) => {
   if (user === undefined) {
     return <div>Loading session...</div>;
@@ -24,11 +26,11 @@ const ProtectedRoute = ({ user, children }) => {
   return children;
 };
 
-// ===================== APP =====================
+// Root app router.
 const App = () => {
   const [loggedUser, setLoggedUser] = useState(undefined);
 
-  // CHECK SESSION
+  // Restores the current session on page load.
   useEffect(() => {
     fetch("/api/user/me", {
       credentials: "include"
@@ -38,7 +40,7 @@ const App = () => {
       .catch(() => setLoggedUser(null));
   }, []);
 
-  // LOGOUT
+  // Ends the session and returns the app to the login state.
   const handleLogout = async () => {
     try {
       await fetch("/api/user/logout", {
@@ -54,11 +56,11 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* redirect root */}
+        {/* Root redirect */}
         <Route 
           path="/" element={<Navigate to="/login" replace />} />
 
-        {/* public routes */}
+        {/* Public routes */}
         <Route
           path="/login"
           element={<AuthPage onLoginSuccess={setLoggedUser} />} />
@@ -66,7 +68,11 @@ const App = () => {
         <Route 
           path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* protected layout */}
+        {/* Email verification route */}
+        <Route 
+          path="/verify-email" element={<VerifyEmailPage />} />
+
+        {/* Protected layout */}
         <Route
           element={
             <ProtectedRoute user={loggedUser}>
@@ -80,7 +86,7 @@ const App = () => {
           />
 
           <Route 
-            path="/events" element={<AllEvents />} />
+            path="/events" element={<AllEvents user={loggedUser} />} />
 
           <Route 
             path="/my-events" element={<MyEvents />} />
@@ -88,7 +94,11 @@ const App = () => {
           <Route
             path="/profile"
             element={
-              <Profile user={loggedUser} onLogout={handleLogout} />
+              <Profile
+                user={loggedUser}
+                onLogout={handleLogout}
+                onUserUpdated={setLoggedUser}
+              />
             }
           />
         </Route>

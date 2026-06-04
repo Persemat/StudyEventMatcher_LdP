@@ -25,9 +25,9 @@ public class EventViewTest extends BaseEventTest {
         Event event = new Event();
         event.setTitle("Analytical Review");
         event.setDateTime(LocalDateTime.parse("2026-04-10T10:30:00"));
-        event.setLocation("Room 4");
+        event.setLocation("Milano (MI)-Aula 4");
         event.setDuration(2.0);
-        event.setTags(List.of("Math"));
+        event.setTags(List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")));
         event.setDescription("Exam preparation");
         event.setStatus("open");
         event.setCreator(creator);
@@ -39,7 +39,7 @@ public class EventViewTest extends BaseEventTest {
 
         assertEquals(1, result.size());
         assertEquals("Analytical Review", result.get(0).title());
-        assertEquals("Room 4", result.get(0).location());
+        assertEquals("Milano (MI)-Aula 4", result.get(0).location());
         assertEquals("Mario", result.get(0).creator().name());
         assertTrue(result.get(0).isCreatedByMe());
     }

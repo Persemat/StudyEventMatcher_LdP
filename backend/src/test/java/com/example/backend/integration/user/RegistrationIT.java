@@ -3,6 +3,7 @@ package com.example.backend.integration.user;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,48 +12,55 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Tag("integration")
+@TestPropertySource(properties = "app.security.require-email-verification=false")
 public class RegistrationIT extends BaseUserIT {
 
-    @Test
-    void validRegistration_shouldReturn200AndSaveUser() throws Exception {
-        String json = """
-                {
-                  "name": "Mario",
-                  "lastname": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void validRegistration_shouldReturn200AndSaveUser() throws Exception {
+                String json = """
+                                {
+                                  "name": "Mario",
+                                  "lastname": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123",
+                                  "favouriteCity": "Milano",
+                                  "macroTags": ["Informatica"],
+                                  "microTags": []
+                                }
+                                """;
 
-        mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("mario@example.com")));
+                mockMvc.perform(post("/user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isOk())
+                                .andExpect(content().string(containsString("mario@example.com")));
 
-        assertTrue(userRepository.findByEmail("mario@example.com").isPresent());
-    }
+                assertTrue(userRepository.findByEmail("mario@example.com").isPresent());
+        }
 
-    @Test
-    void emailAlreadyExists_shouldReturn400() throws Exception {
-        String json = """
-                {
-                  "name": "Mario",
-                  "lastname": "Rossi",
-                  "email": "mario@example.com",
-                  "password": "Password123"
-                }
-                """;
+        @Test
+        void emailAlreadyExists_shouldReturn400() throws Exception {
+                String json = """
+                                {
+                                  "name": "Mario",
+                                  "lastname": "Rossi",
+                                  "email": "mario@example.com",
+                                  "password": "Password123",
+                                  "favouriteCity": "Milano",
+                                  "macroTags": ["Informatica"],
+                                  "microTags": []
+                                }
+                                """;
 
-        mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isOk());
+                mockMvc.perform(post("/user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isOk());
 
-        mockMvc.perform(post("/user")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(containsString("Email già registrata")));
-    }
+                mockMvc.perform(post("/user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(content().string(containsString("Email già registrata")));
+        }
 }

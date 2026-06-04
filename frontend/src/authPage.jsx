@@ -1,36 +1,159 @@
-//authPage
-import { useState } from 'react'
+// Authentication page.
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, Link } from "react-router-dom";
 
-export default function AuthPage(props) {
-  const [isLogin, setIsLogin] = useState(true)
+import { loadCityOptions, loadTagOptions } from "./catalogs";
 
+const MAX_MACRO_TAGS = 3;
+const MAX_MICRO_TAGS = 5;
+
+export default function AuthPage(props) {
+  const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
-  const [name, setName] = useState('')
-  const [lastname, setLastname] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  // Shared form fields.
+  const [name, setName] = useState('');
+  const [lastname, setLastname] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  // Registration-only fields.
+  const [city, setCity] = useState('');
+  const [macroTags, setMacroTags] = useState([]);
+  const [microTags, setMicroTags] = useState([]);
 
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  // Catalog data.
+  const [cityOptions, setCityOptions] = useState([]);
+  const [tagOptions, setTagOptions] = useState([]);
+
+  // UI state for focused autocomplete fields.
+  const [isCityInputFocused, setIsCityInputFocused] = useState(false);
+  
+  const [macroInput, setMacroInput] = useState('');
+  const [isMacroInputFocused, setIsMacroInputFocused] = useState(false);
+  
+  const [microInput, setMicroInput] = useState('');
+  const [isMicroInputFocused, setIsMicroInputFocused] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  // Input refs used to restore focus.
+  const cityInputRef = useRef(null);
+
+  // Loads catalogs when the registration form is active.
+  useEffect(() => {
+    let active = true;
+    if (!isLogin) {
+      loadCityOptions()
+        .then((data) => active && setCityOptions(data))
+        .catch(() => active && setError("Impossibile caricare il catalogo comuni."));
+
+      loadTagOptions()
+        .then((data) => active && setTagOptions(data))
+        .catch(() => active && setError("Impossibile caricare il catalogo tag."));
+    }
+    return () => { active = false; };
+  }, [isLogin]);
+
+  // City autocomplete suggestions.
+  const citySuggestions = useMemo(() => {
+    const query = city.trim().toLowerCase();
+    if (!query) return [];
+    return cityOptions
+      .filter((option) => option.name.toLowerCase().startsWith(query))
+      .slice(0, 30);
+  }, [city, cityOptions]);
+
+  const validCityLabels = useMemo(
+    () => new Set(cityOptions.map((option) => option.label)),
+    [cityOptions]
+  );
+
+  // Macro tag autocomplete suggestions.
+  const macroSuggestions = useMemo(() => {
+    const query = macroInput.trim().toLowerCase();
+    return tagOptions
+      .filter(option => option.isMacro) // Keep macro tags only.
+      .filter(option => !macroTags.includes(option.macroTag)) // Exclude selected tags.
+      .filter(option => !query || option.macroTag.toLowerCase().includes(query)); // Match typed text.
+  }, [macroInput, tagOptions, macroTags]);
+
+  // Micro tag autocomplete suggestions.
+  const microSuggestions = useMemo(() => {
+    const query = microInput.trim().toLowerCase();
+    return tagOptions
+      .filter(option => !option.isMacro) // Keep micro tags only.
+      .filter(option => !microTags.includes(option.microTag)) // Exclude selected tags.
+      .filter(option => !query || option.microTag.toLowerCase().includes(query)); // Match typed text.
+  }, [microInput, tagOptions, microTags]);
+
 
   function resetMessages() {
-    setMessage('')
-    setError('')
+    setMessage('');
+    setError('');
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-    resetMessages()
+  // Tag add/remove helpers.
+  const addMacro = (macroValue) => {
+    if (macroTags.length >= MAX_MACRO_TAGS) return; // Safety limit.
+    if (!macroTags.includes(macroValue)) {
+      setMacroTags([...macroTags, macroValue]);
+    }
+    setMacroInput("");
+    setIsMacroInputFocused(false);
+  };
 
-    if (!isLogin && password !== confirmPassword) {
-      setError('Le password non corrispondono')
-      return
+  const removeMacro = (macroToRemove) => {
+    setMacroTags(macroTags.filter(t => t !== macroToRemove));
+  };
+
+  const addMicro = (microValue) => {
+    if (microTags.length >= MAX_MICRO_TAGS) return; // Safety limit.
+    if (!microTags.includes(microValue)) {
+      setMicroTags([...microTags, microValue]);
+    }
+    setMicroInput("");
+    setIsMicroInputFocused(false);
+  };
+
+  const removeMicro = (microToRemove) => {
+    setMicroTags(microTags.filter(t => t !== microToRemove));
+  };
+
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    resetMessages();
+
+    // Registration-only validation.
+    if (!isLogin) {
+      if (password !== confirmPassword) {
+        setError('Le password non corrispondono');
+        return;
+      }
+
+      if (!city.trim()) {
+        setError("La città preferita è richiesta.");
+        cityInputRef.current?.focus();
+        return;
+      }
+
+      // Validates the city against the catalog to avoid invalid values.
+      if (!validCityLabels.has(city.trim())) {
+        setError("Seleziona una città valida dall'elenco suggerito.");
+        cityInputRef.current?.focus();
+        return;
+      }
+
+      if (macroTags.length === 0) {
+        setError('Devi selezionare almeno un Macro Tag di interesse.');
+        return;
+      }
     }
 
     try {
@@ -42,17 +165,49 @@ export default function AuthPage(props) {
         body: JSON.stringify(
           isLogin
             ? { email, password }
-            : { name, lastname, email, password }
+            : { 
+                name, 
+                lastname, 
+                email, 
+                password,
+                favouriteCity: city.trim(), // Send the selected city label to the backend.
+                macroTags: macroTags,
+                microTags: microTags 
+              }
         ),
         credentials: 'include'
-      })
+      });
 
       if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(errorText)
+        const errorText = await response.text();
+        if (isLogin && errorText.includes("Devi confermare la tua email")) {
+          setError(
+            <span>
+              Devi confermare la tua email prima di accedere.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/verify-email", { state: { email } })}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: 'inherit'
+                }}
+              >
+                Clicca qui per confermare la tua email
+              </button>
+            </span>
+          );
+          return;
+        }
+        throw new Error(errorText);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (isLogin) {
         setMessage(`Loggato come: ${data.email}`);
@@ -64,24 +219,31 @@ export default function AuthPage(props) {
 
       } else {
         setMessage(
-          `Registratione completata per: ${data.name ?? ''} ${data.lastname ?? ''}`
+          `Registrazione completata per: ${data.name ?? ''} ${data.lastname ?? ''}. Reindirizzamento alla verifica...`
         );
 
+        // Pass the email through router state for the verification page.
+        const registeredEmail = email;
+
+        // Reset form fields.
+        setName('');
+        setLastname('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setCity('');
+        setMacroTags([]);
+        setMicroTags([]);
+
         setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+          // Navigate to verification while keeping the email out of the URL.
+          navigate("/verify-email", { state: { email: registeredEmail } });
+        }, 1500);
       }
 
-      // reset fields
-      setName('')
-      setLastname('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-
     } catch (error) {
-      console.error(error)
-      setError(error.message)
+      console.error(error);
+      setError(error.message);
     }
   }
 
@@ -103,28 +265,16 @@ export default function AuthPage(props) {
           <div style={styles.tabs}>
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(true)
-                resetMessages()
-              }}
-              style={{
-                ...styles.tabButton,
-                ...(isLogin ? styles.activeTab : {}),
-              }}
+              onClick={() => { setIsLogin(true); resetMessages(); }}
+              style={{ ...styles.tabButton, ...(isLogin ? styles.activeTab : {}), }}
             >
               Accedi
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(false)
-                resetMessages()
-              }}
-              style={{
-                ...styles.tabButton,
-                ...(!isLogin ? styles.activeTab : {}),
-              }}
+              onClick={() => { setIsLogin(false); resetMessages(); }}
+              style={{ ...styles.tabButton, ...(!isLogin ? styles.activeTab : {}), }}
             >
               Registrati
             </button>
@@ -133,33 +283,193 @@ export default function AuthPage(props) {
           <form onSubmit={handleSubmit} style={styles.form}>
 
             {!isLogin && (
-              <div style={styles.row}>
-                <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="name" style={styles.label}>Nome</label>
-                  <input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Mario"
-                    required
-                    style={styles.input}
-                  />
+              <>
+                <div style={styles.row}>
+                  <div style={{ ...styles.field, flex: 1 }}>
+                    <label htmlFor="name" style={styles.label}>Nome</label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Mario"
+                      required
+                      style={styles.input}
+                    />
+                  </div>
+
+                  <div style={{ ...styles.field, flex: 1 }}>
+                    <label htmlFor="lastname" style={styles.label}>Cognome</label>
+                    <input
+                      id="lastname"
+                      type="text"
+                      value={lastname}
+                      onChange={(e) => setLastname(e.target.value)}
+                      placeholder="Rossi"
+                      required
+                      style={styles.input}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ ...styles.field, flex: 1 }}>
-                  <label htmlFor="lastname" style={styles.label}>Cognome</label>
+                {/* City section */}
+                <div style={styles.field} className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1" style={styles.label}>
+                    Città preferita
+                  </label>
                   <input
-                    id="lastname"
+                    ref={cityInputRef}
                     type="text"
-                    value={lastname}
-                    onChange={(e) => setLastname(e.target.value)}
-                    placeholder="Rossi"
                     required
+                    placeholder="es: Milano"
                     style={styles.input}
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    onFocus={() => setIsCityInputFocused(true)}
+                    onBlur={() => setIsCityInputFocused(false)}
                   />
+                  {isCityInputFocused && citySuggestions.length > 0 && (
+                    <ul style={styles.dropdown}>
+                      {citySuggestions.map((option) => (
+                        <li
+                          key={option.label}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setCity(option.label);
+                            setIsCityInputFocused(false);
+                          }}
+                          style={styles.dropdownItem}
+                        >
+                          {option.label}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              </div>
+
+                {/* Macro tags section */}
+                <div style={styles.field}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={styles.label}>Inserisci almeno un'area di interesse</label>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      fontWeight: 'bold', 
+                      color: macroTags.length >= MAX_MACRO_TAGS ? '#dc2626' : '#64748b' 
+                    }}>
+                      {macroTags.length} / {MAX_MACRO_TAGS}
+                    </span>
+                  </div>
+                  
+                  <div style={{ 
+                    ...styles.tagsContainer, 
+                    backgroundColor: macroTags.length >= MAX_MACRO_TAGS ? '#e2e8f0' : '#f1f5f9' 
+                  }}>
+                    {macroTags.map(m => (
+                      <span key={m} style={styles.tagPill}>
+                        {m} 
+                        <button type="button" onClick={() => removeMacro(m)} style={styles.tagRemove}>×</button>
+                      </span>
+                    ))}
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input
+                        type="text"
+                        value={macroInput}
+                        onChange={(e) => {
+                          setMacroInput(e.target.value);
+                          setIsMacroInputFocused(true);
+                        }}
+                        onFocus={() => setIsMacroInputFocused(true)}
+                        onBlur={() => setIsMacroInputFocused(false)}
+                        placeholder={macroTags.length >= MAX_MACRO_TAGS ? "Limite raggiunto" : "Cerca area di interesse..."}
+                        disabled={macroTags.length >= MAX_MACRO_TAGS}
+                        style={{
+                          ...styles.tagInput, 
+                          cursor: macroTags.length >= MAX_MACRO_TAGS ? 'not-allowed' : 'text'
+                        }}
+                      />
+                      {isMacroInputFocused && macroTags.length < MAX_MACRO_TAGS && macroSuggestions.length > 0 && (
+                        <ul style={styles.dropdown}>
+                          {macroSuggestions.map(option => (
+                            <li 
+                              key={option.macroTag} 
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                addMacro(option.macroTag);
+                              }} 
+                              style={styles.dropdownItem}
+                            >
+                              {option.macroTag}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Micro tags section */}
+                <div style={styles.field}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={styles.label}>Scegli fino a 5 argomenti di interesse specifico</label>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      fontWeight: 'bold', 
+                      color: microTags.length >= MAX_MICRO_TAGS ? '#dc2626' : '#64748b' 
+                    }}>
+                      {microTags.length} / {MAX_MICRO_TAGS}
+                    </span>
+                  </div>
+
+                  <div style={{ 
+                    ...styles.tagsContainer, 
+                    backgroundColor: microTags.length >= MAX_MICRO_TAGS ? '#e2e8f0' : '#f1f5f9' 
+                  }}>
+                    {microTags.map(m => (
+                      <span key={m} style={styles.tagPillMicro}>
+                        {m} 
+                        <button type="button" onClick={() => removeMicro(m)} style={styles.tagRemove}>×</button>
+                      </span>
+                    ))}
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input
+                        type="text"
+                        value={microInput}
+                        onChange={(e) => {
+                          setMicroInput(e.target.value);
+                          setIsMicroInputFocused(true);
+                        }}
+                        onFocus={() => setIsMicroInputFocused(true)}
+                        onBlur={() => setIsMicroInputFocused(false)}
+                        placeholder={microTags.length >= MAX_MICRO_TAGS ? "Limite raggiunto" : "Cerca competenza..."}
+                        disabled={microTags.length >= MAX_MICRO_TAGS}
+                        style={{
+                          ...styles.tagInput, 
+                          cursor: microTags.length >= MAX_MICRO_TAGS ? 'not-allowed' : 'text'
+                        }}
+                      />
+                      {isMicroInputFocused && microTags.length < MAX_MICRO_TAGS && microSuggestions.length > 0 && (
+                        <ul style={styles.dropdown}>
+                          {microSuggestions.map(option => (
+                            <li 
+                              key={option.microTag} 
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                addMicro(option.microTag);
+                              }} 
+                              style={styles.dropdownItem}
+                            >
+                              <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase' }}>
+                                {option.macroTag}
+                              </div>
+                              {option.microTag}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
 
             <div style={styles.field}>
@@ -177,7 +487,6 @@ export default function AuthPage(props) {
 
             <div style={styles.field}>
               <label htmlFor="password" style={styles.label}>Password</label>
-
               <div style={styles.passwordWrapper}>
                 <input
                   id="password"
@@ -188,7 +497,6 @@ export default function AuthPage(props) {
                   required
                   style={styles.passwordInput}
                 />
-
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -201,9 +509,7 @@ export default function AuthPage(props) {
 
             {!isLogin && (
               <div style={styles.field}>
-                <label htmlFor="confirmPassword" style={styles.label}>
-                  Conferma password
-                </label>
+                <label htmlFor="confirmPassword" style={styles.label}>Conferma password</label>
 
                 <div style={styles.passwordWrapper}>
                   <input
@@ -215,7 +521,6 @@ export default function AuthPage(props) {
                     required
                     style={styles.passwordInput}
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -333,6 +638,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
+    position: 'relative', // Anchors absolute dropdowns.
   },
   label: {
     fontWeight: '700',
@@ -347,12 +653,15 @@ const styles = {
     outline: 'none',
     backgroundColor: '#f1f5f9',
     color: '#000000',
+    width: '100%',
+    boxSizing: 'border-box'
   },
   passwordWrapper: {
     display: 'flex',
     alignItems: 'center',
     border: '1px solid #cbd5e1',
     borderRadius: '14px',
+    backgroundColor: '#f1f5f9',
   },
   passwordInput: {
     flex: 1,
@@ -361,7 +670,7 @@ const styles = {
     fontSize: '16px',
     outline: 'none',
     borderRadius: '14px 0 0 14px',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: 'transparent',
     color: '#000000',
   },
   eyeButton: {
@@ -371,10 +680,6 @@ const styles = {
     cursor: 'pointer',
     fontSize: '20px',
     color: '#64748b',
-  },
-  smallText: {
-    color: '#64748b',
-    fontSize: '14px',
   },
   submitButton: {
     marginTop: '8px',
@@ -399,19 +704,92 @@ const styles = {
     fontWeight: '600',
     textAlign: 'center',
   },
-  footerText: {
-    marginTop: '20px',
-    textAlign: 'center',
-    color: '#475569',
-    fontSize: '15px',
-  },
   linkButton: {
-  color: '#667eea',
-  textDecoration: 'none',
-  fontWeight: '600',
-  textAlign: 'left',
-  display: 'block',
-  cursor: 'pointer',
+    color: '#667eea',
+    textDecoration: 'none',
+    fontWeight: '600',
+    textAlign: 'left',
+    display: 'block',
+    cursor: 'pointer',
+  },
+  // Tag and dropdown styles.
+  tagsContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    padding: '10px',
+    border: '1px solid #cbd5e1',
+    borderRadius: '14px',
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    minHeight: '52px',
+    boxSizing: 'border-box',
+    transition: 'background-color 0.2s ease'
+  },
+  tagPill: {
+    backgroundColor: '#2563eb', // Macro tag color.
+    color: 'white',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  tagPillMicro: {
+    backgroundColor: '#10b981', // Micro tag color.
+    color: 'white',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  tagRemove: {
+    background: 'transparent',
+    border: 'none',
+    color: 'white',
+    cursor: 'pointer',
+    fontSize: '16px',
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    lineHeight: '1'
+  },
+  tagInput: {
+    border: 'none',
+    background: 'transparent',
+    outline: 'none',
+    fontSize: '16px',
+    padding: '4px',
+    width: '100%',
+    minWidth: '150px'
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    border: '1px solid #cbd5e1',
+    borderRadius: '10px',
+    marginTop: '4px',
+    maxHeight: '200px',
+    overflowY: 'auto',
+    listStyle: 'none',
+    padding: '0',
+    zIndex: 10,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    margin: 0
+  },
+  dropdownItem: {
+    padding: '10px 14px',
+    cursor: 'pointer',
+    borderBottom: '1px solid #f1f5f9',
+    fontSize: '14px',
+    color: '#334155',
+    backgroundColor: 'white'
   }
-
 }

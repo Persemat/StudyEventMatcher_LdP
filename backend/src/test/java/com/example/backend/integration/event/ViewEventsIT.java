@@ -2,7 +2,6 @@ package com.example.backend.integration.event;
 
 import com.example.backend.model.Event;
 import com.example.backend.model.User;
-
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -20,8 +19,9 @@ public class ViewEventsIT extends BaseEventIT {
         event.setTitle("React Workshop");
         event.setDateTime(java.time.LocalDateTime.parse("2026-04-15T09:00:00"));
         event.setDuration(1.5);
-        event.setLocation("Online");
-        event.setTags(java.util.List.of("Frontend"));
+        event.setLocation("Milano (MI)-Online");
+        event.setTags(java.util.List
+                .of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Sviluppo frontend")));
         event.setDescription("Component-based development");
         event.setStatus("open");
         event.setCreator(creator);
@@ -31,9 +31,12 @@ public class ViewEventsIT extends BaseEventIT {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/events")
                 .sessionAttr("userId", userId))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title").value("React Workshop"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].location").value("Online"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].dateTime").exists());
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].title")
+                        .value("React Workshop"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].location")
+                        .value("Milano (MI)-Online"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$[0].dateTime")
+                        .exists());
     }
 
     @Test

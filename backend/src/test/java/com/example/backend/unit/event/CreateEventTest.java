@@ -23,8 +23,10 @@ public class CreateEventTest extends BaseEventTest {
                 "Math",
                 LocalDateTime.parse("2026-10-01T15:00:00"),
                 2.0,
-                "Library",
-                List.of("math"),
+                "Milano (MI)-Biblioteca",
+                null,
+                null,
+                List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")),
                 "Revision",
                 5,
                 true
@@ -54,8 +56,10 @@ public class CreateEventTest extends BaseEventTest {
                 "Math",
                 LocalDateTime.now(),
                 2.0,
-                "Room 1",
-                List.of("test"),
+                "Milano (MI)-Aula 1",
+                null,
+                null,
+                List.of(new com.example.backend.model.EventTag("Informatica e Tecnologie", "Testing software")),
                 "desc",
                 5,
                 true
@@ -78,8 +82,10 @@ public class CreateEventTest extends BaseEventTest {
                 "Study Session",
                 LocalDateTime.parse("2026-04-10T15:00:00"),
                 2.0,
-                "Room 1",
-                List.of("Math"),
+                "Milano (MI)-Aula 1",
+                null,
+                null,
+                List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")),
                 "Revision",
                 5,
                 true
@@ -92,6 +98,36 @@ public class CreateEventTest extends BaseEventTest {
                 () -> eventService.createEvent(request, session));
 
         assertTrue(ex.getMessage().contains("Utente non trovato"));
+
+        verify(eventRepository, never()).save(any());
+    }
+
+    @Test
+    void createEvent_shouldFail_whenDateTimeIsPast() {
+
+        EventRequest request = new EventRequest(
+                "Past study",
+                LocalDateTime.now().minusMinutes(1),
+                2.0,
+                "Milano (MI)-Aula 1",
+                null,
+                null,
+                List.of(new com.example.backend.model.EventTag("Scienze Matematiche Fisiche e Naturali", "Matematica")),
+                "Revision",
+                5,
+                true
+        );
+
+        User creator = new User();
+        creator.setId(1L);
+
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(creator));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> eventService.createEvent(request, session));
+
+        assertEquals("Data e ora devono essere future", ex.getMessage());
 
         verify(eventRepository, never()).save(any());
     }

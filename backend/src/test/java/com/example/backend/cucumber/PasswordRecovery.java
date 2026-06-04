@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -45,7 +47,8 @@ public class PasswordRecovery {
     public void esisteUnUtenteRegistratoPerIlRecuperoPassword() {
         email = "user_" + UUID.randomUUID() + "@example.com";
 
-        User user = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"));
+        User user = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"),
+                "Milano", List.of("Tech"), new ArrayList<>());
         userRepository.save(user);
     }
 
@@ -70,7 +73,8 @@ public class PasswordRecovery {
     @Then("il sistema invia il codice di recupero")
     public void ilSistemaInviaIlCodiceDiRecupero() throws Exception {
         result.andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Codice di reset della password inviato per email")));
+                .andExpect(
+                        content().string(Matchers.containsString("Codice di reset della password inviato per email")));
     }
 
     @Then("il sistema rifiuta la richiesta di recupero password")
@@ -84,7 +88,8 @@ public class PasswordRecovery {
         code = "123456";
         newPassword = "NuovaPass1";
 
-        User utente = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"));
+        User utente = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"),
+                "Milano", List.of("Tech"), new ArrayList<>());
         userRepository.save(utente);
 
         PasswordResetToken token = new PasswordResetToken();
@@ -101,7 +106,8 @@ public class PasswordRecovery {
         email = "user_" + UUID.randomUUID() + "@example.com";
         newPassword = "NewPass1";
 
-        User user = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"));
+        User user = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"),
+                "Milano", List.of("Tech"), new ArrayList<>());
         userRepository.save(user);
     }
 
@@ -111,7 +117,8 @@ public class PasswordRecovery {
         code = "123456";
         newPassword = "NewPass1";
 
-        User user = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"));
+        User user = new User("Mario", "Rossi", email, passwordEncoder.encode("Password123"),
+                "Milano", List.of("Tech"), new ArrayList<>());
         userRepository.save(user);
 
         PasswordResetToken token = new PasswordResetToken();
@@ -164,7 +171,7 @@ public class PasswordRecovery {
         result.andExpect(status().isBadRequest());
     }
 
-    @Then("il sistema mostra il messaggio {string}")
+    @Then("il sistema mostra il messaggio password {string}")
     public void ilSistemaMostraIlMessaggio(String messaggio) throws Exception {
         result.andExpect(content().string(Matchers.containsString(messaggio)));
     }

@@ -1,6 +1,7 @@
 package com.example.backend.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,15 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * Entity class representing an academic or social study event within the
+ * platform.
+ * <p>
+ * It maps to the "events" database table and maintains relational links with
+ * the organizing {@link User} (creator), registered attendees, and interested
+ * users
+ * who marked the event as a favorite.
+ */
 @Entity
 @Table(name = "events")
 public class Event {
@@ -26,7 +36,6 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    // Required fields
     @Column(nullable = false)
     private String title;
 
@@ -38,14 +47,16 @@ public class Event {
 
     @Column(nullable = false)
     private String location;
+    @Column
+    private Double latitude;
 
-    // ElementCollection for tags
+    @Column
+    private Double longitude;
+
     @ElementCollection
     @CollectionTable(name = "event_tags", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "tag", nullable = false)
-    private List<String> tags;
+    private List<EventTag> tags;
 
-    // Optional fields
     @Column(length = 1000)
     private String description;
 
@@ -60,10 +71,11 @@ public class Event {
     @JoinColumn(name = "creator_id", nullable = false)
     private User creator;
 
-    // Empty constructor
-    public Event() {}
-
-    // ===================== GETTERS & SETTERS =====================
+    /**
+     * Default no-argument constructor required by JPA specification.
+     */
+    public Event() {
+    }
 
     public long getId() {
         return id;
@@ -105,12 +117,40 @@ public class Event {
         this.location = location;
     }
 
-    public List<String> getTags() {
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public List<EventTag> getTags() {
         return tags;
     }
 
-    public void setTags(List<String> tags) {
-        this.tags = tags;
+    public void setTags(List<?> tags) {
+        if (tags == null) {
+            this.tags = null;
+            return;
+        }
+
+        this.tags = new ArrayList<>(tags.stream()
+                .map(tag -> {
+                    if (tag instanceof EventTag eventTag) {
+                        return eventTag;
+                    }
+                    return new EventTag(String.valueOf(tag), null);
+                })
+                .toList());
     }
 
     public String getDescription() {
@@ -153,15 +193,13 @@ public class Event {
         this.creator = creator2;
     }
 
-    // ===================== PARTICIPANTS =====================
+    @ManyToMany
+    @JoinTable(name = "event_participants", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> participants = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(
-        name = "event_participants",
-        joinColumns = @JoinColumn(name = "event_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<User> participants = new HashSet<>();
+    @JoinTable(name = "event_favorites", joinColumns = @JoinColumn(name = "event_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> favorites = new HashSet<>();
 
     public Set<User> getParticipants() {
         return participants;
@@ -171,15 +209,71 @@ public class Event {
         this.participants = participants;
     }
 
+    /**
+     * Enrolls a user into the event participant list.
+     *
+     * @param user the user registering for the event
+     */
     public void addParticipant(User user) {
         this.participants.add(user);
+
     }
 
+    /**
+     * Removes a user from the event participant list.
+     *
+     * @param user the user cancelling their registration
+     */
     public void removeParticipant(User user) {
         this.participants.remove(user);
     }
 
+    /**
+     * Computes the current total number of enrolled participants.
+     *
+     * @return the total count of active participants, or 0 if the list is null
+     */
     public int getCurrentParticipants() {
         return participants != null ? participants.size() : 0;
+    }
+
+    public Set<User> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Set<User> favorites) {
+        this.favorites = favorites;
+    }
+
+    /**
+     * Marks this event as a favorite for a specific user.
+     * <p>
+     * This helper method synchronizes both sides of the bidirectional ManyToMany
+     * association
+     * between the event and the user's personal bookmark list.
+     * </p>
+     *
+     * @param user the user adding the event to their favorites
+     */
+    public void addFavorite(User user) {
+        if (this.favorites.add(user)) {
+            user.addFavoriteEvent(this);
+        }
+    }
+
+    /**
+     * Removes this event from a specific user's favorites list.
+     * <p>
+     * This helper method synchronizes both sides of the bidirectional ManyToMany
+     * association
+     * to safely clear internal entity references.
+     * </p>
+     *
+     * @param user the user removing the event from their bookmarks
+     */
+    public void removeFavorite(User user) {
+        if (this.favorites.remove(user)) {
+            user.removeFavoriteEvent(this);
+        }
     }
 }

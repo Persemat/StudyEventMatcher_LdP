@@ -12,16 +12,22 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.UUID;
 
+import com.example.backend.model.UserVerification;
+import com.example.backend.repository.UserVerificationRepository;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.Matchers.*;
 
-
 public class Login {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserVerificationRepository userVerificationRepository;
 
     private String email;
     private String password;
@@ -33,17 +39,27 @@ public class Login {
         password = "Password123!";
 
         String bodyRegistration = String.format("""
-            {
-              "name": "Mario",
-              "lastname": "Rossi",
-              "email": "%s",
-              "password": "%s"
-            }
-            """, email, password);
+                {
+                  "name": "Mario",
+                  "lastname": "Rossi",
+                  "email": "%s",
+                  "password": "%s",
+                  "favouriteCity": "Milano",
+                  "macroTags": ["Informatica"],
+                  "microTags": []
+                }
+                """, email, password);
 
         mockMvc.perform(post("/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyRegistration))
+                .andExpect(status().isOk());
+
+        UserVerification verification = userVerificationRepository.findById(email)
+                .orElseThrow(() -> new AssertionError("Record di verifica non trovato"));
+
+        mockMvc.perform(get("/user/verify")
+                .param("token", verification.getToken()))
                 .andExpect(status().isOk());
     }
 
@@ -53,17 +69,27 @@ public class Login {
         String correctPassword = "Password123!";
 
         String bodyRegistration = String.format("""
-            {
-              "name": "Mario",
-              "lastname": "Rossi",
-              "email": "%s",
-              "password": "%s"
-            }
-            """, email, correctPassword);
+                {
+                  "name": "Mario",
+                  "lastname": "Rossi",
+                  "email": "%s",
+                  "password": "%s",
+                  "favouriteCity": "Milano",
+                  "macroTags": ["Informatica"],
+                  "microTags": []
+                }
+                """, email, correctPassword);
 
         mockMvc.perform(post("/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyRegistration))
+                .andExpect(status().isOk());
+
+        UserVerification verification = userVerificationRepository.findById(email)
+                .orElseThrow(() -> new AssertionError("Record di verifica non trovato"));
+
+        mockMvc.perform(get("/user/verify")
+                .param("token", verification.getToken()))
                 .andExpect(status().isOk());
 
         password = "WrongPassword";
@@ -78,14 +104,13 @@ public class Login {
     @When("l'utente prova ad accedere")
     public void utenteProvaAdAccedere() throws Exception {
         String loginBody = String.format("""
-            {
-              "email": %s,
-              "password": %s
-            }
-            """,
-            email == null ? "null" : "\"" + email + "\"",
-            password == null ? "null" : "\"" + password + "\""
-        );
+                {
+                  "email": %s,
+                  "password": %s
+                }
+                """,
+                email == null ? "null" : "\"" + email + "\"",
+                password == null ? "null" : "\"" + password + "\"");
 
         result = mockMvc.perform(post("/user/login")
                 .contentType(MediaType.APPLICATION_JSON)

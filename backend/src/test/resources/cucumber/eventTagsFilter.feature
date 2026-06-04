@@ -7,17 +7,23 @@ Feature: Ricerca per tag
         Then il sistema deve restituire un elenco contenente esattamente quei 3 eventi
         And nessun evento privo di quel tag deve apparire nei risultati
 
-    Scenario: Filtraggio combinato con più tag (logica AND)
+    Scenario: Filtraggio combinato con più tag (logica OR)
         Given sono L'utente
         And esiste 1 evento associato sia al “Tag A” che al “Tag B”
         And esistono 2 eventi associati solo al “Tag A”
         When seleziono sia il “Tag A” che il “Tag B” dalla lista predefinita
-        Then il sistema deve restituire solo l'evento che possiede entrambi i tag
-        And gli eventi che possiedono solo uno dei due tag vengono esclusi dai risultati
+        Then il sistema deve restituire gli eventi che possiedono almeno uno dei tag
+        And gli eventi che possiedono uno solo dei due tag vengono inclusi nei risultati
+
+    Scenario: Filtraggio per macrotag
+        Given sono L'utente
+        And esistono eventi associati a microtag dello stesso macrotag
+        When seleziono solo il macrotag dalla lista predefinita
+        Then il sistema deve restituire tutti gli eventi di quel macrotag
 
     Scenario: Nessun evento corrispondente ai tag selezionati
         Given sono L'utente
         And seleziono una combinazione di tag dalla lista predefinita
-        And non esistono eventi attivi nel database che possiedano tutti i tag scelti
+        And non esistono eventi attivi nel database che possiedano almeno uno dei tag scelti
         When il sistema elabora la richiesta di filtraggio
         Then il sistema restituisce un elenco vuoto di risultati
