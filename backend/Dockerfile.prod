@@ -1,0 +1,15 @@
+# Usa un'immagine JRE ufficiale e minimale basata su Alpine Linux (pesa pochissimo ed è ultra-sicura)
+FROM eclipse-temurin:21-jre-alpine
+
+# Imposta la cartella di lavoro principale all'interno del container
+WORKDIR /app
+
+# Copia il file .jar generato dal job 'package_backend' dentro la cartella /app del container
+# Usiamo il carattere jolly *SNAPSHOT.jar per evitare di dover aggiornare il Dockerfile ogni volta che cambia la versione nel pom.xml
+COPY target/*SNAPSHOT.jar app.jar
+
+# Comunica a Docker che il container ascolterà sulla porta 8080 (la porta standard di Spring Boot)
+EXPOSE 8080
+
+# Comando eseguito all'avvio del container per lanciare l'applicazione Java
+ENTRYPOINT ["java", "-jar", "app.jar"]
