@@ -130,8 +130,7 @@ package_backend:
       - backend/target/*.jar # Salva il JAR per passarlo al job successivo della pipeline
     expire_in: 1 week
   rules:
-    # - if: '$CI_COMMIT_BRANCH == "main"' # <--- RIGA ORIGINALE DA SCOMMENTARE ALLA FINE
-    - if: '$CI_COMMIT_BRANCH' # <--- REGOLA TEMPORANEA: fa girare il job su qualsiasi branch per i tuoi test
+     - if: '$CI_COMMIT_BRANCH == "main"' 
 
 package_frontend:
   stage: package
@@ -145,8 +144,7 @@ package_frontend:
       - frontend/dist/ # Salva i file statici per passarli al job successivo
     expire_in: 1 week
   rules:
-    # - if: '$CI_COMMIT_BRANCH == "main"' # <--- RIGA ORIGINALE DA SCOMMENTARE ALLA FINE
-    - if: '$CI_COMMIT_BRANCH' # <--- REGOLA TEMPORANEA: fa girare il job su qualsiasi branch per i tuoi test
+     - if: '$CI_COMMIT_BRANCH == "main"' 
 
 ########################
 # DEPLOY STAGE (DOCKER BUILD & PUSH)
@@ -175,25 +173,6 @@ upload_to_registry:
     - docker push $CI_REGISTRY_IMAGE/frontend:latest
     - cd ..
   rules:
-    # - if: '$CI_COMMIT_BRANCH == "main"' # <--- RIGA ORIGINALE DA SCOMMENTARE ALLA FINE
-    - if: '$CI_COMMIT_BRANCH' # <--- REGOLA TEMPORANEA: fa girare il job su qualsiasi branch per i tuoi test
-########################
-# DEPLOY
-########################
-# deploy:
-#   stage: deploy
-#   image: alpine:latest
-#   needs:
-#     - package_backend
-#     - package_frontend
-#   script:
-#     - mkdir -p deploy
-#     - cp backend/target/*.jar deploy/app.jar
-#     - cp -r frontend/dist deploy/
-#   artifacts:
-#       paths:
-#         - deploy/
-#       expire_in: 1 week
-#   rules:
-#     - if: '$CI_COMMIT_BRANCH == "develop"'
+     - if: '$CI_COMMIT_BRANCH == "main"' 
+    
 
