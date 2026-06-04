@@ -9,6 +9,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+/**
+ * Entity class representing a security token generated for a password reset
+ * request.
+ * <p>
+ * It maps to the "password_reset_tokens" database table and maintains
+ * information about
+ * the target user's email, the numeric verification code, timestamps for
+ * lifetime expiration,
+ * and usage flags for anti-tampering verification workflows.
+ * </p>
+ */
 @Entity
 @Table(name = "password_reset_tokens")
 public class PasswordResetToken {
@@ -32,10 +43,27 @@ public class PasswordResetToken {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    // ===================== CONSTRUCTORS =====================
+    /**
+     * Default no-argument constructor required by JPA specification.
+     */
+    public PasswordResetToken() {
+    }
 
-    public PasswordResetToken() {}
-
+    /**
+     * Constructs a new PasswordResetToken initialized with the target email,
+     * validation code, and specific expiration boundaries.
+     * <p>
+     * The creation timestamp is automatically initialized to the current system
+     * date and time,
+     * and the token's operational state is set to unused.
+     * </p>
+     *
+     * @param email     the unique email address of the user requesting the password
+     *                  reset
+     * @param code      the randomly generated 6-digit verification code string
+     * @param expiresAt the future deadline timestamp after which the token becomes
+     *                  invalid
+     */
     public PasswordResetToken(String email, String code, LocalDateTime expiresAt) {
         this.email = email;
         this.code = code;
@@ -43,8 +71,6 @@ public class PasswordResetToken {
         this.used = false;
         this.createdAt = LocalDateTime.now();
     }
-
-    // ===================== GETTERS & SETTERS =====================
 
     public Long getId() {
         return id;

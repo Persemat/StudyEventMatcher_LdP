@@ -50,18 +50,21 @@ public class GetRecommendedEvents {
         userRepository.deleteAll();
 
         // Utente che fa la ricerca
-        testUser = new User("Mario", "Rossi", "mario@example.com", "Password123!", "Milano", new ArrayList<>(), new ArrayList<>());
+        testUser = new User("Mario", "Rossi", "mario@example.com", "Password123!", "Milano", new ArrayList<>(),
+                new ArrayList<>());
         testUser = userRepository.save(testUser);
         userId = testUser.getId();
 
-        // Un altro utente per creare gli eventi (così non vengono scartati perché creati da noi)
-        creatorUser = new User("Luigi", "Verdi", "luigi@example.com", "Password123!", "Roma", new ArrayList<>(), new ArrayList<>());
+        // Un altro utente per creare gli eventi (così non vengono scartati perché
+        // creati da noi)
+        creatorUser = new User("Luigi", "Verdi", "luigi@example.com", "Password123!", "Roma", new ArrayList<>(),
+                new ArrayList<>());
         creatorUser = userRepository.save(creatorUser);
     }
 
     @And("l'utente ha una città preferita salvata")
     public void utenteHaCittaPreferita() {
-        // Già impostata su "Milano" nello step precedente. 
+        // Già impostata su "Milano" nello step precedente.
         // L'API riceverà le coordinate tramite i @RequestParam.
     }
 
@@ -81,8 +84,8 @@ public class GetRecommendedEvents {
     @And("esistono eventi futuri con il tag {string} ad una distanza inferiore alla distanza limite")
     public void esistonoEventiSingoloTag(String macroTag) {
         // Evento 1 a 10km, Evento 2 a 30km
-        creaEventoNelDB("Evento Vicino", macroTag, null, 45.05, 9.05); 
-        creaEventoNelDB("Evento Lontano", macroTag, null, 45.20, 9.20); 
+        creaEventoNelDB("Evento Vicino", macroTag, null, 45.05, 9.05);
+        creaEventoNelDB("Evento Lontano", macroTag, null, 45.20, 9.20);
     }
 
     @And("esistono due eventi futuri, evento 1 con solo {string} ed evento 2 con {string} e {string}")
@@ -118,7 +121,6 @@ public class GetRecommendedEvents {
 
     @When("l'utente accede alla dashboard")
     public void utenteAccedeAllaDashboard() throws Exception {
-        // Simuliamo la fetch() che React fa dietro le quinte quando apre la dashboard
         result = mockMvc.perform(get("/events/recommended")
                 .sessionAttr("userId", userId)
                 .param("latitude", USER_LAT.toString())
@@ -129,42 +131,39 @@ public class GetRecommendedEvents {
     @Then("il sistema mostra una sezione Eventi consigliati per te")
     public void sistemaMostraEventiConsigliati() throws Exception {
         result.andExpect(status().isOk())
-              .andExpect(jsonPath("$.messageCode").value("SUCCESS"))
-              .andExpect(jsonPath("$.recommendedEvents").isNotEmpty());
+                .andExpect(jsonPath("$.messageCode").value("SUCCESS"))
+                .andExpect(jsonPath("$.recommendedEvents").isNotEmpty());
     }
 
     @Then("il sistema mostra entrambi gli eventi nella sezione Eventi consigliati per te")
     public void sistemaMostraEntrambiGliEventi() throws Exception {
         result.andExpect(status().isOk())
-              .andExpect(jsonPath("$.messageCode").value("SUCCESS"))
-              .andExpect(jsonPath("$.recommendedEvents.length()").value(2));
+                .andExpect(jsonPath("$.messageCode").value("SUCCESS"))
+                .andExpect(jsonPath("$.recommendedEvents.length()").value(2));
     }
 
     @And("gli eventi sono ordinati in base alla distanza dalla posizione di riferimento salvata")
     public void eventiOrdinatiPerDistanza() throws Exception {
         result.andExpect(jsonPath("$.recommendedEvents[0].title").value("Evento Vicino"))
-              .andExpect(jsonPath("$.recommendedEvents[1].title").value("Evento Lontano"));
+                .andExpect(jsonPath("$.recommendedEvents[1].title").value("Evento Lontano"));
     }
 
     @And("evento {int} viene visualizzato prima di evento {int} nell'ordine finale")
     public void ordineSpecificoTraEventi(int primo, int secondo) throws Exception {
         result.andExpect(jsonPath("$.recommendedEvents[0].title").value("Evento " + primo))
-              .andExpect(jsonPath("$.recommendedEvents[1].title").value("Evento " + secondo));
+                .andExpect(jsonPath("$.recommendedEvents[1].title").value("Evento " + secondo));
     }
 
     @Then("il sistema mostra il messaggio {string}")
     public void sistemaMostraMessaggioErrore(String messaggio) throws Exception {
-        // Se il tuo Controller manda il messaggio di errore dentro messageCode
         if (messaggio.equals("NO_LOCATION_MATCH")) {
             result.andExpect(jsonPath("$.messageCode").value("NO_LOCATION_MATCH"));
         } else {
             result.andExpect(jsonPath("$.messageCode").value("NO_TAG_MATCH"));
-            // L'asserzione sul testo specifico (es. "Nessun evento...") è gestita sul Frontend React, 
-            // ma confermiamo che il backend ha inviato la "flag" giusta per farlo apparire!
+
         }
     }
 
-    // --- Helper Method per creare eventi velocemente nel DB ---
     private Event creaEventoNelDB(String titolo, String macroTag, String microTag, double lat, double lon) {
         Event event = new Event();
         event.setTitle(titolo);
@@ -178,11 +177,11 @@ public class GetRecommendedEvents {
         event.setStatus("open");
         event.setCreator(creatorUser);
         event.setParticipants(new HashSet<>());
-        
+
         List<EventTag> tags = new ArrayList<>();
         tags.add(new EventTag(macroTag, microTag));
         event.setTags(tags);
-        
+
         return eventRepository.save(event);
     }
 }

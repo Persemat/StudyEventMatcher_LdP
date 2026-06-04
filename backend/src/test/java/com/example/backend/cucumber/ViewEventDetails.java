@@ -47,7 +47,6 @@ public class ViewEventDetails {
         user.setLastname("Rossi");
         user.setEmail("mario.dettagli@example.com");
         user.setPassword("Password123!");
-        // Required profile fields must be populated to satisfy the User entity constraints.
         user.setFavouriteCity("Milano");
         user.setMacroTags(List.of("Tech"));
         user.setMicroTags(List.of());
@@ -126,7 +125,7 @@ public class ViewEventDetails {
 
     @When("l'utente prova a visualizzare i dettagli di un evento")
     public void lUtenteProvaAVisualizzareIDettagliDiUnEvento() throws Exception {
-        result = mockMvc.perform(get("/events/1")); // Chiamata senza caricare la sessione
+        result = mockMvc.perform(get("/events/1"));
     }
 
     @Then("il sistema mostra i dettagli dell'evento")

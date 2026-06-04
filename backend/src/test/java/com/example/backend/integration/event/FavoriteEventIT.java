@@ -19,128 +19,118 @@ import java.util.HashSet;
 @Tag("integration")
 public class FavoriteEventIT extends BaseEventIT {
 
-    private MockHttpSession session;
-    private User user;
-    private User creator;
-    private Event event;
+        private MockHttpSession session;
+        private User user;
+        private User creator;
+        private Event event;
 
-    @BeforeEach
-    void prepareDatabase() {
+        @BeforeEach
+        void prepareDatabase() {
 
-        eventRepository.deleteAll();
-        userRepository.deleteAll();
+                eventRepository.deleteAll();
+                userRepository.deleteAll();
 
-        session = new MockHttpSession();
+                session = new MockHttpSession();
 
-        user = new User();
-        user.setName("Mario");
-        user.setLastname("Rossi");
-        user.setEmail("mario.favorite@example.com");
-        user.setPassword("Password123!");
-        user.setFavouriteCity("Milano");
-        user = userRepository.save(user);
+                user = new User();
+                user.setName("Mario");
+                user.setLastname("Rossi");
+                user.setEmail("mario.favorite@example.com");
+                user.setPassword("Password123!");
+                user.setFavouriteCity("Milano");
+                user = userRepository.save(user);
 
-        creator = new User();
-        creator.setName("Luca");
-        creator.setLastname("Bianchi");
-        creator.setEmail("luca.creator@example.com");
-        creator.setPassword("Password123!");
-        creator.setFavouriteCity("Milano");
-        creator = userRepository.save(creator);
+                creator = new User();
+                creator.setName("Luca");
+                creator.setLastname("Bianchi");
+                creator.setEmail("luca.creator@example.com");
+                creator.setPassword("Password123!");
+                creator.setFavouriteCity("Milano");
+                creator = userRepository.save(creator);
 
-        event = new Event();
-        event.setTitle("Backend Study Group");
-        event.setDescription("Study Spring Boot");
-        event.setLocation("Milano (MI)-Aula 2");
-        event.setDateTime(LocalDateTime.now().plusDays(1));
-        event.setDuration(2.0);
-        event.setMaxParticipants(5);
-        event.setCreatorParticipationRequired(false);
-        event.setStatus("open");
-        event.setCreator(creator);
+                event = new Event();
+                event.setTitle("Backend Study Group");
+                event.setDescription("Study Spring Boot");
+                event.setLocation("Milano (MI)-Aula 2");
+                event.setDateTime(LocalDateTime.now().plusDays(1));
+                event.setDuration(2.0);
+                event.setMaxParticipants(5);
+                event.setCreatorParticipationRequired(false);
+                event.setStatus("open");
+                event.setCreator(creator);
 
-        if (event.getParticipants() == null) {
-            event.setParticipants(new HashSet<>());
+                if (event.getParticipants() == null) {
+                        event.setParticipants(new HashSet<>());
+                }
+
+                event.addParticipant(creator);
+
+                event = eventRepository.save(event);
         }
 
-        event.addParticipant(creator);
+        @Test
+        void toggleFavorite_success_shouldReturn200() throws Exception {
 
-        event = eventRepository.save(event);
-    }
+                session.setAttribute("userId", user.getId());
 
-    @Test
-    void toggleFavorite_success_shouldReturn200() throws Exception {
+                mockMvc.perform(
+                                post("/events/{id}/favorite", event.getId())
+                                                .session(session))
+                                .andExpect(status().isOk())
+                                .andExpect(content().string("Operazione sui preferiti completata"));
 
-        session.setAttribute("userId", user.getId());
+                mockMvc.perform(
+                                get("/events")
+                                                .session(session))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].isFavorite").value(true));
+        }
 
-        mockMvc.perform(
-                        post("/events/{id}/favorite", event.getId())
-                                .session(session)
-                )
-                .andExpect(status().isOk())
-                .andExpect(content().string("Operazione sui preferiti completata"));
+        @Test
+        void toggleFavorite_unauthenticated_shouldReturn401() throws Exception {
 
-        mockMvc.perform(
-                        get("/events")
-                                .session(session)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].isFavorite").value(true));
-    }
+                mockMvc.perform(
+                                post("/events/{id}/favorite", event.getId())
+                                                .session(session))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(content().string("Sessione invalida o scaduta"));
+        }
 
-    @Test
-    void toggleFavorite_unauthenticated_shouldReturn401() throws Exception {
+        @Test
+        void toggleFavorite_eventNotFound_shouldReturn400() throws Exception {
 
-        mockMvc.perform(
-                        post("/events/{id}/favorite", event.getId())
-                                .session(session)
-                )
-                .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Sessione invalida o scaduta"));
-    }
+                session.setAttribute("userId", user.getId());
 
-    @Test
-    void toggleFavorite_eventNotFound_shouldReturn400() throws Exception {
+                mockMvc.perform(
+                                post("/events/{id}/favorite", 9999L)
+                                                .session(session))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(content().string("Errore: Evento non trovato"));
+        }
 
-        session.setAttribute("userId", user.getId());
+        @Test
+        void toggleFavorite_twice_shouldToggleOnAndOff() throws Exception {
 
-        mockMvc.perform(
-                        post("/events/{id}/favorite", 9999L)
-                                .session(session)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Errore: Evento non trovato"));
-    }
+                session.setAttribute("userId", user.getId());
 
-    @Test
-    void toggleFavorite_twice_shouldToggleOnAndOff() throws Exception {
+                mockMvc.perform(
+                                post("/events/{id}/favorite", event.getId())
+                                                .session(session))
+                                .andExpect(status().isOk());
 
-        session.setAttribute("userId", user.getId());
+                mockMvc.perform(
+                                get("/events")
+                                                .session(session))
+                                .andExpect(jsonPath("$[0].isFavorite").value(true));
 
-        // aggiunge ai preferiti
-        mockMvc.perform(
-                        post("/events/{id}/favorite", event.getId())
-                                .session(session)
-                )
-                .andExpect(status().isOk());
+                mockMvc.perform(
+                                post("/events/{id}/favorite", event.getId())
+                                                .session(session))
+                                .andExpect(status().isOk());
 
-        mockMvc.perform(
-                        get("/events")
-                                .session(session)
-                )
-                .andExpect(jsonPath("$[0].isFavorite").value(true));
-
-        // rimuove dai preferiti
-        mockMvc.perform(
-                        post("/events/{id}/favorite", event.getId())
-                                .session(session)
-                )
-                .andExpect(status().isOk());
-
-        mockMvc.perform(
-                        get("/events")
-                                .session(session)
-                )
-                .andExpect(jsonPath("$[0].isFavorite").value(false));
-    }
+                mockMvc.perform(
+                                get("/events")
+                                                .session(session))
+                                .andExpect(jsonPath("$[0].isFavorite").value(false));
+        }
 }

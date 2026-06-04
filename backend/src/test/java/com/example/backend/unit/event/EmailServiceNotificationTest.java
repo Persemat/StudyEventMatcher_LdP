@@ -47,7 +47,6 @@ public class EmailServiceNotificationTest {
     @Test
     @DisplayName("Cancellazione: Invia mail solo ai partecipanti con notifiche attive, escludendo il creatore")
     void sendEventCancellationEmailToParticipants_ShouldFilterCorrectly() {
-        // 1. SETUP
         User creator = user(1L, "creator@example.com");
         User activeParticipant = user(2L, "active@example.com");
         User inactiveParticipant = user(3L, "inactive@example.com");
@@ -75,7 +74,6 @@ public class EmailServiceNotificationTest {
     @Test
     @DisplayName("Modifica: Invia mail solo ai partecipanti con notifiche attive, escludendo il creatore")
     void sendEventUpdateEmailToParticipants_ShouldFilterCorrectly() {
-        // 1. SETUP
         User creator = user(1L, "creator@example.com");
         User activeParticipant = user(2L, "active@example.com");
         User inactiveParticipant = user(3L, "inactive@example.com");

@@ -35,17 +35,16 @@ public class PasswordResetService {
     /**
      * Constructs the PasswordResetService.
      *
-     * @param userRepository repository used to access user data
+     * @param userRepository               repository used to access user data
      * @param passwordResetTokenRepository repository used to manage reset tokens
-     * @param passwordEncoder encoder used to securely hash passwords
-     * @param emailService service used to send reset emails
+     * @param passwordEncoder              encoder used to securely hash passwords
+     * @param emailService                 service used to send reset emails
      */
     public PasswordResetService(
             UserRepository userRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
-            EmailService emailService
-    ) {
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -73,14 +72,13 @@ public class PasswordResetService {
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Non è stato trovato nessun utente associato all'email"));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Non è stato trovato nessun utente associato all'email"));
 
         LocalDateTime now = LocalDateTime.now();
 
-        // Remove expired tokens
         passwordResetTokenRepository.deleteByExpiresAtBefore(now);
 
-        // Prevent spam requests (30s cooldown)
         PasswordResetToken lastToken = passwordResetTokenRepository
                 .findTopByEmailOrderByCreatedAtDesc(email)
                 .orElse(null);
@@ -95,7 +93,6 @@ public class PasswordResetService {
             }
         }
 
-        // Remove previous tokens for this email
         passwordResetTokenRepository.deleteByEmail(email);
 
         String code = generateResetCode();
@@ -116,14 +113,22 @@ public class PasswordResetService {
 
     /**
      * Resets the user's password using a valid reset code.
-     *
-     * Validates the code, checks expiration, and updates the password
-     * after applying security rules.
+     * <p>
+     * Validates the verification code, checks for token expiration, and updates the
+     * user's
+     * password. The new password must satisfy specific security criteria, including
+     * a minimum
+     * length of 8 characters, at least one uppercase letter, and at least one
+     * numeric digit.
      *
      * @param request contains email, reset code, and new password
      * @return confirmation message
-     * @throws IllegalArgumentException if input data is invalid, the code is incorrect or expired,
-     *                                  or the user cannot be found
+     * @throws IllegalArgumentException if input fields are blank, the code is
+     *                                  incorrect,
+     *                                  the token is expired, the user does not
+     *                                  exist,
+     *                                  or if the new password fails complexity
+     *                                  validation rules
      */
     @Transactional
     public String resetPassword(ResetPasswordRequest request) {

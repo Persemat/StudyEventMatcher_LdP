@@ -62,7 +62,7 @@ public class DeleteBooking {
         User user = userRepository.findById((Long) session.getAttribute("userId")).get();
 
         Event event = createBaseEvent();
-        event.addParticipant(user); // Prenotazione!
+        event.addParticipant(user);
         event = eventRepository.save(event);
 
         this.currentEventId = event.getId();
@@ -72,7 +72,7 @@ public class DeleteBooking {
     public void utenteNonPrenotato() {
         eventRepository.deleteAll();
         Event event = createBaseEvent();
-        event = eventRepository.save(event); // Viene salvato senza aggiungere l'utente
+        event = eventRepository.save(event);
 
         this.currentEventId = event.getId();
     }
@@ -80,9 +80,8 @@ public class DeleteBooking {
     @Transactional
     @And("l'utente ha una prenotazione per un evento con posti limitati")
     public void utenteHaPrenotazionePostiLimitati() {
-        utenteHaUnaPrenotazione(); // Sfruttiamo il metodo sopra per creare l'iscrizione
+        utenteHaUnaPrenotazione();
 
-        // Segnamoci quanti partecipanti ci sono all'inizio (dovrebbe essere 1)
         Event event = eventRepository.findById(currentEventId).get();
         this.initialPartecipants = event.getParticipants().size();
     }
@@ -104,8 +103,6 @@ public class DeleteBooking {
 
     @When("l'utente prova a cancellare la prenotazione")
     public void provaACancellareUnaPrenotazione() throws Exception {
-        // Se l'evento non è stato creato prima (come nello scenario 3), usiamo un ID
-        // fittizio "1" per far arrivare la richiesta al controller
         Long idToDelete = (currentEventId != null) ? currentEventId : 1L;
 
         result = mockMvc.perform(delete("/events/" + idToDelete + "/book").session(session));
@@ -124,7 +121,6 @@ public class DeleteBooking {
     @Transactional
     @Then("il sistema aumenta il numero di posti disponibili")
     public void ilSistemaAumentaPostiDisponibili() throws Exception {
-        // Grazie al @Transactional qui, possiamo rileggere la lista aggiornata
         Event updatedEvent = eventRepository.findById(currentEventId).get();
         int currentPartecipants = updatedEvent.getParticipants().size();
 

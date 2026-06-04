@@ -41,7 +41,6 @@ public class NewEventNotification {
     @Autowired
     private EventRepository eventRepository;
 
-    // AGGIUNTO: Repository per gestire le impostazioni di notifica
     @Autowired
     private UserSettingsRepository settingsRepository;
 
@@ -72,7 +71,6 @@ public class NewEventNotification {
                 "Milano", new ArrayList<>(), new ArrayList<>());
         interestedUser = userRepository.saveAndFlush(interestedUser);
 
-        // AGGIUNTO: Attiviamo le notifiche per l'utente interessato nel DB
         UserSettings settings = new UserSettings(interestedUser.getEmail(), true, true, true);
         settingsRepository.saveAndFlush(settings);
 

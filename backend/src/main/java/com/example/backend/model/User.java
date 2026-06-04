@@ -15,6 +15,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
+/**
+ * Entity class representing a platform user account.
+ * <p>
+ * It maps to the "users" database table and holds personal profile information,
+ * local interest tags, and handles associations with events the user has booked
+ * or bookmarked.
+ */
 @Entity
 @Table(name = "users")
 public class User {
@@ -51,14 +58,26 @@ public class User {
     @ManyToMany(mappedBy = "participants")
     private Set<Event> bookedEvents = new HashSet<>();
 
-    
     @ManyToMany(mappedBy = "favorites")
     private Set<Event> favoriteEvents = new HashSet<>();
 
+    /**
+     * Default no-argument constructor required by JPA specification.
+     */
+    public User() {
+    }
 
-
-    public User() {}
-
+    /**
+     * Constructs a full User profile with interest preferences.
+     *
+     * @param name          the first name of the user
+     * @param lastname      the last name or surname of the user
+     * @param email         the unique email address acting as account identity
+     * @param password      the hashed password string
+     * @param favouriteCity the user's preferred city geographical filter
+     * @param macroTags     the list of general interest categories
+     * @param microTags     the list of specific targeted interest topics
+     */
     public User(String name, String lastname, String email, String password, String favouriteCity,
             List<String> macroTags, List<String> microTags) {
         this.name = name;
@@ -142,18 +161,40 @@ public class User {
         this.bookedEvents = bookedEvents;
     }
 
-    // public void addEvent(Event event) {
-    //     bookedEvents.add(event);
-    //     event.getParticipants().add(this);
-    // }
+    /**
+     * Adds an event to the user's personal bookmarks list.
+     * <p>
+     * This helper method synchronizes both sides of the bidirectional ManyToMany
+     * association
+     * between the user and the event favorite mappings.
+     * </p>
+     *
+     * @param event the event to mark as favorite
+     */
+    public void addFavoriteEvent(Event event) {
+        if (this.favoriteEvents.add(event)) {
+            event.addFavorite(this);
+        }
+    }
 
-    // public void removeEvent(Event event) {
-    //     bookedEvents.remove(event);
-    //     event.getParticipants().remove(this);
-    // }
- 
+    /**
+     * Removes an event from the user's personal bookmarks list.
+     * <p>
+     * This helper method synchronizes both sides of the bidirectional ManyToMany
+     * association
+     * to safely clear internal entity references.
+     * </p>
+     *
+     * @param event the event to unmark as favorite
+     */
+    public void removeFavoriteEvent(Event event) {
+        if (this.favoriteEvents.remove(event)) {
+            event.removeFavorite(this);
+        }
+    }
+
     public Set<Event> getFavoriteEvents() {
-    return favoriteEvents;
+        return favoriteEvents;
     }
 
     public void setFavoriteEvents(Set<Event> favoritedBy) {

@@ -26,7 +26,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-
 public class UserEmailVerification {
 
     @Autowired
@@ -50,14 +49,9 @@ public class UserEmailVerification {
     private final String testEmail = "test.verification@example.com";
     private String extractedCode;
 
-    // =========================================================================
-    // SCENARIO 1: Invio codice di conferma dopo registrazione
-    // =========================================================================
-
     @Given("l'utente si trova nella pagina di registrazione")
     public void utenteNellaPaginaDiRegistrazione() {
-        // TRUCCO CRUCIALE: Forziamo la variabile booleana del Service a TRUE prima del
-        // test
+        // Forziamo la variabile booleana del Service a TRUE prima del test
         ReflectionTestUtils.setField(userService, "requireEmailVerification", true);
 
         userVerificationRepository.deleteAll();
@@ -98,7 +92,6 @@ public class UserEmailVerification {
                             "Il JSON di risposta deve contenere l'email dell'utente");
                 });
 
-        // Ora che la proprietà è TRUE, questo record ESISTERÀ al 100%
         UserVerification verification = userVerificationRepository.findById(testEmail)
                 .orElseThrow(() -> new AssertionError(
                         "Record di verifica non generato nel database. Verifica l'inizializzazione!"));
@@ -126,10 +119,6 @@ public class UserEmailVerification {
     public void sistemaMostraMessaggioRegistrazioneCompletata() throws Exception {
         result.andExpect(status().isOk());
     }
-
-    // =========================================================================
-    // SCENARIO 2: Conferma email completata con successo
-    // =========================================================================
 
     @Given("l'utente ha completato la registrazione")
     public void utenteHaCompletatoLaRegistrazione() throws Exception {
@@ -176,13 +165,10 @@ public class UserEmailVerification {
     @And("il sistema mostra il messaggio “Email confermata con successo”")
     public void sistemaMostraMessaggioEmailConfermata() throws Exception {
         result.andExpect(status().isOk())
-              .andExpect(jsonPath("$.status").value("success"))
-              .andExpect(jsonPath("$.message").value("'Email verificata con successo! Verrai reindirizzato al login...'"));
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message")
+                        .value("'Email verificata con successo! Verrai reindirizzato al login...'"));
     }
-
-    // =========================================================================
-    // SCENARIO 3: Codice di conferma non valido o già utilizzato
-    // =========================================================================
 
     @Given("l'utente ha ricevuto un codice di conferma a 6 cifre")
     public void utenteHaRicevutoCodiceDiConferma() throws Exception {
@@ -206,7 +192,7 @@ public class UserEmailVerification {
     @And("il sistema mostra il messaggio d'errore “Codice di conferma non valido o già utilizzato”")
     public void sistemaMostraMessaggioErroreCodiceNonValido() throws Exception {
         result.andExpect(status().isBadRequest())
-              .andExpect(jsonPath("$.status").value("error"))
-              .andExpect(jsonPath("$.message").value("Token di verifica non valido o scaduto."));
+                .andExpect(jsonPath("$.status").value("error"))
+                .andExpect(jsonPath("$.message").value("Token di verifica non valido o scaduto."));
     }
 }

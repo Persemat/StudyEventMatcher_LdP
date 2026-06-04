@@ -155,7 +155,7 @@ public class DeleteEvent {
     @And("le 5 prenotazioni associate vengono eliminate a cascata")
     public void prenotazioniAssociateEliminateACascata() {
         assertFalse(eventRepository.findById(eventId).isPresent());
-        assertTrue(partecipantsBeforeDelete >= 6); // creatore + 5 utenti
+        assertTrue(partecipantsBeforeDelete >= 6);
     }
 
     @And("il creatore viene rimosso dall’evento")

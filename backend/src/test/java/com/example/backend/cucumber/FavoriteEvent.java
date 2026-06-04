@@ -98,7 +98,7 @@ public class FavoriteEvent {
 
     @Given("l'utente si trova nella sezione {string}")
     public void utenteSiTrovaNellaSezione(String section) {
-        if(user == null){
+        if (user == null) {
             utenteVisualizzaDettagliEvento();
         }
         session.setAttribute("userId", user.getId());
@@ -106,7 +106,7 @@ public class FavoriteEvent {
 
     @Given("l'evento {string} è presente nell'elenco dei preferiti")
     public void eventoPresenteNeiPreferiti(String title) {
-        if(user == null){
+        if (user == null) {
             utenteVisualizzaDettagliEvento();
         }
         event.setTitle(title);
@@ -115,8 +115,7 @@ public class FavoriteEvent {
         try {
             mockMvc.perform(
                     post("/events/{id}/favorite", event.getId())
-                            .session(session)
-            );
+                            .session(session));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -124,7 +123,7 @@ public class FavoriteEvent {
 
     @Given("l'utente ha salvato nell'elenco degli eventi preferiti l'evento {string}")
     public void utenteHaGiaSalvatoPreferito(String title) throws Exception {
-        if(user == null || event == null){
+        if (user == null || event == null) {
             utenteVisualizzaDettagliEvento();
         }
         event.setTitle(title);
@@ -132,11 +131,9 @@ public class FavoriteEvent {
 
         session.setAttribute("userId", user.getId());
 
-        // simula già preferito
         result = mockMvc.perform(
                 post("/events/{id}/favorite", event.getId())
-                        .session(session)
-        );
+                        .session(session));
     }
 
     /* ---------------- WHEN ---------------- */
@@ -145,12 +142,11 @@ public class FavoriteEvent {
     public void utenteCliccaPulsante(String button) throws Exception {
 
         if (button.equals("Aggiungi ai preferiti") ||
-            button.equals("Rimuovi dai preferiti")) {
+                button.equals("Rimuovi dai preferiti")) {
 
             result = mockMvc.perform(
                     post("/events/{id}/favorite", event.getId())
-                            .session(session)
-            );
+                            .session(session));
         }
     }
 
@@ -161,8 +157,7 @@ public class FavoriteEvent {
 
         result = mockMvc.perform(
                 delete("/events/{id}", event.getId())
-                        .session(creatorSession)
-        );
+                        .session(creatorSession));
     }
 
     /* ---------------- THEN ---------------- */
@@ -171,12 +166,12 @@ public class FavoriteEvent {
     public void sistemaInseriscePreferito(String section) throws Exception {
 
         result.andExpect(status().isOk())
-              .andExpect(content().string("Operazione sui preferiti completata"));
+                .andExpect(content().string("Operazione sui preferiti completata"));
 
         resultGet = mockMvc.perform(get(EVENTI_URL).session(session));
 
         resultGet.andExpect(status().isOk())
-                 .andExpect(jsonPath("$[0].isFavorite").value(true));
+                .andExpect(jsonPath("$[0].isFavorite").value(true));
     }
 
     @Then("l'evento scompare immediatamente dall'elenco")
@@ -187,7 +182,7 @@ public class FavoriteEvent {
         resultGet = mockMvc.perform(get(EVENTI_URL).session(session));
 
         resultGet.andExpect(status().isOk())
-                 .andExpect(jsonPath("$[0].isFavorite").value(false));
+                .andExpect(jsonPath("$[0].isFavorite").value(false));
     }
 
     @Then("il sistema rimuove automaticamente l'evento anche dalla lista dei preferiti dell'utente")
@@ -196,6 +191,6 @@ public class FavoriteEvent {
         resultGet = mockMvc.perform(get(EVENTI_URL).session(session));
 
         resultGet.andExpect(status().isOk())
-                 .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$").isEmpty());
     }
 }

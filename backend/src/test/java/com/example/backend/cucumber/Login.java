@@ -80,7 +80,6 @@ public class Login {
                 }
                 """, email, correctPassword);
 
-        // Registrazione
         mockMvc.perform(post("/user")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(bodyRegistration))
